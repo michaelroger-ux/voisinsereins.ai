@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VoisinSereins.ai — Démo interactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: linear-gradient(170deg, #2A4D38, #3D6B4F 40%, #5B8C5A);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 20px;
+}
+.back-link {
+  position: fixed; top: 16px; left: 20px; color: rgba(255,255,255,0.7);
+  text-decoration: none; font-size: 0.85rem; font-weight: 600;
+  display: flex; align-items: center; gap: 6px; z-index: 100;
+  transition: color 0.2s;
+}
+.back-link:hover { color: #fff; }
+.demo-title { text-align: center; margin-bottom: 16px; color: #fff; }
+.demo-title h1 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 2px; }
+.demo-title h1 span { color: #E8A854; }
+.demo-title p { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+.phone-frame {
+  width: 390px; max-width: calc(100vw - 28px); height: min(812px, calc(100vh - 130px));
+  border-radius: 44px; background: #111; padding: 12px;
+  box-shadow: 0 32px 100px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset;
+}
+.phone-inner {
+  width: 100%; height: 100%; border-radius: 34px; overflow: hidden; background: #FDFBF7;
+}
+#root { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; }
+.hint { margin-top: 12px; text-align: center; color: rgba(255,255,255,0.45); font-size: 0.75rem; }
+@media (max-width: 430px) {
+  body { padding: 0; justify-content: flex-start; }
+  .phone-frame { border-radius: 0; padding: 0; width: 100%; height: 100vh; max-width: 100%; }
+  .phone-inner { border-radius: 0; }
+  .demo-title, .hint, .back-link { display: none; }
+}
+</style>
+</head>
+<body>
+<a href="/" class="back-link">← Retour au site</a>
+<div class="demo-title">
+  <h1>🏡 VoisinSereins<span>.ai</span></h1>
+  <p>Prototype interactif — Testez toutes les fonctions</p>
+</div>
+<div class="phone-frame">
+  <div class="phone-inner">
+    <div id="root"></div>
+  </div>
+</div>
+<div class="hint">💡 Tapez "12 rue des Tilleuls" dans la recherche d'adresse</div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
