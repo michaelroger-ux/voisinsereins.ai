@@ -73,7 +73,7 @@ function OnboardingWelcome({onNext}) {
   const [show,setShow]=useState(false);
   useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
   return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:`linear-gradient(170deg,${T.warmWhite} 0%,${T.sand} 40%,${T.leafLight}33 100%)`,fontFamily:SANS,overflow:"hidden",position:"relative"}}>
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:`linear-gradient(170deg,${T.warmWhite} 0%,${T.sand} 40%,${T.leafLight}33 100%)`,fontFamily:SANS,overflow:"hidden",position:"relative"}}>
       <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",background:T.sunriseLight,opacity:0.18}}/>
       <div style={{position:"absolute",bottom:100,left:-60,width:200,height:200,borderRadius:"50%",background:T.leafLight,opacity:0.12}}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 28px",position:"relative",zIndex:1,opacity:show?1:0,transform:show?"none":"translateY(20px)",transition:"all 0.8s cubic-bezier(0.16,1,0.3,1)"}}>
@@ -120,7 +120,7 @@ function OnboardingAddress({onFound,onCreate}) {
   const handleSelect=a=>{setSel(a);setQ(a.label);setSugs([]);setSearching(true);setTimeout(()=>{setSearching(false);setResult(a.copro?"found":"new")},1400)};
 
   return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 24px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.07)"}}/>
         <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 1 sur 2</p>
@@ -198,7 +198,7 @@ function OnboardingRole({copro,onContinue}) {
     {id:"syndic",icon:"🏛",label:"Syndic professionnel",desc:"Dashboard de gestion, diffusion officielle, analytics"},
   ];
   return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 24px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px"}}>
         <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Étape 2 sur 2</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Quel est votre rôle ?</h2>
@@ -254,7 +254,7 @@ function InviteKit({copro,onClose}) {
   const [copied,setCopied]=useState(false);
   const link=`voisinsereins.ai/join/${(copro?.label||"ma-copro").replace(/[\s,]+/g,"-").toLowerCase()}`;
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={onClose}>
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"82vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
         <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 18px"}}/>
         <h3 style={{fontFamily:FONT,fontSize:20,color:T.forest,margin:"0 0 4px"}}>Invitez vos voisins</h3>
@@ -326,7 +326,6 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const [userEmail]=useState("jean.dupont@gmail.com");
   const [userFloor,setUserFloor]=useState("2A");
   const [userNotifs,setUserNotifs]=useState(true);
-  const [userAICoach,setUserAICoach]=useState(true);
 
   // ─── FEED STATE ───
   const [feedCat,setFeedCat]=useState("all");
@@ -452,7 +451,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const activeCopro = COPROS[0];
 
   return (
-    <div style={{minHeight:"100vh",background:T.sand,fontFamily:SANS,display:"flex",flexDirection:"column"}}>
+    <div style={{height:"100%",background:T.sand,fontFamily:SANS,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
       {/* ─── HEADER ─── */}
       <div style={{background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,padding:"48px 16px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
@@ -488,7 +487,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div></div>
 
       {/* ─── TAB CONTENT ─── */}
-      <div style={{flex:1,overflowY:"auto",paddingBottom:76}}>
+      <div style={{flex:1,overflowY:"auto"}}>
 
         {/* ═══ HOME TAB ═══ */}
         {tab==="home"&&<div style={{padding:14}}>
@@ -597,7 +596,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
         </div>}
 
         {/* ═══ FEED TAB ═══ */}
-        {tab==="feed"&&<div style={{padding:"14px 14px 90px"}}>
+        {tab==="feed"&&<div style={{padding:"14px 14px 70px"}}>
           {/* Compose bar */}
           <button onClick={()=>setShowComposer(true)} style={{width:"100%",padding:"12px 16px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",marginBottom:14,textAlign:"left"}}>
             <div style={{width:32,height:32,borderRadius:10,background:`${T.forest}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✏️</div>
@@ -627,10 +626,10 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
             </Card>
           ))}
           {/* Compose FAB */}
-          <button onClick={()=>setShowComposer(true)} style={{position:"fixed",bottom:86,right:18,width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,border:"none",color:"#fff",fontSize:22,cursor:"pointer",boxShadow:`0 4px 16px ${T.forest}44`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}>✏️</button>
+          <button onClick={()=>setShowComposer(true)} style={{position:"absolute",bottom:68,right:18,width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,border:"none",color:"#fff",fontSize:22,cursor:"pointer",boxShadow:`0 4px 16px ${T.forest}44`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}>✏️</button>
 
           {/* Composer */}
-          {showComposer&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={()=>{setShowComposer(false);setReforms(null);setSelReform(null)}}>
+          {showComposer&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={()=>{setShowComposer(false);setReforms(null);setSelReform(null)}}>
             <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"78vh",overflowY:"auto"}}>
               <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
               <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 10px"}}>Nouveau message</h3>
@@ -676,7 +675,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               </button>
             ))}
           </div>:
-          <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}}>
+          <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
             <div style={{padding:"12px 16px",background:"#fff",borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:10}}>
               <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:T.forest}}>←</button>
               <Av name={activeConv?.name||""} size={32}/>
@@ -699,7 +698,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
         </div>}
 
         {/* ═══ CONSEIL AI TAB ═══ */}
-        {tab==="ai"&&<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}}>
+        {tab==="ai"&&<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
           <div style={{flex:1,overflowY:"auto",padding:14}}>
             {aiMsgs.map((m,i)=>(
               <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:10}}>
@@ -862,7 +861,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>
 
       {/* ─── BOTTOM TAB BAR ─── */}
-      {tab!=="mediation"&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(253,251,247,0.92)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px 18px",display:"flex",justifyContent:"space-around",zIndex:50,maxWidth:420,margin:"0 auto"}}>
+      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.95)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px 14px",display:"flex",justifyContent:"space-around",flexShrink:0}}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"3px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:1,opacity:tab===t.id?1:0.45,transition:"opacity 0.2s"}}>
             <span style={{fontSize:20}}>{t.icon}</span>
@@ -874,7 +873,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       {showInvite&&<InviteKit copro={copro||{label:"Ma copropriété"}} onClose={()=>setShowInvite(false)}/>}
 
       {/* ═══ PROFILE MODAL ═══ */}
-      {showProfile&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
+      {showProfile&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
           <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 18px"}}/>
 
@@ -938,14 +937,22 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Préférences</h4>
 
           {[
-            {label:"Notifications push",desc:"Nouveaux messages, voisins, événements",value:userNotifs,set:setUserNotifs},
-            {label:"Coach AI à l'écriture",desc:"Suggestions de reformulation avant envoi",value:userAICoach,set:setUserAICoach},
+            {label:"Notifications push",desc:"Nouveaux messages, voisins, événements",value:userNotifs,set:setUserNotifs,disabled:false},
+            {label:"Coach AI à l'écriture",desc:"Toujours actif — non désactivable",value:true,set:()=>{},disabled:true,locked:true},
           ].map((s,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:i===0?`1px solid ${T.sand}`:"none"}}>
-              <div><div style={{fontSize:14,fontWeight:500,color:T.text}}>{s.label}</div><div style={{fontSize:11,color:T.textMuted}}>{s.desc}</div></div>
-              <button onClick={()=>s.set(!s.value)} style={{width:48,height:28,borderRadius:14,border:"none",background:s.value?T.forest:T.sandDark,cursor:"pointer",position:"relative",transition:"background 0.2s"}}>
-                <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,left:s.value?23:3,transition:"left 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.15)"}}/>
-              </button>
+              <div style={{opacity:s.disabled?0.7:1}}>
+                <div style={{fontSize:14,fontWeight:500,color:T.text,display:"flex",alignItems:"center",gap:5}}>
+                  {s.label}
+                  {s.locked&&<span style={{fontSize:10}}>🔒</span>}
+                </div>
+                <div style={{fontSize:11,color:T.textMuted}}>{s.desc}</div>
+              </div>
+              <div style={{position:"relative"}}>
+                <button onClick={()=>!s.disabled&&s.set(!s.value)} style={{width:48,height:28,borderRadius:14,border:"none",background:s.value?(s.disabled?`${T.forest}99`:T.forest):T.sandDark,cursor:s.disabled?"default":"pointer",position:"relative",transition:"background 0.2s"}}>
+                  <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,left:s.value?23:3,transition:"left 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.15)",opacity:s.disabled?0.8:1}}/>
+                </button>
+              </div>
             </div>
           ))}
 
@@ -974,7 +981,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>}
 
       {/* ═══ COPRO INFO MODAL ═══ */}
-      {showCoproInfo&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowCoproInfo(false)}>
+      {showCoproInfo&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowCoproInfo(false)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
           <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 18px"}}/>
 
@@ -1063,7 +1070,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>}
 
       {/* ═══ VERIFICATION GATE MODAL ═══ */}
-      {showVerifyGate&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1100,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.3s"}} onClick={()=>setShowVerifyGate(null)}>
+      {showVerifyGate&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1100,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.3s"}} onClick={()=>setShowVerifyGate(null)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:380,background:T.warmWhite,borderRadius:22,padding:28,boxShadow:"0 16px 48px rgba(0,0,0,0.15)"}}>
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{fontSize:48,marginBottom:12}}>{showVerifyGate==="syndic"?"🏛":showVerifyGate==="cs"?"👥":"🔑"}</div>
@@ -1110,7 +1117,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>}
 
       {/* ═══ ROLE SWITCH MODAL ═══ */}
-      {showRoleSwitch&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1100,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.3s"}} onClick={()=>setShowRoleSwitch(false)}>
+      {showRoleSwitch&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1100,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn 0.3s"}} onClick={()=>setShowRoleSwitch(false)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:380,background:T.warmWhite,borderRadius:22,padding:28,boxShadow:"0 16px 48px rgba(0,0,0,0.15)"}}>
           <h3 style={{fontFamily:FONT,fontSize:20,color:T.forest,margin:"0 0 6px",textAlign:"center"}}>Changer de rôle</h3>
           <p style={{fontSize:13,color:T.textLight,textAlign:"center",margin:"0 0 20px",lineHeight:1.5}}>Vos vérifications déjà effectuées restent valides.</p>
@@ -1170,7 +1177,7 @@ export default function VoisinSereins() {
   const [userIsCS,setUserIsCS]=useState(false);
 
   return (
-    <div style={{maxWidth:420,margin:"0 auto",minHeight:"100vh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
+    <div style={{maxWidth:420,margin:"0 auto",height:"100vh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
       {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")}/>}
       {screen==="address"&&<OnboardingAddress
         onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
