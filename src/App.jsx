@@ -205,6 +205,7 @@ function OnboardingRole({copro,onContinue}) {
   const roles=[
     {id:"proprio",icon:"🔑",label:"Copropriétaire",desc:"Accès complet : AG, votes, documents financiers, médiation"},
     {id:"locataire",icon:"🏠",label:"Locataire",desc:"Fil d'actualité, annonces, messagerie, conseil AI bail"},
+    {id:"concierge",icon:"🛎",label:"Concierge / Gardien",desc:"Fil, annonces, messagerie avec syndic, conseil AI"},
     {id:"syndic",icon:"🏛",label:"Syndic professionnel",desc:"Dashboard de gestion, diffusion officielle, analytics"},
   ];
   return (
@@ -217,7 +218,7 @@ function OnboardingRole({copro,onContinue}) {
       </div>
       <div style={{padding:"24px 16px",flex:1}}>
         {roles.map((r,i)=>(
-          <button key={r.id} onClick={()=>{setRole(r.id);if(r.id==="syndic")setIsCS(false)}} style={{
+          <button key={r.id} onClick={()=>{setRole(r.id);if(r.id!=="proprio")setIsCS(false)}} style={{
             width:"100%",padding:16,borderRadius:16,border:role===r.id?`2px solid ${T.forest}`:`2px solid ${T.sandDark}`,
             background:role===r.id?`${T.leafLight}18`:"#fff",marginBottom:10,cursor:"pointer",textAlign:"left",
             display:"flex",alignItems:"center",gap:14,fontFamily:SANS,
@@ -261,14 +262,16 @@ function OnboardingRole({copro,onContinue}) {
 /* ═══════════════════════════════════════
    INVITATION KIT
    ═══════════════════════════════════════ */
-function InviteKit({copro,onClose}) {
+function InviteKit({copro,userName,onClose}) {
   const [copied,setCopied]=useState(false);
   const [selMsg,setSelMsg]=useState(0);
+  const [showName,setShowName]=useState(true);
   const link=`voisinsereins.ai/join/${(copro?.label||"ma-copro").replace(/[\s,]+/g,"-").toLowerCase()}`;
+  const nameStr=showName?` — invité(e) par ${userName}`:"";
   const preMsgs=[
-    {label:"Convivial",text:`Salut ! 👋 Je viens de rejoindre notre espace copro sur VoisinSereins. On peut échanger entre voisins, consulter les documents, et avoir des conseils juridiques. Rejoins-nous → ${link}`},
-    {label:"Pratique",text:`Bonjour, je voulais te prévenir que notre copropriété a maintenant son espace numérique sur VoisinSereins.ai. Documents, agenda, annonces entre voisins... Inscris-toi ici : ${link}`},
-    {label:"Officiel",text:`Chers voisins, un espace numérique privé a été créé pour notre copropriété sur VoisinSereins.ai. Il permet de retrouver les documents, l'agenda, et d'échanger sereinement. Pour rejoindre : ${link}`},
+    {label:"Convivial",text:`Salut ! 👋 ${showName?`C'est ${userName}. `:""}Je viens de rejoindre notre espace copro sur VoisinSereins. On peut échanger entre voisins, consulter les documents, et avoir des conseils juridiques. Rejoins-nous → ${link}`},
+    {label:"Pratique",text:`Bonjour, ${showName?`${userName} vous invite. `:""}Notre copropriété a maintenant son espace numérique sur VoisinSereins.ai. Documents, agenda, annonces entre voisins... Inscris-toi ici : ${link}`},
+    {label:"Officiel",text:`Chers voisins, un espace numérique privé a été créé pour notre copropriété sur VoisinSereins.ai. Il permet de retrouver les documents, l'agenda, et d'échanger sereinement.${showName?` Invitation de ${userName}.`:""} Pour rejoindre : ${link}`},
   ];
   return (
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={onClose}>
@@ -292,6 +295,15 @@ function InviteKit({copro,onClose}) {
         </div>
 
         <div style={{fontSize:11,fontWeight:600,color:T.text,marginBottom:8}}>Choisissez un message pré-rédigé</div>
+
+        {/* Name toggle */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:"#fff",borderRadius:12,border:`1px solid ${T.sandDark}`,marginBottom:10}}>
+          <div><div style={{fontSize:13,fontWeight:500,color:T.text}}>Afficher mon nom</div><div style={{fontSize:10,color:T.textMuted}}>L'invitation mentionnera « {userName} »</div></div>
+          <button onClick={()=>setShowName(!showName)} style={{width:44,height:26,borderRadius:13,border:"none",background:showName?T.forest:T.sandDark,cursor:"pointer",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+            <div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:3,left:showName?21:3,transition:"left 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.15)"}}/>
+          </button>
+        </div>
+
         <div style={{display:"flex",gap:6,marginBottom:8}}>
           {preMsgs.map((m,i)=>(
             <button key={i} onClick={()=>setSelMsg(i)} style={{flex:1,padding:"7px 10px",borderRadius:8,border:selMsg===i?`2px solid ${T.forest}`:`1.5px solid ${T.sandDark}`,background:selMsg===i?`${T.leafLight}18`:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:selMsg===i?T.forest:T.textMuted,textAlign:"center"}}>{m.label}</button>
@@ -346,8 +358,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   // ─── USER PROFILE ───
   const [userName,setUserName]=useState("Jean Dupont");
   const [userEmail]=useState("jean.dupont@gmail.com");
-  const [userFloor,setUserFloor]=useState("2A");
+  const [userBuilding,setUserBuilding]=useState("Mimosa");
+  const [userEtage,setUserEtage]=useState("3");
+  const [userDoor,setUserDoor]=useState("Gauche");
+  const autoApt = `${userEtage?userEtage+"ème ":""}${userDoor}${userBuilding?" - "+userBuilding:""}`;
+  const [userFloor,setUserFloor]=useState("3ème Gauche - Mimosa");
+  const [userFloorEdited,setUserFloorEdited]=useState(false);
+  const currentApt = userFloorEdited ? userFloor : autoApt;
   const [userNotifs,setUserNotifs]=useState(true);
+  const [userLots,setUserLots]=useState("");
 
   // ─── FEED STATE ───
   const [feedCat,setFeedCat]=useState("all");
@@ -358,9 +377,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const [selReform,setSelReform]=useState(null);
   const [posts,setPosts]=useState([
     {id:1,author:"Marie D.",floor:"3B",time:"Auj. 09:14",text:"Bonjour à tous ! Petit rappel : la prochaine AG est prévue le 15 avril. N'hésitez pas à me transmettre vos points à l'ordre du jour.",cat:"officiel",likedBy:["Sophie L.","Thomas R.","Paul V.","Anna K.","Lucas M."],role:"CS",replies:[]},
+    {id:10,welcome:true,author:"Pierre B.",floor:"5B",time:"Auj. 08:30",cat:"officiel",text:"",likedBy:[],role:"",replies:[]},
     {id:2,author:"Thomas R.",floor:"1A",time:"Hier 18:30",text:"Quelqu'un saurait recommander un bon serrurier dans le quartier ? Ma serrure a un souci depuis ce matin.",cat:"entraide",likedBy:["Marie D.","Sophie L.","Anna K."],role:"proprio",replies:[{author:"Paul V.",text:"J'ai utilisé SerruPlus le mois dernier, très pro !",time:"Hier 19:02"}]},
+    {id:11,welcome:true,author:"Claire F.",floor:"2C",time:"Hier 10:00",cat:"officiel",text:"",likedBy:[],role:"",replies:[]},
     {id:3,author:"Sophie L.",floor:"4C",time:"Hier 14:22",text:"Je propose un apéro entre voisins dimanche prochain dans le jardin commun, vers 17h. Qui est partant ? 🥂",cat:"convivialité",likedBy:["Marie D.","Thomas R.","Paul V.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F."],role:"locataire",replies:[]},
     {id:4,author:"Lucas M.",floor:"2B",time:"Mar. 10:45",text:"Les travaux de ravalement débutent lundi. L'échafaudage sera monté côté rue. Merci de ne pas garer devant l'entrée.",cat:"travaux",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K."],role:"syndic",replies:[]},
+    {id:12,welcome:true,author:"Marc T.",floor:"1B",time:"Mar. 09:30",cat:"officiel",text:"",likedBy:[],role:"",replies:[]},
     {id:5,author:"Anna K.",floor:"5A",time:"Mar. 09:00",text:"L'ascenseur est en panne depuis hier soir. J'ai signalé au syndic. Intervention prévue demain matin.",cat:"incidents",likedBy:["Marie D.","Sophie L.","Thomas R.","Paul V.","Lucas M.","Jean Dupont"],role:"proprio",replies:[{author:"Lucas M.",text:"Intervention confirmée pour demain 8h.",time:"Mar. 10:00"}]},
     {id:6,author:"Paul V.",floor:"1C",time:"Lun. 16:30",text:"Et si on installait un compost collectif dans le jardin ? J'ai trouvé un modèle à 150€. Ça pourrait être voté à la prochaine AG.",cat:"suggestions",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F.","Marc T."],role:"proprio",replies:[]},
   ]);
@@ -443,7 +465,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
 
   const handlePublish = () => {
     const text=selReform?reforms[selReform]:draft;
-    setPosts([{id:Date.now(),author:userName,floor:userFloor,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likedBy:[],role,replies:[]},... posts]);
+    setPosts([{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likedBy:[],role,replies:[]},... posts]);
     setDraft("");setReforms(null);setSelReform(null);setShowComposer(false);
   };
 
@@ -479,7 +501,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   return (
     <div style={{height:"100%",background:T.sand,fontFamily:SANS,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
       {/* ─── HEADER ─── */}
-      <div style={{background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,padding:"48px 16px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
+      <div style={{background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,padding:"48px 16px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",flexShrink:0,zIndex:20}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
           <button onClick={()=>setShowProfile(true)} style={{background:"none",border:"2px solid rgba(255,255,255,0.3)",cursor:"pointer",padding:0,borderRadius:14,flexShrink:0}}>
             <div style={{width:36,height:36,borderRadius:12,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:14,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
@@ -508,12 +530,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>
 
       {/* Progress bar */}
-      <div style={{padding:"0 16px"}}><div style={{height:3,borderRadius:2,background:T.sandDark,marginTop:-1.5,position:"relative",zIndex:2}}>
+      <div style={{padding:"0 16px",flexShrink:0}}><div style={{height:3,borderRadius:2,background:T.sandDark,marginTop:-1.5,position:"relative",zIndex:2}}>
         <div style={{height:"100%",borderRadius:2,width:`${(activeCopro.members/activeCopro.logements)*100}%`,background:`linear-gradient(90deg,${T.sunrise},${T.leaf})`,transition:"width 1s"}}/>
       </div></div>
 
       {/* ─── TAB CONTENT ─── */}
-      <div style={{flex:1,overflowY:"auto"}}>
+      <div style={{flex:1,overflowY:"auto",minHeight:0}}>
 
         {/* ═══ HOME TAB ═══ */}
         {tab==="home"&&<div style={{padding:14}}>
@@ -537,7 +559,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           <Card style={{background:`linear-gradient(135deg,${T.forest}08,${T.leafLight}22)`,border:`1px solid ${T.leafLight}44`,padding:20}}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
               <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:17,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
-              <div><h2 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Bonjour {userName.split(" ")[0]} !</h2><p style={{fontSize:12,color:T.textLight,margin:"2px 0 0"}}>{role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":"Syndic"}{isCS?" · Conseil syndical":""} · App. {userFloor}</p></div>
+              <div><h2 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Bonjour {userName.split(" ")[0]} !</h2><p style={{fontSize:12,color:T.textLight,margin:"2px 0 0"}}>{role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}{isCS?" · Conseil syndical":""} · App. {currentApt}</p></div>
             </div>
             {isNew?
               <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>Bienvenue sur VoisinSereins ! Vous êtes le premier membre de votre copropriété. Invitez vos voisins pour profiter pleinement de l'app.</p>:
@@ -632,6 +654,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
 
           <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{CATS.map(c=><Chip key={c.id} label={c.l} icon={c.i} active={feedCat===c.id} color={CC[c.id]||T.forest} onClick={()=>setFeedCat(c.id)}/>)}</div>
           {filteredPosts.map(p=>{
+            if(p.welcome) return (
+              <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:`${T.leafLight}15`,borderRadius:12,marginBottom:8,border:`1px solid ${T.leafLight}33`}}>
+                <span style={{fontSize:18}}>👋</span>
+                <p style={{fontSize:12,color:T.forest,margin:0,flex:1}}><strong>Bienvenue à {p.author}</strong> <span style={{color:T.textMuted,fontWeight:400}}>(App. {p.floor})</span> 🎉</p>
+                <span style={{fontSize:10,color:T.textMuted}}>{p.time}</span>
+              </div>
+            );
             const myLike=p.likedBy.includes(userName);
             const isOwn=p.author===userName;
             return (
@@ -870,7 +899,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
                 ))}
               </div>;
             })}
-            {role==="locataire"&&<div style={{background:`${T.sunriseLight}33`,borderRadius:12,padding:14,marginTop:8}}><p style={{fontSize:12,color:T.bark,margin:0}}>🔒 En tant que locataire, certains documents financiers ne sont pas accessibles. Contactez votre propriétaire pour plus d'informations.</p></div>}
+            {(role==="locataire"||role==="concierge")&&<div style={{background:`${T.sunriseLight}33`,borderRadius:12,padding:14,marginTop:8}}><p style={{fontSize:12,color:T.bark,margin:0}}>🔒 En tant que {role==="concierge"?"concierge":"locataire"}, certains documents financiers ne sont pas accessibles.</p></div>}
           </div>}
 
           {agendaTab==="entraide"&&<div>
@@ -952,7 +981,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>
 
       {/* ─── BOTTOM TAB BAR ─── */}
-      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.95)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px 14px",display:"flex",justifyContent:"space-around",flexShrink:0}}>
+      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.95)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px 14px",display:"flex",justifyContent:"space-around",flexShrink:0,zIndex:20}}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"3px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:1,opacity:tab===t.id?1:0.45,transition:"opacity 0.2s"}}>
             <span style={{fontSize:20}}>{t.icon}</span>
@@ -961,7 +990,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
         ))}
       </div>}
 
-      {showInvite&&<InviteKit copro={copro||{label:"Ma copropriété"}} onClose={()=>setShowInvite(false)}/>}
+      {showInvite&&<InviteKit copro={copro||{label:"Ma copropriété"}} userName={userName} onClose={()=>setShowInvite(false)}/>}
 
       {/* ═══ PROFILE MODAL ═══ */}
       {showProfile&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
@@ -979,11 +1008,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <p style={{fontSize:12,color:T.textMuted,margin:0}}>{userEmail}</p>
               <div style={{marginTop:4,display:"flex",gap:5,flexWrap:"wrap"}}>
                 <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.forest}15`,color:T.forest,display:"flex",alignItems:"center",gap:3}}>
-                  {role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":"Syndic"}
+                  {role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}
                   {((role==="proprio"&&verifiedProprio)||(role==="syndic"&&verifiedSyndic))&&<span style={{fontSize:8}}>✓</span>}
                 </span>
                 {isCS&&<span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.sky}20`,color:T.sky,display:"flex",alignItems:"center",gap:3}}>CS{verifiedCS&&<span style={{fontSize:8}}>✓</span>}</span>}
-                <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:600,background:T.sand,color:T.bark}}>App. {userFloor}</span>
+                <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:600,background:T.sand,color:T.bark}}>App. {currentApt}</span>
               </div>
             </div>
           </div>
@@ -1031,14 +1060,43 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
             <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Nom complet</label>
             <input value={userName} onChange={e=>setUserName(e.target.value)} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
           </div>
-          <div style={{marginBottom:20}}>
-            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Appartement / Lot</label>
-            <input value={userFloor} onChange={e=>setUserFloor(e.target.value)} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <div style={{flex:2}}>
+              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Bâtiment</label>
+              <input value={userBuilding} onChange={e=>{setUserBuilding(e.target.value);setUserFloorEdited(false)}} placeholder="A, Mimosa..." style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Étage</label>
+              <input value={userEtage} onChange={e=>{setUserEtage(e.target.value);setUserFloorEdited(false)}} placeholder="3" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            </div>
+            <div style={{flex:1.5}}>
+              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Porte</label>
+              <div style={{display:"flex",gap:4}}>
+                {["Gauche","Centre","Droite"].map(d=>(
+                  <button key={d} onClick={()=>{setUserDoor(d);setUserFloorEdited(false)}} style={{flex:1,padding:"9px 4px",borderRadius:8,border:userDoor===d?`2px solid ${T.forest}`:`1.5px solid ${T.sandDark}`,background:userDoor===d?`${T.leafLight}18`:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:9,fontWeight:600,color:userDoor===d?T.forest:T.textMuted,textAlign:"center"}}>{d.charAt(0)}</button>
+                ))}
+              </div>
+            </div>
           </div>
+
+          <div style={{marginBottom:20}}>
+            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Appartement <span style={{fontSize:9,fontWeight:400,textTransform:"none",letterSpacing:0}}>(auto-généré, modifiable)</span></label>
+            <input value={currentApt} onChange={e=>{setUserFloor(e.target.value);setUserFloorEdited(true)}} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${userFloorEdited?T.sunrise:T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:userFloorEdited?"#fff":`${T.leafLight}12`,color:T.text,boxSizing:"border-box"}}/>
+            {userFloorEdited&&<p style={{fontSize:10,color:T.sunrise,margin:"4px 0 0"}}>✏️ Modifié manuellement</p>}
+          </div>
+
           <div style={{marginBottom:20}}>
             <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Email</label>
             <div style={{padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,color:T.textMuted,background:T.sand}}>{userEmail}</div>
           </div>
+
+          {/* Lots - copropriétaire only */}
+          {role==="proprio"&&<div style={{marginBottom:20}}>
+            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Numéros de lots</label>
+            <input value={userLots} onChange={e=>setUserLots(e.target.value)} placeholder="12, 45, 78" style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            <p style={{fontSize:10,color:T.textMuted,margin:"4px 0 0",lineHeight:1.4}}>🔒 Visible uniquement par le syndic — utile pour identifier vos lots dans les échanges officiels.</p>
+          </div>}
 
           {/* Settings toggles */}
           <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Préférences</h4>
@@ -1065,11 +1123,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
 
           {/* Role info + change role */}
           <div style={{background:`${T.leafLight}18`,borderRadius:14,padding:14,marginTop:20,marginBottom:8}}>
-            <h4 style={{fontSize:13,fontWeight:600,color:T.forest,margin:"0 0 6px"}}>Vos droits d'accès ({role==="proprio"?"copropriétaire":role==="locataire"?"locataire":"syndic"})</h4>
+            <h4 style={{fontSize:13,fontWeight:600,color:T.forest,margin:"0 0 6px"}}>Vos droits d'accès ({role==="proprio"?"copropriétaire":role==="locataire"?"locataire":role==="concierge"?"concierge":"syndic"})</h4>
             {role==="proprio"?
               <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Accès complet : documents AG, votes, médiation, conseil juridique copropriété, tous les fils, messagerie, petites annonces.{isCS?" En tant que membre du conseil syndical, vous avez également accès aux outils de suivi CS.":""}{!verifiedProprio?" Les fonctions sensibles (docs financiers, votes) nécessitent une vérification.":""}</p>:
             role==="syndic"?
               <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Dashboard de gestion, diffusion officielle, analytics d'engagement, ticketing, gestion des procurations et votes AG.{!verifiedSyndic?" Mode démo actif — vérification professionnelle requise pour activer.":""}</p>:
+            role==="concierge"?
+              <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Fil d'actualité, petites annonces, messagerie (y compris avec le syndic), conseil AI. Pas d'accès aux documents financiers ni aux votes d'AG.</p>:
               <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Fil d'actualité, petites annonces, messagerie, conseil AI (orienté bail). Les documents financiers et votes d'AG sont réservés aux copropriétaires.</p>
             }
           </div>
@@ -1232,6 +1292,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           {[
             {id:"proprio",icon:"🔑",label:"Copropriétaire",desc:"Accès complet avec vérification",verified:verifiedProprio},
             {id:"locataire",icon:"🏠",label:"Locataire",desc:"Fil, annonces, messagerie, conseil AI",verified:true},
+            {id:"concierge",icon:"🛎",label:"Concierge / Gardien",desc:"Comme locataire + messagerie syndic",verified:true},
             {id:"syndic",icon:"🏛",label:"Syndic professionnel",desc:"Dashboard de gestion",verified:verifiedSyndic},
           ].map((r,i)=>(
             <button key={r.id} onClick={()=>{setRole(r.id);if(r.id!=="proprio")setIsCS(false);setShowRoleSwitch(false);setShowProfile(false)}} style={{
@@ -1288,7 +1349,7 @@ export default function VoisinSereins() {
       {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")}/>}
       {screen==="address"&&<OnboardingAddress
         onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
-        onCreate={c=>{setCopro({...c,name:"Ma Copropriété",city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("role")}}
+        onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("role")}}
       />}
       {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
       {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew}/>}
