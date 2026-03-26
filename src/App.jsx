@@ -210,49 +210,52 @@ function OnboardingRole({copro,onContinue}) {
   ];
   return (
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
-      <div style={{padding:"56px 24px 24px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px"}}>
+      <div style={{padding:"56px 24px 18px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",flexShrink:0}}>
         <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Étape 2 sur 2</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Quel est votre rôle ?</h2>
         <p style={{color:"rgba(255,255,255,0.85)",fontSize:14,margin:0,fontWeight:600}}>{copro?.name || "Ma Copropriété"}</p>
         <p style={{color:"rgba(255,255,255,0.55)",fontSize:12,margin:"2px 0 0"}}>{copro?.city||"—"} · {copro?.logements||"?"} logements</p>
       </div>
-      <div style={{padding:"24px 16px",flex:1}}>
+      <div style={{padding:"16px 16px 0",flex:1,overflowY:"auto",minHeight:0}}>
         {roles.map((r,i)=>(
           <button key={r.id} onClick={()=>{setRole(r.id);if(r.id!=="proprio")setIsCS(false)}} style={{
-            width:"100%",padding:16,borderRadius:16,border:role===r.id?`2px solid ${T.forest}`:`2px solid ${T.sandDark}`,
-            background:role===r.id?`${T.leafLight}18`:"#fff",marginBottom:10,cursor:"pointer",textAlign:"left",
-            display:"flex",alignItems:"center",gap:14,fontFamily:SANS,
+            width:"100%",padding:14,borderRadius:16,border:role===r.id?`2px solid ${T.forest}`:`2px solid ${T.sandDark}`,
+            background:role===r.id?`${T.leafLight}18`:"#fff",marginBottom:8,cursor:"pointer",textAlign:"left",
+            display:"flex",alignItems:"center",gap:12,fontFamily:SANS,
             opacity:show?1:0,transform:show?"none":"translateX(-10px)",transition:`all 0.5s ${0.2+i*0.1}s cubic-bezier(0.16,1,0.3,1)`,
           }}>
-            <div style={{width:48,height:48,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",background:role===r.id?`${T.forest}15`:`${T.sand}`,fontSize:24}}>{r.icon}</div>
-            <div style={{flex:1}}><div style={{fontSize:15,fontWeight:600,color:T.text}}>{r.label}</div><div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{r.desc}</div></div>
+            <div style={{width:44,height:44,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",background:role===r.id?`${T.forest}15`:`${T.sand}`,fontSize:22}}>{r.icon}</div>
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:T.text}}>{r.label}</div><div style={{fontSize:11,color:T.textMuted,marginTop:1}}>{r.desc}</div></div>
             {role===r.id&&<div style={{marginLeft:"auto",color:T.forest,fontSize:18}}>✓</div>}
           </button>
         ))}
 
         {/* Conseil syndical option — only for propriétaire */}
         {role==="proprio"&&(
-          <div style={{marginTop:8,opacity:show?1:0,transition:"opacity 0.4s 0.6s",animation:"fadeIn 0.4s ease"}}>
+          <div style={{marginTop:4,opacity:show?1:0,transition:"opacity 0.4s 0.6s",animation:"fadeIn 0.4s ease"}}>
             <button onClick={()=>setIsCS(!isCS)} style={{
-              width:"100%",padding:14,borderRadius:14,border:isCS?`2px solid ${T.sky}`:`2px solid ${T.sandDark}`,
+              width:"100%",padding:12,borderRadius:14,border:isCS?`2px solid ${T.sky}`:`2px solid ${T.sandDark}`,
               background:isCS?`${T.skyLight}22`:"#fff",cursor:"pointer",textAlign:"left",
-              display:"flex",alignItems:"center",gap:12,fontFamily:SANS,
+              display:"flex",alignItems:"center",gap:10,fontFamily:SANS,
             }}>
-              <div style={{width:24,height:24,borderRadius:6,border:isCS?`2px solid ${T.sky}`:`2px solid ${T.sandDark}`,background:isCS?T.sky:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                {isCS&&<span style={{color:"#fff",fontSize:14,fontWeight:700}}>✓</span>}
+              <div style={{width:22,height:22,borderRadius:6,border:isCS?`2px solid ${T.sky}`:`2px solid ${T.sandDark}`,background:isCS?T.sky:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {isCS&&<span style={{color:"#fff",fontSize:13,fontWeight:700}}>✓</span>}
               </div>
               <div style={{flex:1}}>
-                <div style={{fontSize:14,fontWeight:600,color:T.text}}>Je fais partie du conseil syndical</div>
-                <div style={{fontSize:11,color:T.textMuted,marginTop:2}}>Accès aux outils CS : préparation AG, suivi travaux, budgets</div>
+                <div style={{fontSize:13,fontWeight:600,color:T.text}}>Je fais partie du conseil syndical</div>
+                <div style={{fontSize:10,color:T.textMuted,marginTop:1}}>Accès aux outils CS : préparation AG, suivi travaux</div>
               </div>
             </button>
-            {isCS&&<div style={{marginTop:8,background:`${T.sunriseLight}22`,borderRadius:12,padding:"10px 14px"}}>
-              <p style={{fontSize:12,color:T.bark,margin:0,lineHeight:1.5}}>⚠️ Votre statut de membre du conseil syndical fera l'objet d'une vérification auprès du syndic ou d'un autre membre du CS déjà inscrit.</p>
+            {isCS&&<div style={{marginTop:6,background:`${T.sunriseLight}22`,borderRadius:10,padding:"8px 12px"}}>
+              <p style={{fontSize:11,color:T.bark,margin:0,lineHeight:1.4}}>⚠️ Votre statut CS fera l'objet d'une vérification.</p>
             </div>}
           </div>
         )}
-
-        <div style={{marginTop:24}}><Btn full disabled={!role} onClick={()=>onContinue({role,isCS})}>{role==="syndic"?"Accéder au dashboard →":"Découvrir l'application →"}</Btn></div>
+        <div style={{height:16}}/>
+      </div>
+      {/* Sticky button at bottom */}
+      <div style={{padding:"12px 16px calc(12px + env(safe-area-inset-bottom, 8px))",background:T.warmWhite,borderTop:`1px solid ${T.sand}`,flexShrink:0}}>
+        <Btn full disabled={!role} onClick={()=>onContinue({role,isCS})}>{role==="syndic"?"Accéder au dashboard →":"Découvrir l'application →"}</Btn>
       </div>
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>
@@ -981,11 +984,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>
 
       {/* ─── BOTTOM TAB BAR ─── */}
-      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.95)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px 14px",display:"flex",justifyContent:"space-around",flexShrink:0,zIndex:20}}>
+      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.97)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px calc(14px + env(safe-area-inset-bottom, 8px))",display:"flex",justifyContent:"space-around",flexShrink:0,zIndex:20}}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"3px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:1,opacity:tab===t.id?1:0.45,transition:"opacity 0.2s"}}>
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 10px 2px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative"}}>
             <span style={{fontSize:20}}>{t.icon}</span>
-            <span style={{fontSize:9,fontWeight:600,fontFamily:SANS,color:tab===t.id?T.forest:T.textMuted}}>{t.label}</span>
+            <span style={{fontSize:9,fontWeight:700,fontFamily:SANS,color:tab===t.id?T.forest:T.textMuted}}>{t.label}</span>
+            {tab===t.id&&<div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:20,height:3,borderRadius:2,background:T.forest}}/>}
           </button>
         ))}
       </div>}
@@ -1345,7 +1349,7 @@ export default function VoisinSereins() {
   const [userIsCS,setUserIsCS]=useState(false);
 
   return (
-    <div style={{maxWidth:420,margin:"0 auto",height:"100vh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
+    <div style={{maxWidth:420,margin:"0 auto",height:"100dvh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
       {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")}/>}
       {screen==="address"&&<OnboardingAddress
         onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
