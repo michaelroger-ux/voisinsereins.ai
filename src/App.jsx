@@ -107,10 +107,10 @@ function OnboardingAddress({onFound,onCreate}) {
   useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
 
   const ADDRS=[
-    {label:"12 Rue des Tilleuls, 69003 Lyon",copro:true,name:"Résidence Les Tilleuls",members:14,logements:24},
-    {label:"12 Rue des Tilleuls, 75011 Paris",copro:false},
-    {label:"124 Avenue des Tilleuls, 69003 Lyon",copro:true,name:"Le Parc des Tilleuls",members:8,logements:36},
-    {label:"15 Rue Voltaire, 69001 Lyon",copro:false},
+    {label:"12 Rue des Tilleuls, 69003 Lyon",city:"Lyon",copro:true,name:"Résidence Les Tilleuls",members:14,logements:24,year:1975,syndic:"Cabinet Urbania",dpe:"D",immat:"AA-0024-RNC",periodeConst:"1971-1980"},
+    {label:"12 Rue des Tilleuls, 75011 Paris",city:"Paris",copro:false},
+    {label:"124 Avenue des Tilleuls, 69003 Lyon",city:"Lyon",copro:true,name:"Le Parc des Tilleuls",members:8,logements:36,year:2002,syndic:"Nexity Lamy",dpe:"C",immat:"AA-0158-RNC",periodeConst:"2001-2010"},
+    {label:"15 Rue Voltaire, 69001 Lyon",city:"Lyon",copro:false},
   ];
 
   const handleInput=v=>{setQ(v);setSel(null);setResult(null);
@@ -147,18 +147,28 @@ function OnboardingAddress({onFound,onCreate}) {
 
         {result==="found"&&sel&&(
           <Card style={{marginTop:20,border:`2px solid ${T.leafLight}`,boxShadow:`0 4px 24px ${T.forest}15`,animation:"fadeIn 0.5s ease"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
               <div style={{width:48,height:48,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,fontSize:22}}>🏡</div>
               <div><h3 style={{margin:0,fontSize:17,fontFamily:FONT,color:T.forest}}>{sel.name}</h3><p style={{margin:"2px 0 0",fontSize:12,color:T.textLight}}>{sel.label}</p></div>
             </div>
-            <div style={{background:`${T.leafLight}22`,borderRadius:12,padding:"12px 14px",marginBottom:16}}>
+            {/* Registre national des copropriétés */}
+            <div style={{background:`${T.sky}10`,borderRadius:10,padding:"8px 12px",marginBottom:12,border:`1px solid ${T.sky}22`}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.sky,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>📋 Registre national des copropriétés</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 12px",fontSize:11}}>
+                <div><span style={{color:T.textMuted}}>Immatriculation</span><div style={{fontWeight:600,color:T.text}}>{sel.immat}</div></div>
+                <div><span style={{color:T.textMuted}}>Construction</span><div style={{fontWeight:600,color:T.text}}>{sel.year} ({sel.periodeConst})</div></div>
+                <div><span style={{color:T.textMuted}}>Syndic</span><div style={{fontWeight:600,color:T.text}}>{sel.syndic}</div></div>
+                <div><span style={{color:T.textMuted}}>DPE</span><div style={{fontWeight:600,color:T.text}}>Classe {sel.dpe}</div></div>
+              </div>
+            </div>
+            <div style={{background:`${T.leafLight}22`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-around",textAlign:"center"}}>
                 {[{v:sel.members,l:"Voisins actifs"},{v:sel.logements,l:"Logements"},{v:Math.round(sel.members/sel.logements*100)+"%",l:"Connectés"}].map((s,i)=>(
                   <div key={i}><div style={{fontSize:22,fontWeight:700,color:T.forest}}>{s.v}</div><div style={{fontSize:10,color:T.textLight,fontWeight:500}}>{s.l}</div></div>
                 ))}
               </div>
             </div>
-            <div style={{marginBottom:16}}>
+            <div style={{marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{fontSize:11,fontWeight:600,color:T.forest}}>Progression</span><span style={{fontSize:11,color:T.textMuted}}>{sel.members}/{sel.logements}</span></div>
               <div style={{height:7,borderRadius:4,background:T.sand}}><div style={{height:"100%",borderRadius:4,width:`${(sel.members/sel.logements)*100}%`,background:`linear-gradient(90deg,${T.forest},${T.leaf})`,transition:"width 1s ease"}}/></div>
             </div>
@@ -202,7 +212,8 @@ function OnboardingRole({copro,onContinue}) {
       <div style={{padding:"56px 24px 24px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px"}}>
         <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Étape 2 sur 2</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Quel est votre rôle ?</h2>
-        <p style={{color:"rgba(255,255,255,0.7)",fontSize:14,margin:0}}>{copro?.name || "Ma Copropriété"}</p>
+        <p style={{color:"rgba(255,255,255,0.85)",fontSize:14,margin:0,fontWeight:600}}>{copro?.name || "Ma Copropriété"}</p>
+        <p style={{color:"rgba(255,255,255,0.55)",fontSize:12,margin:"2px 0 0"}}>{copro?.city||"—"} · {copro?.logements||"?"} logements</p>
       </div>
       <div style={{padding:"24px 16px",flex:1}}>
         {roles.map((r,i)=>(
@@ -252,7 +263,13 @@ function OnboardingRole({copro,onContinue}) {
    ═══════════════════════════════════════ */
 function InviteKit({copro,onClose}) {
   const [copied,setCopied]=useState(false);
+  const [selMsg,setSelMsg]=useState(0);
   const link=`voisinsereins.ai/join/${(copro?.label||"ma-copro").replace(/[\s,]+/g,"-").toLowerCase()}`;
+  const preMsgs=[
+    {label:"Convivial",text:`Salut ! 👋 Je viens de rejoindre notre espace copro sur VoisinSereins. On peut échanger entre voisins, consulter les documents, et avoir des conseils juridiques. Rejoins-nous → ${link}`},
+    {label:"Pratique",text:`Bonjour, je voulais te prévenir que notre copropriété a maintenant son espace numérique sur VoisinSereins.ai. Documents, agenda, annonces entre voisins... Inscris-toi ici : ${link}`},
+    {label:"Officiel",text:`Chers voisins, un espace numérique privé a été créé pour notre copropriété sur VoisinSereins.ai. Il permet de retrouver les documents, l'agenda, et d'échanger sereinement. Pour rejoindre : ${link}`},
+  ];
   return (
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"82vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
@@ -274,9 +291,14 @@ function InviteKit({copro,onClose}) {
           ))}
         </div>
 
-        <div style={{fontSize:11,fontWeight:600,color:T.text,marginBottom:6}}>Message pré-rédigé</div>
-        <div style={{background:"#fff",borderRadius:12,padding:14,border:`1px solid ${T.sandDark}`,fontSize:13,color:T.textLight,lineHeight:1.6,marginBottom:18}}>
-          Salut ! 👋 Je viens de rejoindre notre espace copro sur VoisinSereins. On peut échanger entre voisins, consulter les documents, et avoir des conseils juridiques. Rejoins-nous → {link}
+        <div style={{fontSize:11,fontWeight:600,color:T.text,marginBottom:8}}>Choisissez un message pré-rédigé</div>
+        <div style={{display:"flex",gap:6,marginBottom:8}}>
+          {preMsgs.map((m,i)=>(
+            <button key={i} onClick={()=>setSelMsg(i)} style={{flex:1,padding:"7px 10px",borderRadius:8,border:selMsg===i?`2px solid ${T.forest}`:`1.5px solid ${T.sandDark}`,background:selMsg===i?`${T.leafLight}18`:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:selMsg===i?T.forest:T.textMuted,textAlign:"center"}}>{m.label}</button>
+          ))}
+        </div>
+        <div style={{background:"#fff",borderRadius:12,padding:14,border:`1px solid ${T.sandDark}`,fontSize:13,color:T.textLight,lineHeight:1.6,marginBottom:18,minHeight:60}}>
+          {preMsgs[selMsg].text}
         </div>
 
         <div style={{display:"flex",gap:10}}>
@@ -335,13 +357,17 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const [reforming,setReforming]=useState(false);
   const [selReform,setSelReform]=useState(null);
   const [posts,setPosts]=useState([
-    {id:1,author:"Marie D.",floor:"3B",time:"Auj. 09:14",text:"Bonjour à tous ! Petit rappel : la prochaine AG est prévue le 15 avril. N'hésitez pas à me transmettre vos points à l'ordre du jour.",cat:"officiel",likes:5,role:"CS"},
-    {id:2,author:"Thomas R.",floor:"1A",time:"Hier 18:30",text:"Quelqu'un saurait recommander un bon serrurier dans le quartier ? Ma serrure a un souci depuis ce matin.",cat:"entraide",likes:3,role:"proprio"},
-    {id:3,author:"Sophie L.",floor:"4C",time:"Hier 14:22",text:"Je propose un apéro entre voisins dimanche prochain dans le jardin commun, vers 17h. Qui est partant ? 🥂",cat:"convivialité",likes:8,role:"locataire"},
-    {id:4,author:"Lucas M.",floor:"2B",time:"Mar. 10:45",text:"Les travaux de ravalement débutent lundi. L'échafaudage sera monté côté rue. Merci de ne pas garer devant l'entrée.",cat:"travaux",likes:4,role:"syndic"},
-    {id:5,author:"Anna K.",floor:"5A",time:"Mar. 09:00",text:"L'ascenseur est en panne depuis hier soir. J'ai signalé au syndic. Intervention prévue demain matin.",cat:"incidents",likes:6,role:"proprio"},
-    {id:6,author:"Paul V.",floor:"1C",time:"Lun. 16:30",text:"Et si on installait un compost collectif dans le jardin ? J'ai trouvé un modèle à 150€. Ça pourrait être voté à la prochaine AG.",cat:"suggestions",likes:9,role:"proprio"},
+    {id:1,author:"Marie D.",floor:"3B",time:"Auj. 09:14",text:"Bonjour à tous ! Petit rappel : la prochaine AG est prévue le 15 avril. N'hésitez pas à me transmettre vos points à l'ordre du jour.",cat:"officiel",likedBy:["Sophie L.","Thomas R.","Paul V.","Anna K.","Lucas M."],role:"CS",replies:[]},
+    {id:2,author:"Thomas R.",floor:"1A",time:"Hier 18:30",text:"Quelqu'un saurait recommander un bon serrurier dans le quartier ? Ma serrure a un souci depuis ce matin.",cat:"entraide",likedBy:["Marie D.","Sophie L.","Anna K."],role:"proprio",replies:[{author:"Paul V.",text:"J'ai utilisé SerruPlus le mois dernier, très pro !",time:"Hier 19:02"}]},
+    {id:3,author:"Sophie L.",floor:"4C",time:"Hier 14:22",text:"Je propose un apéro entre voisins dimanche prochain dans le jardin commun, vers 17h. Qui est partant ? 🥂",cat:"convivialité",likedBy:["Marie D.","Thomas R.","Paul V.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F."],role:"locataire",replies:[]},
+    {id:4,author:"Lucas M.",floor:"2B",time:"Mar. 10:45",text:"Les travaux de ravalement débutent lundi. L'échafaudage sera monté côté rue. Merci de ne pas garer devant l'entrée.",cat:"travaux",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K."],role:"syndic",replies:[]},
+    {id:5,author:"Anna K.",floor:"5A",time:"Mar. 09:00",text:"L'ascenseur est en panne depuis hier soir. J'ai signalé au syndic. Intervention prévue demain matin.",cat:"incidents",likedBy:["Marie D.","Sophie L.","Thomas R.","Paul V.","Lucas M.","Jean Dupont"],role:"proprio",replies:[{author:"Lucas M.",text:"Intervention confirmée pour demain 8h.",time:"Mar. 10:00"}]},
+    {id:6,author:"Paul V.",floor:"1C",time:"Lun. 16:30",text:"Et si on installait un compost collectif dans le jardin ? J'ai trouvé un modèle à 150€. Ça pourrait être voté à la prochaine AG.",cat:"suggestions",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F.","Marc T."],role:"proprio",replies:[]},
   ]);
+  const [replyingTo,setReplyingTo]=useState(null);
+  const [replyDraft,setReplyDraft]=useState("");
+  const [showLikers,setShowLikers]=useState(null); // postId or null
+  const [longPressTimer,setLongPressTimer]=useState(null);
 
   // ─── MESSAGES STATE ───
   const [msgView,setMsgView]=useState("list");
@@ -417,7 +443,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
 
   const handlePublish = () => {
     const text=selReform?reforms[selReform]:draft;
-    setPosts([{id:Date.now(),author:"Vous",floor:userFloor,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likes:0,role},... posts]);
+    setPosts([{id:Date.now(),author:userName,floor:userFloor,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likedBy:[],role,replies:[]},... posts]);
     setDraft("");setReforms(null);setSelReform(null);setShowComposer(false);
   };
 
@@ -605,7 +631,10 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           </button>
 
           <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{CATS.map(c=><Chip key={c.id} label={c.l} icon={c.i} active={feedCat===c.id} color={CC[c.id]||T.forest} onClick={()=>setFeedCat(c.id)}/>)}</div>
-          {filteredPosts.map(p=>(
+          {filteredPosts.map(p=>{
+            const myLike=p.likedBy.includes(userName);
+            const isOwn=p.author===userName;
+            return (
             <Card key={p.id}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                 <Av name={p.author}/>
@@ -616,15 +645,55 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
                   </div>
                   <div style={{fontSize:10,color:T.textMuted}}>{p.time}</div>
                 </div>
-                <span style={{padding:"3px 9px",borderRadius:7,fontSize:10,fontWeight:600,background:`${CC[p.cat]||T.sand}18`,color:CC[p.cat]||T.textMuted}}>{p.cat}</span>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{padding:"3px 9px",borderRadius:7,fontSize:10,fontWeight:600,background:`${CC[p.cat]||T.sand}18`,color:CC[p.cat]||T.textMuted}}>{p.cat}</span>
+                  {isOwn&&<button onClick={()=>setPosts(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer",padding:2}} title="Supprimer">×</button>}
+                </div>
               </div>
-              <p style={{fontSize:13.5,color:T.text,lineHeight:1.6,margin:"0 0 10px"}}>{p.text}</p>
-              <div style={{display:"flex",gap:14}}>
-                <button style={{background:"none",border:"none",fontSize:12,color:T.textMuted,cursor:"pointer",fontFamily:SANS}}>❤️ {p.likes}</button>
-                <button style={{background:"none",border:"none",fontSize:12,color:T.textMuted,cursor:"pointer",fontFamily:SANS}}>💬 Répondre</button>
+              <p style={{fontSize:13.5,color:T.text,lineHeight:1.6,margin:"0 0 8px"}}>{p.text}</p>
+              {/* Replies */}
+              {p.replies.length>0&&<div style={{marginBottom:8,paddingLeft:12,borderLeft:`2px solid ${T.sandDark}`}}>
+                {p.replies.map((r,ri)=>(
+                  <div key={ri} style={{marginBottom:4}}>
+                    <span style={{fontSize:11,fontWeight:600,color:T.text}}>{r.author}</span>
+                    <span style={{fontSize:10,color:T.textMuted}}> · {r.time}</span>
+                    <p style={{fontSize:12,color:T.textLight,lineHeight:1.5,margin:"2px 0 0"}}>{r.text}</p>
+                  </div>
+                ))}
+              </div>}
+              {/* Reply input */}
+              {replyingTo===p.id&&<div style={{display:"flex",gap:6,marginBottom:8}}>
+                <input value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="Votre réponse..." autoFocus style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}} onKeyDown={e=>{if(e.key==="Enter"&&replyDraft.trim()){setPosts(prev=>prev.map(x=>x.id===p.id?{...x,replies:[...x.replies,{author:userName,text:replyDraft,time:"Maint."}]}:x));setReplyDraft("");setReplyingTo(null)}}}/>
+                <button onClick={()=>{if(replyDraft.trim()){setPosts(prev=>prev.map(x=>x.id===p.id?{...x,replies:[...x.replies,{author:userName,text:replyDraft,time:"Maint."}]}:x));setReplyDraft("");setReplyingTo(null)}}} style={{width:36,height:36,borderRadius:10,border:"none",background:replyDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+              </div>}
+              {/* Actions: like + reply */}
+              <div style={{display:"flex",gap:14,alignItems:"center"}}>
+                <button
+                  onMouseDown={()=>{const t=setTimeout(()=>{setShowLikers(p.id);setLongPressTimer(null)},500);setLongPressTimer(t)}}
+                  onMouseUp={()=>{if(longPressTimer){clearTimeout(longPressTimer);setLongPressTimer(null);setPosts(prev=>prev.map(x=>x.id===p.id?{...x,likedBy:myLike?x.likedBy.filter(n=>n!==userName):[...x.likedBy,userName]}:x))}}}
+                  onMouseLeave={()=>{if(longPressTimer){clearTimeout(longPressTimer);setLongPressTimer(null)}}}
+                  onTouchStart={()=>{const t=setTimeout(()=>{setShowLikers(p.id);setLongPressTimer(null)},500);setLongPressTimer(t)}}
+                  onTouchEnd={e=>{e.preventDefault();if(longPressTimer){clearTimeout(longPressTimer);setLongPressTimer(null);setPosts(prev=>prev.map(x=>x.id===p.id?{...x,likedBy:myLike?x.likedBy.filter(n=>n!==userName):[...x.likedBy,userName]}:x))}}}
+                  style={{background:"none",border:"none",fontSize:12,color:myLike?T.coral:T.textMuted,cursor:"pointer",fontFamily:SANS,fontWeight:myLike?600:400,userSelect:"none"}}>
+                  {myLike?"❤️":"🤍"} {p.likedBy.length}
+                </button>
+                <button onClick={()=>{setReplyingTo(replyingTo===p.id?null:p.id);setReplyDraft("")}} style={{background:"none",border:"none",fontSize:12,color:replyingTo===p.id?T.forest:T.textMuted,cursor:"pointer",fontFamily:SANS}}>💬 Répondre{p.replies.length>0?` (${p.replies.length})`:""}</button>
               </div>
+              {/* Likers popup */}
+              {showLikers===p.id&&<div style={{marginTop:8,background:"#fff",borderRadius:12,border:`1px solid ${T.sandDark}`,padding:10,boxShadow:"0 4px 16px rgba(0,0,0,0.06)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{fontSize:11,fontWeight:700,color:T.text}}>Aimé par {p.likedBy.length} personne{p.likedBy.length>1?"s":""}</span>
+                  <button onClick={()=>setShowLikers(null)} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.textMuted}}>×</button>
+                </div>
+                {p.likedBy.map((n,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderTop:i>0?`1px solid ${T.sand}`:"none"}}>
+                    <Av name={n} size={24}/><span style={{fontSize:12,color:T.text}}>{n}</span>
+                  </div>
+                ))}
+              </div>}
             </Card>
-          ))}
+          )})}
+
           {/* Compose FAB */}
           <button onClick={()=>setShowComposer(true)} style={{position:"absolute",bottom:68,right:18,width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,border:"none",color:"#fff",fontSize:22,cursor:"pointer",boxShadow:`0 4px 16px ${T.forest}44`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}>✏️</button>
 
@@ -660,11 +729,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
 
             <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>Conversations</h4>
             {/* New message button */}
-            <button onClick={()=>{setActiveConv({id:99,name:"Nouveau message",floor:""});setConvMsgs([]);setMsgView("conv")}} style={{width:"100%",padding:"12px 14px",background:`${T.forest}08`,borderRadius:16,border:`1.5px dashed ${T.forestLight}55`,marginBottom:12,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:SANS,textAlign:"left"}}>
+            <button onClick={()=>setMsgView("newmsg")} style={{width:"100%",padding:"12px 14px",background:`${T.forest}08`,borderRadius:16,border:`1.5px dashed ${T.forestLight}55`,marginBottom:12,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:SANS,textAlign:"left"}}>
               <div style={{width:42,height:42,borderRadius:14,background:`${T.forest}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>✏️</div>
-              <div><div style={{fontSize:14,fontWeight:600,color:T.forest}}>Nouveau message</div><div style={{fontSize:12,color:T.textMuted}}>Écrire à un voisin ou au syndic</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:T.forest}}>Nouveau message</div><div style={{fontSize:12,color:T.textMuted}}>{role==="locataire"?"Écrire à un voisin":"Écrire à un voisin ou au syndic"}</div></div>
             </button>
-            {convos.map(c=>(
+            {convos.filter(c=>!(role==="locataire"&&c.role==="syndic")).map(c=>(
               <button key={c.id} onClick={()=>{setActiveConv(c);setMsgView("conv")}} style={{width:"100%",padding:"12px 14px",background:"#fff",borderRadius:16,border:"none",marginBottom:8,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:SANS,boxShadow:"0 1px 6px rgba(0,0,0,0.04)",textAlign:"left"}}>
                 <Av name={c.name} size={42}/>
                 <div style={{flex:1,minWidth:0}}>
@@ -675,6 +744,27 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               </button>
             ))}
           </div>:
+          msgView==="newmsg"?<div style={{padding:14}}>
+            <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour</button>
+            <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 6px"}}>Nouveau message</h3>
+            <p style={{fontSize:12,color:T.textMuted,margin:"0 0 14px"}}>Choisissez un destinataire</p>
+            {[
+              {name:"Marie D.",floor:"3B",role:"CS"},
+              {name:"Thomas R.",floor:"1A",role:"proprio"},
+              {name:"Sophie L.",floor:"4C",role:"locataire"},
+              {name:"Anna K.",floor:"5A",role:"proprio"},
+              {name:"Paul V.",floor:"1C",role:"proprio"},
+              ...(role!=="locataire"?[{name:"Syndic Urbania",floor:"",role:"syndic"}]:[]),
+            ].map((dest,i)=>(
+              <button key={i} onClick={()=>{setActiveConv({id:Date.now(),name:dest.name,floor:dest.floor});setConvMsgs([]);setMsgView("conv")}} style={{width:"100%",padding:"10px 14px",background:"#fff",borderRadius:14,border:"none",marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",textAlign:"left"}}>
+                <Av name={dest.name} size={36}/>
+                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.text}}>{dest.name}</div>{dest.floor&&<div style={{fontSize:10,color:T.textMuted}}>App. {dest.floor}</div>}</div>
+                {dest.role==="syndic"&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:T.coral,color:"#fff"}}>SYNDIC</span>}
+                {dest.role==="CS"&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:T.sky,color:"#fff"}}>CS</span>}
+              </button>
+            ))}
+            {role==="locataire"&&<div style={{background:`${T.sunriseLight}22`,borderRadius:12,padding:12,marginTop:8}}><p style={{fontSize:12,color:T.bark,margin:0}}>ℹ️ En tant que locataire, les messages au syndic ne sont pas disponibles. Contactez votre propriétaire pour toute demande au syndic.</p></div>}
+          </div>:
           <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
             <div style={{padding:"12px 16px",background:"#fff",borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:10}}>
               <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:T.forest}}>←</button>
@@ -682,6 +772,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <div><div style={{fontSize:14,fontWeight:600,color:T.text}}>{activeConv?.name}</div><div style={{fontSize:10,color:T.textMuted}}>{activeConv?.floor}</div></div>
             </div>
             <div style={{flex:1,overflowY:"auto",padding:14}}>
+              {convMsgs.length===0&&<div style={{textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:8}}>💬</div><p style={{fontSize:13,color:T.textMuted}}>Écrivez votre premier message à {activeConv?.name}</p></div>}
               {convMsgs.map((m,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:m.from==="me"?"flex-end":"flex-start",marginBottom:10}}>
                   <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:14,background:m.from==="me"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#fff",color:m.from==="me"?"#fff":T.text,fontSize:13,lineHeight:1.5,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
@@ -691,7 +782,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               ))}
             </div>
             <div style={{padding:"10px 14px",background:T.warmWhite,borderTop:`1px solid ${T.sandDark}`,display:"flex",gap:8}}>
-              <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} placeholder="Message..." style={{flex:1,padding:"10px 14px",borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+              <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} placeholder="Message..." style={{flex:1,padding:"10px 14px",borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff"}}/>
               <button onClick={()=>{if(msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} style={{width:42,height:42,borderRadius:12,border:"none",background:msgDraft.trim()?`linear-gradient(135deg,${T.forest},${T.forestLight})`:T.sandDark,color:"#fff",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
             </div>
           </div>}
@@ -918,6 +1009,22 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <div><div style={{fontSize:13,fontWeight:600,color:T.forest}}>Statut vérifié</div><div style={{fontSize:11,color:T.textMuted,marginTop:1}}>Vous avez accès à toutes les fonctions de votre rôle.</div></div>
             </div>
           )}
+
+          {/* Activity stats */}
+          <div style={{display:"flex",gap:10,marginBottom:20}}>
+            <div style={{flex:1,background:"#fff",borderRadius:14,padding:"14px 12px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
+              <div style={{fontSize:22,fontWeight:700,color:T.forest}}>{posts.filter(p=>p.author===userName).length}</div>
+              <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>Publications</div>
+            </div>
+            <div style={{flex:1,background:"#fff",borderRadius:14,padding:"14px 12px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
+              <div style={{fontSize:22,fontWeight:700,color:T.sunrise}}>{3}</div>
+              <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>Invitations acceptées</div>
+            </div>
+            <div style={{flex:1,background:"#fff",borderRadius:14,padding:"14px 12px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
+              <div style={{fontSize:22,fontWeight:700,color:T.sky}}>{posts.reduce((n,p)=>n+p.replies.filter(r=>r.author===userName).length,0)}</div>
+              <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>Réponses</div>
+            </div>
+          </div>
 
           {/* Profile fields */}
           <div style={{marginBottom:20}}>
@@ -1181,7 +1288,7 @@ export default function VoisinSereins() {
       {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")}/>}
       {screen==="address"&&<OnboardingAddress
         onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
-        onCreate={c=>{setCopro({...c,name:"Ma Copropriété",members:1,logements:20});setIsNew(true);setScreen("role")}}
+        onCreate={c=>{setCopro({...c,name:"Ma Copropriété",city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("role")}}
       />}
       {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
       {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew}/>}
