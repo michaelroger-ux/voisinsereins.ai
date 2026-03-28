@@ -370,6 +370,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const currentApt = userFloorEdited ? userFloor : autoApt;
   const [userNotifs,setUserNotifs]=useState(true);
   const [userLots,setUserLots]=useState("");
+  const [extraLogements,setExtraLogements]=useState([]);
 
   // ─── FEED STATE ───
   const [feedCat,setFeedCat]=useState("all");
@@ -393,6 +394,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const [replyDraft,setReplyDraft]=useState("");
   const [showLikers,setShowLikers]=useState(null); // postId or null
   const [longPressTimer,setLongPressTimer]=useState(null);
+  const [editingCat,setEditingCat]=useState(null); // postId or null
 
   // ─── MESSAGES STATE ───
   const [msgView,setMsgView]=useState("list");
@@ -422,7 +424,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const [medReform,setMedReform]=useState(null);
 
   // ─── AGENDA STATE ───
-  const [agendaTab,setAgendaTab]=useState("events");
+  const [agendaTab,setAgendaTab]=useState("docs");
   const [docSearch,setDocSearch]=useState("");
 
   const EVENTS=[
@@ -459,15 +461,36 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
     } catch(e) { return null; }
   };
 
-  const handleReformulate = async () => {
+  const handleReformulate = () => {
     if(!draft.trim())return; setReforming(true);
-    const txt = await callAI(`Tu es un assistant de modération pour copropriété. Règlement:\n${REGLEMENT}\nReformule ce message en 3 styles: diplomatique, chaleureux, factuel. Si lié au règlement, cite l'article. Réponds UNIQUEMENT en JSON: {"diplomatique":"...","chaleureux":"...","factuel":"..."}`,`Message: "${draft}"`);
-    try { setReforms(JSON.parse(txt.replace(/```json|```/g,"").trim())); } catch { setReforms({diplomatique:"Je souhaiterais attirer votre attention sur un point important.",chaleureux:"Chers voisins, j'espère que vous allez bien ! Je voulais aborder un sujet.",factuel:"Information : un point nécessite notre attention collective."}); }
-    setReforming(false);
+    // Simulated AI reformulation — generates contextual responses based on keywords
+    setTimeout(()=>{
+      const d=draft.toLowerCase();
+      const isBruit=d.includes("bruit")||d.includes("boucan")||d.includes("musique")||d.includes("tapage");
+      const isTravaux=d.includes("travaux")||d.includes("chantier")||d.includes("perceuse");
+      const isParties=d.includes("poubelle")||d.includes("parties communes")||d.includes("couloir")||d.includes("hall");
+      const isAnimal=d.includes("chien")||d.includes("chat")||d.includes("animal");
+      const ref=isBruit?"(Art. 2 du règlement — nuisances sonores)":isTravaux?"(Art. 5 — travaux et horaires autorisés)":isParties?"(Art. 3 — usage des parties communes)":isAnimal?"(Art. 8 — animaux domestiques)":"";
+      setReforms({
+        diplomatique:{
+          text:isBruit?"Je souhaiterais attirer votre attention sur le niveau sonore constaté récemment. Serait-il possible d'en discuter afin de trouver un arrangement qui convienne à tous ?":isTravaux?"Je comprends la nécessité des travaux en cours. Serait-il envisageable de limiter les interventions bruyantes aux créneaux autorisés par le règlement ?":isParties?"J'aimerais aborder avec bienveillance la question de l'entretien de nos espaces communs. Pourrions-nous trouver ensemble des solutions pour que chacun s'y sente bien ?":isAnimal?"Je me permets de vous contacter au sujet d'un petit désagrément lié à la présence d'un animal. Pourrions-nous en discuter calmement ?":"Je souhaiterais attirer votre attention sur un point qui me semble important pour notre vie collective. Pourrions-nous en échanger ?",
+          emoji:"🤝",ref
+        },
+        chaleureux:{
+          text:isBruit?"Salut les voisins ! 😊 Petit message pour parler du bruit — je sais que chacun a sa vie, mais ce serait super si on pouvait se mettre d'accord sur des créneaux pour les activités bruyantes. Merci de votre compréhension !":isTravaux?"Hello ! Je voulais juste signaler que les travaux sont parfois un peu intenses 🛠 Rien de grave, mais si on pouvait respecter les horaires prévus, ce serait top ! Bon courage pour les travaux !":isParties?"Coucou les voisins ! 😊 Petit rappel amical : nos parties communes sont notre espace partagé — prenons-en soin ensemble pour que chacun s'y sente comme chez soi !":isAnimal?"Hello ! 🐾 Petit message au sujet de nos amis à quatre pattes — je suis sûr qu'on peut trouver un arrangement qui convienne à tous, animaux compris !":"Salut les voisins ! 😊 Je voulais partager une réflexion sur notre vie commune. On est une chouette copro, continuons à bien vivre ensemble !",
+          emoji:"💛",ref
+        },
+        factuel:{
+          text:isBruit?`Signalement : des nuisances sonores répétées ont été constatées en soirée. Le règlement de copropriété interdit les bruits excessifs après 22h ${ref}. Merci de veiller au respect de cette disposition.`:isTravaux?`Information : les travaux bruyants sont autorisés uniquement en semaine de 8h à 19h et le samedi de 9h à 12h ${ref}. Merci de respecter ces créneaux.`:isParties?`Rappel : les parties communes doivent être maintenues propres et dégagées ${ref}. Tout objet personnel doit être retiré des espaces partagés.`:isAnimal?`Rappel réglementaire : les propriétaires d'animaux sont tenus de veiller à ce que leurs animaux ne causent pas de nuisances ${ref}.`:`Information à l'attention de la copropriété : un point nécessite notre attention collective. Merci de votre collaboration.`,
+          emoji:"📋",ref
+        },
+      });
+      setReforming(false);
+    },1200);
   };
 
   const handlePublish = () => {
-    const text=selReform?reforms[selReform]:draft;
+    const text=selReform?reforms[selReform].text:draft;
     setPosts([{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likedBy:[],role,replies:[]},... posts]);
     setDraft("");setReforms(null);setSelReform(null);setShowComposer(false);
   };
@@ -488,11 +511,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   };
 
   const TABS=[
-    {id:"home",icon:"🏠",label:"Accueil"},
-    {id:"feed",icon:"💬",label:"Fil"},
-    {id:"msg",icon:"✉️",label:"Messages"},
-    {id:"ai",icon:"⚖️",label:"Conseil"},
-    {id:"copro",icon:"🏢",label:"Copro"},
+    {id:"home",icon:"🏠",label:"Accueil",color:T.forest},
+    {id:"feed",icon:"💬",label:"Fil",color:T.sky},
+    {id:"agenda",icon:"📅",label:"Agenda",color:T.sunrise},
+    {id:"ai",icon:"⚖️",label:"Conseil",color:T.purple},
+    {id:"copro",icon:"🏢",label:"Copro",color:T.bark},
   ];
 
   const CATS=[{id:"all",l:"Tous",i:"📋"},{id:"officiel",l:"Officiel",i:"📢"},{id:"convivialité",l:"Social",i:"🎉"},{id:"entraide",l:"Entraide",i:"🤝"},{id:"travaux",l:"Travaux",i:"🛠"},{id:"incidents",l:"Urgences",i:"⚠️"},{id:"suggestions",l:"Idées",i:"💡"}];
@@ -587,14 +610,14 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"18px 0 10px"}}>Accès rapide</h3>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
             {[
-              {icon:"⚖️",label:"Conseiller juridique",desc:"Posez vos questions",color:T.forest,tab:"ai"},
-              {icon:"💬",label:"Fil d'actualité",desc:isNew?"En attente de voisins":`${posts.length} messages`,color:T.sky,tab:"feed"},
-              {icon:"🕊",label:"Médiation",desc:"Résoudre un différend",color:T.purple,tab:"msg"},
-              {icon:"📅",label:"Agenda & Docs",desc:`${EVENTS.length} événements`,color:T.sunrise,tab:"copro"},
-              {icon:"🤝",label:"Entraide",desc:"Petites annonces",color:T.coral,tab:"copro_entraide"},
-              {icon:"✉️",label:"Messages",desc:isNew?"—":`${convos.filter(c=>c.unread>0).length} non lu(s)`,color:T.bark,tab:"msg"},
+              {icon:"⚖️",label:"Conseiller juridique",desc:"Posez vos questions",color:T.purple,tab:"ai"},
+              {icon:"💬",label:"Fil d'actualité",desc:isNew?"En attente de voisins":`${posts.filter(p=>!p.welcome).length} messages`,color:T.sky,tab:"feed"},
+              {icon:"📅",label:"Agenda",desc:`${EVENTS.length} événements`,color:T.sunrise,tab:"agenda"},
+              {icon:"✉️",label:"Messages",desc:isNew?"—":`${convos.filter(c=>c.unread>0).length} non lu(s)`,color:T.forest,tab:"copro_msg"},
+              {icon:"📁",label:"Documents",desc:"Règlement, AG, finances",color:T.bark,tab:"copro_docs"},
+              {icon:"🕊",label:"Médiation",desc:"Résoudre un différend",color:T.coral,tab:"mediation"},
             ].map((item,i)=>(
-              <button key={i} onClick={()=>{if(item.tab==="copro_entraide"){setAgendaTab("entraide");setTab("copro")}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+              <button key={i} onClick={()=>{if(item.tab==="copro_msg"){setAgendaTab("msg");setTab("copro")}else if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
                 <div style={{width:40,height:40,borderRadius:12,background:`${item.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{item.icon}</div>
                 <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{item.label}</div><div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div></div>
               </button>
@@ -604,7 +627,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           {/* Upcoming events */}
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>Prochains événements</h3>
           {EVENTS.sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,3).map(e=>(
-            <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#fff",borderRadius:14,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",cursor:"pointer"}} onClick={()=>{setAgendaTab("events");setTab("copro")}}>
+            <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#fff",borderRadius:14,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",cursor:"pointer"}} onClick={()=>setTab("agenda")}>
               <div style={{width:42,height:42,borderRadius:12,background:`${EC[e.type]}15`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <span style={{fontSize:12,fontWeight:700,color:EC[e.type]}}>{new Date(e.date).getDate()}</span>
                 <span style={{fontSize:8,fontWeight:600,color:EC[e.type],textTransform:"uppercase"}}>{new Date(e.date).toLocaleDateString("fr-FR",{month:"short"})}</span>
@@ -616,7 +639,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <span style={{padding:"3px 7px",borderRadius:6,fontSize:9,fontWeight:700,background:`${EC[e.type]}18`,color:EC[e.type],flexShrink:0}}>{EL[e.type]}</span>
             </div>
           ))}
-          <button onClick={()=>{setAgendaTab("events");setTab("copro")}} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight}}>Voir tout l'agenda →</button>
+          <button onClick={()=>setTab("agenda")} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight}}>Voir tout l'agenda →</button>
 
           {/* Recent activity */}
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"16px 0 10px"}}>Dernière activité</h3>
@@ -678,7 +701,18 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
                   <div style={{fontSize:10,color:T.textMuted}}>{p.time}</div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{padding:"3px 9px",borderRadius:7,fontSize:10,fontWeight:600,background:`${CC[p.cat]||T.sand}18`,color:CC[p.cat]||T.textMuted}}>{p.cat}</span>
+                  <div style={{position:"relative"}}>
+                    <button onClick={()=>isOwn&&setEditingCat(editingCat===p.id?null:p.id)} style={{padding:"3px 9px",borderRadius:7,fontSize:10,fontWeight:600,background:`${CC[p.cat]||T.sand}18`,color:CC[p.cat]||T.textMuted,border:"none",cursor:isOwn?"pointer":"default",fontFamily:SANS,display:"flex",alignItems:"center",gap:3}}>
+                      {p.cat}{isOwn&&<span style={{fontSize:8}}>▼</span>}
+                    </button>
+                    {editingCat===p.id&&<div style={{position:"absolute",top:"100%",right:0,marginTop:4,background:"#fff",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.12)",zIndex:50,overflow:"hidden",minWidth:130}}>
+                      {CATS.filter(c=>c.id!=="all").map(c=>(
+                        <button key={c.id} onClick={()=>{setPosts(prev=>prev.map(x=>x.id===p.id?{...x,cat:c.id}:x));setEditingCat(null)}} style={{width:"100%",padding:"8px 12px",border:"none",borderBottom:`1px solid ${T.sand}`,background:p.cat===c.id?`${T.leafLight}18`:"transparent",cursor:"pointer",textAlign:"left",fontFamily:SANS,fontSize:11,display:"flex",alignItems:"center",gap:6}}>
+                          <span>{c.i}</span><span style={{color:p.cat===c.id?T.forest:T.text}}>{c.l}</span>
+                        </button>
+                      ))}
+                    </div>}
+                  </div>
                   {isOwn&&<button onClick={()=>setPosts(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer",padding:2}} title="Supprimer">×</button>}
                 </div>
               </div>
@@ -735,89 +769,45 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
               <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 10px"}}>Nouveau message</h3>
               <textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Écrivez librement, l'IA vous aidera à reformuler..." rows={3} style={{width:"100%",border:`2px solid ${T.sandDark}`,borderRadius:12,padding:12,fontSize:13,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
-              <Btn full disabled={reforming||!draft.trim()} onClick={handleReformulate} style={{marginTop:8,background:reforming?T.sandDark:`linear-gradient(135deg,${T.sky},${T.forest})`}} small>{reforming?"Reformulation...":"✨ Reformuler avec l'IA"}</Btn>
-              {reforms&&<div style={{marginTop:12,display:"flex",flexDirection:"column",gap:7}}>
-                {Object.entries(reforms).map(([style,text])=>(
-                  <button key={style} onClick={()=>setSelReform(style)} style={{padding:12,borderRadius:12,textAlign:"left",border:selReform===style?`2px solid ${T.forest}`:`2px solid ${T.sandDark}`,background:selReform===style?`${T.leafLight}18`:"#fff",cursor:"pointer",fontFamily:SANS}}>
-                    <div style={{fontSize:11,fontWeight:700,color:T.forest,textTransform:"capitalize",marginBottom:3}}>{style}</div>
-                    <div style={{fontSize:12,color:T.text,lineHeight:1.5}}>{text}</div>
+              <Btn full disabled={reforming||!draft.trim()} onClick={handleReformulate} style={{marginTop:8,background:reforming?T.sandDark:`linear-gradient(135deg,${T.sky},${T.forest})`}} small>{reforming?"✨ Analyse en cours...":"✨ Reformuler avec l'IA"}</Btn>
+              {reforms&&<div style={{marginTop:14}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                  <div style={{width:20,height:20,borderRadius:6,background:`${T.sky}20`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10}}>🤖</div>
+                  <span style={{fontSize:12,fontWeight:700,color:T.sky}}>3 reformulations proposées</span>
+                </div>
+                {Object.entries(reforms).map(([style,data])=>(
+                  <button key={style} onClick={()=>setSelReform(style)} style={{width:"100%",padding:14,borderRadius:14,textAlign:"left",border:selReform===style?`2.5px solid ${T.forest}`:`1.5px solid ${T.sandDark}`,background:selReform===style?`${T.leafLight}15`:"#fff",cursor:"pointer",fontFamily:SANS,marginBottom:8,transition:"all 0.2s"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                      <span style={{fontSize:16}}>{data.emoji}</span>
+                      <span style={{fontSize:13,fontWeight:700,color:selReform===style?T.forest:T.text,textTransform:"capitalize"}}>{style}</span>
+                      {selReform===style&&<span style={{marginLeft:"auto",color:T.forest,fontSize:14}}>✓</span>}
+                    </div>
+                    <div style={{fontSize:13,color:T.text,lineHeight:1.6}}>{data.text}</div>
+                    {data.ref&&<div style={{marginTop:6,fontSize:10,color:T.sky,fontWeight:600,background:`${T.sky}10`,padding:"3px 8px",borderRadius:6,display:"inline-block"}}>{data.ref}</div>}
                   </button>
                 ))}
               </div>}
-              {(selReform||draft.trim())&&<Btn full onClick={handlePublish} style={{marginTop:10}}>Publier {selReform?`(${selReform})`:"(original)"}</Btn>}
+              {(selReform||draft.trim())&&<Btn full onClick={handlePublish} style={{marginTop:10}}>{selReform?`Publier version ${selReform}`:"Publier l'original"}</Btn>}
             </div>
           </div>}
         </div>}
 
         {/* ═══ MESSAGES TAB ═══ */}
-        {tab==="msg"&&<div>
-          {msgView==="list"?<div style={{padding:"14px 14px"}}>
-            {/* Mediation card */}
-            <div onClick={()=>setTab("mediation")} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:`linear-gradient(135deg,${T.purple}10,${T.sky}10)`,borderRadius:16,marginBottom:14,cursor:"pointer",border:`1.5px solid ${T.purple}25`,boxShadow:`0 2px 12px ${T.purple}08`}}>
-              <div style={{width:42,height:42,borderRadius:12,background:`linear-gradient(135deg,${T.purple}20,${T.sky}20)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🕊</div>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:T.purple}}>Médiation entre voisins</div><div style={{fontSize:12,color:T.textMuted,marginTop:1}}>Résoudre un différend avec l'aide de l'AI</div></div>
-              <span style={{fontSize:14,color:T.purple,fontWeight:600}}>→</span>
-            </div>
-
-            <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>Conversations</h4>
-            {/* New message button */}
-            <button onClick={()=>setMsgView("newmsg")} style={{width:"100%",padding:"12px 14px",background:`${T.forest}08`,borderRadius:16,border:`1.5px dashed ${T.forestLight}55`,marginBottom:12,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:SANS,textAlign:"left"}}>
-              <div style={{width:42,height:42,borderRadius:14,background:`${T.forest}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>✏️</div>
-              <div><div style={{fontSize:14,fontWeight:600,color:T.forest}}>Nouveau message</div><div style={{fontSize:12,color:T.textMuted}}>{role==="locataire"?"Écrire à un voisin":"Écrire à un voisin ou au syndic"}</div></div>
-            </button>
-            {convos.filter(c=>!(role==="locataire"&&c.role==="syndic")).map(c=>(
-              <button key={c.id} onClick={()=>{setActiveConv(c);setMsgView("conv")}} style={{width:"100%",padding:"12px 14px",background:"#fff",borderRadius:16,border:"none",marginBottom:8,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:SANS,boxShadow:"0 1px 6px rgba(0,0,0,0.04)",textAlign:"left"}}>
-                <Av name={c.name} size={42}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:14,fontWeight:600,color:T.text}}>{c.name}</span><span style={{fontSize:10,color:T.textMuted}}>{c.time}</span></div>
-                  <p style={{fontSize:12,color:T.textMuted,margin:"2px 0 0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.lastMsg}</p>
+        {/* ═══ AGENDA TAB (standalone) ═══ */}
+        {tab==="agenda"&&<div style={{padding:14}}>
+          <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:"0 0 14px"}}>📅 Agenda de la copropriété</h3>
+          {EVENTS.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e=>(
+            <Card key={e.id} style={{borderLeft:`4px solid ${EC[e.type]}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                <div><h4 style={{margin:"0 0 3px",fontSize:14,color:T.text}}>{e.title}</h4>
+                  <p style={{margin:0,fontSize:12,color:T.textMuted}}>{new Date(e.date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}{e.time&&` · ${e.time}`}</p>
                 </div>
-                {c.unread>0&&<div style={{width:20,height:20,borderRadius:10,background:T.coral,color:"#fff",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{c.unread}</div>}
-              </button>
-            ))}
-          </div>:
-          msgView==="newmsg"?<div style={{padding:14}}>
-            <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour</button>
-            <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 6px"}}>Nouveau message</h3>
-            <p style={{fontSize:12,color:T.textMuted,margin:"0 0 14px"}}>Choisissez un destinataire</p>
-            {[
-              {name:"Marie D.",floor:"3B",role:"CS"},
-              {name:"Thomas R.",floor:"1A",role:"proprio"},
-              {name:"Sophie L.",floor:"4C",role:"locataire"},
-              {name:"Anna K.",floor:"5A",role:"proprio"},
-              {name:"Paul V.",floor:"1C",role:"proprio"},
-              ...(role!=="locataire"?[{name:"Syndic Urbania",floor:"",role:"syndic"}]:[]),
-            ].map((dest,i)=>(
-              <button key={i} onClick={()=>{setActiveConv({id:Date.now(),name:dest.name,floor:dest.floor});setConvMsgs([]);setMsgView("conv")}} style={{width:"100%",padding:"10px 14px",background:"#fff",borderRadius:14,border:"none",marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",textAlign:"left"}}>
-                <Av name={dest.name} size={36}/>
-                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.text}}>{dest.name}</div>{dest.floor&&<div style={{fontSize:10,color:T.textMuted}}>App. {dest.floor}</div>}</div>
-                {dest.role==="syndic"&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:T.coral,color:"#fff"}}>SYNDIC</span>}
-                {dest.role==="CS"&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:T.sky,color:"#fff"}}>CS</span>}
-              </button>
-            ))}
-            {role==="locataire"&&<div style={{background:`${T.sunriseLight}22`,borderRadius:12,padding:12,marginTop:8}}><p style={{fontSize:12,color:T.bark,margin:0}}>ℹ️ En tant que locataire, les messages au syndic ne sont pas disponibles. Contactez votre propriétaire pour toute demande au syndic.</p></div>}
-          </div>:
-          <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
-            <div style={{padding:"12px 16px",background:"#fff",borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:10}}>
-              <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:T.forest}}>←</button>
-              <Av name={activeConv?.name||""} size={32}/>
-              <div><div style={{fontSize:14,fontWeight:600,color:T.text}}>{activeConv?.name}</div><div style={{fontSize:10,color:T.textMuted}}>{activeConv?.floor}</div></div>
-            </div>
-            <div style={{flex:1,overflowY:"auto",padding:14}}>
-              {convMsgs.length===0&&<div style={{textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:8}}>💬</div><p style={{fontSize:13,color:T.textMuted}}>Écrivez votre premier message à {activeConv?.name}</p></div>}
-              {convMsgs.map((m,i)=>(
-                <div key={i} style={{display:"flex",justifyContent:m.from==="me"?"flex-end":"flex-start",marginBottom:10}}>
-                  <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:14,background:m.from==="me"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#fff",color:m.from==="me"?"#fff":T.text,fontSize:13,lineHeight:1.5,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-                    {m.text}<div style={{fontSize:9,marginTop:4,opacity:0.6,textAlign:"right"}}>{m.time}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={{padding:"10px 14px",background:T.warmWhite,borderTop:`1px solid ${T.sandDark}`,display:"flex",gap:8}}>
-              <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} placeholder="Message..." style={{flex:1,padding:"10px 14px",borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff"}}/>
-              <button onClick={()=>{if(msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} style={{width:42,height:42,borderRadius:12,border:"none",background:msgDraft.trim()?`linear-gradient(135deg,${T.forest},${T.forestLight})`:T.sandDark,color:"#fff",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
-            </div>
-          </div>}
+                <span style={{padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${EC[e.type]}18`,color:EC[e.type]}}>{EL[e.type]}</span>
+              </div>
+              {e.desc&&<p style={{fontSize:12,color:T.textLight,lineHeight:1.5,marginTop:6,marginBottom:0}}>{e.desc}</p>}
+              {e.loc&&<p style={{fontSize:11,color:T.textMuted,marginTop:4,marginBottom:0}}>📍 {e.loc}</p>}
+            </Card>
+          ))}
         </div>}
 
         {/* ═══ CONSEIL AI TAB ═══ */}
@@ -841,28 +831,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           </div>
         </div>}
 
-        {/* ═══ COPRO TAB (Agenda + Docs + Entraide) ═══ */}
+        {/* ═══ COPRO TAB (Docs + Messages) ═══ */}
         {tab==="copro"&&<div style={{padding:14}}>
           <div style={{display:"flex",gap:6,marginBottom:14}}>
-            {[{id:"events",l:"📅 Agenda"},{id:"docs",l:"📁 Documents"},{id:"entraide",l:"🤝 Entraide"}].map(t=>(
+            {[{id:"docs",l:"📁 Documents"},{id:"msg",l:"✉️ Messages"}].map(t=>(
               <button key={t.id} onClick={()=>setAgendaTab(t.id)} style={{padding:"8px 14px",borderRadius:10,border:"none",background:agendaTab===t.id?T.forest:"#fff",color:agendaTab===t.id?"#fff":T.text,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:SANS,flex:1,textAlign:"center"}}>{t.l}</button>
             ))}
           </div>
-
-          {agendaTab==="events"&&<div>
-            {EVENTS.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e=>(
-              <Card key={e.id} style={{borderLeft:`4px solid ${EC[e.type]}`}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-                  <div><h4 style={{margin:"0 0 3px",fontSize:14,color:T.text}}>{e.title}</h4>
-                    <p style={{margin:0,fontSize:12,color:T.textMuted}}>{new Date(e.date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}{e.time&&` · ${e.time}`}</p>
-                  </div>
-                  <span style={{padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${EC[e.type]}18`,color:EC[e.type]}}>{EL[e.type]}</span>
-                </div>
-                {e.desc&&<p style={{fontSize:12,color:T.textLight,lineHeight:1.5,marginTop:6,marginBottom:0}}>{e.desc}</p>}
-                {e.loc&&<p style={{fontSize:11,color:T.textMuted,marginTop:4,marginBottom:0}}>📍 {e.loc}</p>}
-              </Card>
-            ))}
-          </div>}
 
           {agendaTab==="docs"&&<div>
             <div style={{background:"#fff",borderRadius:12,padding:"3px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:8,boxShadow:"0 1px 6px rgba(0,0,0,0.04)"}}>
@@ -905,34 +880,79 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
             {(role==="locataire"||role==="concierge")&&<div style={{background:`${T.sunriseLight}33`,borderRadius:12,padding:14,marginTop:8}}><p style={{fontSize:12,color:T.bark,margin:0}}>🔒 En tant que {role==="concierge"?"concierge":"locataire"}, certains documents financiers ne sont pas accessibles.</p></div>}
           </div>}
 
-          {agendaTab==="entraide"&&<div>
-            <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto"}}>
-              {[{l:"Toutes",i:"📋"},{l:"Services",i:"🔧"},{l:"Prêt",i:"📦"},{l:"Baby-sitting",i:"👶"},{l:"Dons",i:"🎁"}].map((c,i)=><Chip key={i} label={c.l} icon={c.i} active={i===0}/>)}
-            </div>
-            {[
-              {author:"Sophie L.",floor:"4C",title:"Recherche baby-sitter",desc:"Pour samedi soir 19h-23h, 2 enfants (4 et 7 ans). Rémunération au tarif habituel.",cat:"👶",color:T.coral,time:"Auj."},
-              {author:"Lucas M.",floor:"2B",title:"Prêt de perceuse",desc:"Je peux prêter ma perceuse Bosch ce week-end. Envoyez-moi un message !",cat:"📦",color:T.sky,time:"Hier"},
-              {author:"Anna K.",floor:"5A",title:"Cours de yoga collectif",desc:"Je propose un cours de yoga dans le jardin commun chaque mercredi à 18h30. Gratuit et ouvert à tous !",cat:"🧘",color:T.purple,time:"Mar."},
-              {author:"Paul V.",floor:"1C",title:"Don de livres",desc:"Je donne une cinquantaine de romans. Premiers arrivés, premiers servis ! Boîte aux lettres du 1C.",cat:"🎁",color:T.sunrise,time:"Lun."},
-            ].map((a,i)=>(
-              <Card key={i}>
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                  <Av name={a.author} size={34}/>
-                  <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.text}}>{a.author} <span style={{fontWeight:400,color:T.textMuted,fontSize:11}}>· {a.floor}</span></div><div style={{fontSize:10,color:T.textMuted}}>{a.time}</div></div>
-                  <span style={{fontSize:18}}>{a.cat}</span>
-                </div>
-                <h4 style={{margin:"0 0 4px",fontSize:14,color:T.text}}>{a.title}</h4>
-                <p style={{fontSize:13,color:T.textLight,lineHeight:1.5,margin:"0 0 10px"}}>{a.desc}</p>
-                <Btn small primary={false}>💬 Contacter</Btn>
-              </Card>
-            ))}
-            <button style={{width:"100%",padding:14,borderRadius:14,border:`2px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:14,fontWeight:600,color:T.forestLight,marginTop:4}}>+ Poster une annonce</button>
+          {/* Messages inside Copro */}
+          {agendaTab==="msg"&&<div>
+            {msgView==="list"?<div>
+              {/* Mediation card */}
+              <div onClick={()=>setTab("mediation")} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:`linear-gradient(135deg,${T.purple}10,${T.sky}10)`,borderRadius:14,marginBottom:12,cursor:"pointer",border:`1px solid ${T.purple}22`}}>
+                <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.purple}20,${T.sky}20)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🕊</div>
+                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.purple}}>Médiation entre voisins</div><div style={{fontSize:10,color:T.textMuted}}>Résoudre un différend avec l'AI</div></div>
+                <span style={{fontSize:12,color:T.purple}}>→</span>
+              </div>
+              {/* New message */}
+              <button onClick={()=>setMsgView("newmsg")} style={{width:"100%",padding:"10px 12px",background:`${T.forest}06`,borderRadius:14,border:`1.5px dashed ${T.forestLight}44`,marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,textAlign:"left"}}>
+                <div style={{width:36,height:36,borderRadius:10,background:`${T.forest}10`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✏️</div>
+                <div><div style={{fontSize:13,fontWeight:600,color:T.forest}}>Nouveau message</div><div style={{fontSize:10,color:T.textMuted}}>{role==="locataire"?"Écrire à un voisin":"Écrire à un voisin ou au syndic"}</div></div>
+              </button>
+              {convos.filter(c=>!(role==="locataire"&&c.role==="syndic")).map(c=>(
+                <button key={c.id} onClick={()=>{setActiveConv(c);setMsgView("conv")}} style={{width:"100%",padding:"10px 12px",background:"#fff",borderRadius:14,border:"none",marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",textAlign:"left"}}>
+                  <Av name={c.name} size={36}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</span><span style={{fontSize:10,color:T.textMuted}}>{c.time}</span></div>
+                    <p style={{fontSize:11,color:T.textMuted,margin:"1px 0 0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.lastMsg}</p>
+                  </div>
+                  {c.unread>0&&<div style={{width:18,height:18,borderRadius:9,background:T.coral,color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{c.unread}</div>}
+                </button>
+              ))}
+            </div>:
+            msgView==="newmsg"?<div>
+              <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:4}}>← Retour</button>
+              <h3 style={{fontFamily:FONT,fontSize:16,color:T.forest,margin:"0 0 4px"}}>Nouveau message</h3>
+              <p style={{fontSize:11,color:T.textMuted,margin:"0 0 10px"}}>Choisissez un destinataire</p>
+              {[
+                {name:"Marie D.",floor:"3B",role:"CS"},
+                {name:"Thomas R.",floor:"1A",role:"proprio"},
+                {name:"Sophie L.",floor:"4C",role:"locataire"},
+                {name:"Anna K.",floor:"5A",role:"proprio"},
+                {name:"Paul V.",floor:"1C",role:"proprio"},
+                ...(role!=="locataire"?[{name:"Syndic Urbania",floor:"",role:"syndic"}]:[]),
+              ].map((dest,i)=>(
+                <button key={i} onClick={()=>{setActiveConv({id:Date.now(),name:dest.name,floor:dest.floor});setConvMsgs([]);setMsgView("conv")}} style={{width:"100%",padding:"8px 12px",background:"#fff",borderRadius:12,border:"none",marginBottom:5,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",textAlign:"left"}}>
+                  <Av name={dest.name} size={32}/>
+                  <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.text}}>{dest.name}</div>{dest.floor&&<div style={{fontSize:9,color:T.textMuted}}>App. {dest.floor}</div>}</div>
+                  {dest.role==="syndic"&&<span style={{padding:"2px 5px",borderRadius:3,fontSize:8,fontWeight:700,background:T.coral,color:"#fff"}}>SYNDIC</span>}
+                  {dest.role==="CS"&&<span style={{padding:"2px 5px",borderRadius:3,fontSize:8,fontWeight:700,background:T.sky,color:"#fff"}}>CS</span>}
+                </button>
+              ))}
+              {role==="locataire"&&<div style={{background:`${T.sunriseLight}22`,borderRadius:10,padding:10,marginTop:6}}><p style={{fontSize:11,color:T.bark,margin:0}}>ℹ️ En tant que locataire, les messages au syndic ne sont pas disponibles.</p></div>}
+            </div>:
+            <div style={{display:"flex",flexDirection:"column",minHeight:300}}>
+              <div style={{padding:"10px 12px",background:"#fff",borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:8,borderRadius:"12px 12px 0 0"}}>
+                <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",color:T.forest}}>←</button>
+                <Av name={activeConv?.name||""} size={28}/>
+                <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{activeConv?.name}</div></div>
+              </div>
+              <div style={{flex:1,overflowY:"auto",padding:10,minHeight:200,background:"#fff"}}>
+                {convMsgs.length===0&&<div style={{textAlign:"center",padding:30}}><div style={{fontSize:28,marginBottom:6}}>💬</div><p style={{fontSize:12,color:T.textMuted}}>Premier message à {activeConv?.name}</p></div>}
+                {convMsgs.map((m,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:m.from==="me"?"flex-end":"flex-start",marginBottom:8}}>
+                    <div style={{maxWidth:"80%",padding:"8px 12px",borderRadius:12,background:m.from==="me"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#f5f5f5",color:m.from==="me"?"#fff":T.text,fontSize:12,lineHeight:1.5}}>
+                      {m.text}<div style={{fontSize:8,marginTop:3,opacity:0.6,textAlign:"right"}}>{m.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{padding:"8px 10px",background:T.warmWhite,borderTop:`1px solid ${T.sandDark}`,display:"flex",gap:6,borderRadius:"0 0 12px 12px"}}>
+                <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} placeholder="Message..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+                <button onClick={()=>{if(msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} style={{width:36,height:36,borderRadius:10,border:"none",background:msgDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+              </div>
+            </div>}
           </div>}
         </div>}
 
         {/* ═══ MEDIATION (inside messages) ═══ */}
         {tab==="mediation"&&<div style={{padding:14}}>
-          <button onClick={()=>setTab("msg")} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour aux messages</button>
+          <button onClick={()=>{setAgendaTab("msg");setTab("copro")}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour aux messages</button>
 
           {medStep===0&&<div>
             <Card style={{textAlign:"center",padding:28}}>
@@ -984,12 +1004,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       </div>
 
       {/* ─── BOTTOM TAB BAR ─── */}
-      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.97)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 8px calc(14px + env(safe-area-inset-bottom, 8px))",display:"flex",justifyContent:"space-around",flexShrink:0,zIndex:20}}>
+      {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.97)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 4px calc(10px + env(safe-area-inset-bottom, 8px))",display:"flex",justifyContent:"space-around",flexShrink:0,zIndex:20}}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 10px 2px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative"}}>
-            <span style={{fontSize:20}}>{t.icon}</span>
-            <span style={{fontSize:9,fontWeight:700,fontFamily:SANS,color:tab===t.id?T.forest:T.textMuted}}>{t.label}</span>
-            {tab===t.id&&<div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:20,height:3,borderRadius:2,background:T.forest}}/>}
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 8px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative"}}>
+            <span style={{fontSize:22}}>{t.icon}</span>
+            <span style={{fontSize:10,fontWeight:700,fontFamily:SANS,color:tab===t.id?t.color:T.textMuted}}>{t.label}</span>
+            {tab===t.id&&<div style={{position:"absolute",bottom:2,left:"50%",transform:"translateX(-50%)",width:22,height:3,borderRadius:2,background:t.color}}/>}
           </button>
         ))}
       </div>}
@@ -1065,30 +1085,38 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
             <input value={userName} onChange={e=>setUserName(e.target.value)} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
           </div>
 
-          <div style={{display:"flex",gap:8,marginBottom:12}}>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
             <div style={{flex:2}}>
               <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Bâtiment</label>
               <input value={userBuilding} onChange={e=>{setUserBuilding(e.target.value);setUserFloorEdited(false)}} placeholder="A, Mimosa..." style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
             </div>
             <div style={{flex:1}}>
               <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Étage</label>
-              <input value={userEtage} onChange={e=>{setUserEtage(e.target.value);setUserFloorEdited(false)}} placeholder="3" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+              <input type="number" value={userEtage} onChange={e=>{setUserEtage(e.target.value);setUserFloorEdited(false)}} placeholder="3" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
             </div>
             <div style={{flex:1.5}}>
               <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Porte</label>
-              <div style={{display:"flex",gap:4}}>
-                {["Gauche","Centre","Droite"].map(d=>(
-                  <button key={d} onClick={()=>{setUserDoor(d);setUserFloorEdited(false)}} style={{flex:1,padding:"9px 4px",borderRadius:8,border:userDoor===d?`2px solid ${T.forest}`:`1.5px solid ${T.sandDark}`,background:userDoor===d?`${T.leafLight}18`:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:9,fontWeight:600,color:userDoor===d?T.forest:T.textMuted,textAlign:"center"}}>{d.charAt(0)}</button>
-                ))}
-              </div>
+              <input value={userDoor} onChange={e=>{if(e.target.value.length<=8){setUserDoor(e.target.value);setUserFloorEdited(false)}}} placeholder="Gauche" maxLength={8} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
             </div>
           </div>
 
-          <div style={{marginBottom:20}}>
-            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Appartement <span style={{fontSize:9,fontWeight:400,textTransform:"none",letterSpacing:0}}>(auto-généré, modifiable)</span></label>
-            <input value={currentApt} onChange={e=>{setUserFloor(e.target.value);setUserFloorEdited(true)}} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${userFloorEdited?T.sunrise:T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:userFloorEdited?"#fff":`${T.leafLight}12`,color:T.text,boxSizing:"border-box"}}/>
-            {userFloorEdited&&<p style={{fontSize:10,color:T.sunrise,margin:"4px 0 0"}}>✏️ Modifié manuellement</p>}
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Appartement <span style={{fontSize:8,fontWeight:400,textTransform:"none",letterSpacing:0}}>(auto-généré, modifiable)</span></label>
+            <input value={currentApt} onChange={e=>{setUserFloor(e.target.value);setUserFloorEdited(true)}} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${userFloorEdited?T.sunrise:T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:userFloorEdited?"#fff":`${T.leafLight}12`,color:T.text,boxSizing:"border-box"}}/>
+            {userFloorEdited&&<p style={{fontSize:10,color:T.sunrise,margin:"3px 0 0"}}>✏️ Modifié manuellement</p>}
           </div>
+
+          {/* Multi-logement — compact "add" link */}
+          {role!=="syndic"&&<div style={{marginBottom:16}}>
+            {extraLogements.length>0&&extraLogements.map((lg,i)=>(
+              <div key={i} style={{display:"flex",gap:6,alignItems:"center",padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,border:`1px solid ${T.sandDark}`}}>
+                <span style={{fontSize:12}}>🏠</span>
+                <span style={{fontSize:12,flex:1,color:T.text}}>{lg}</span>
+                <button onClick={()=>setExtraLogements(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
+              </div>
+            ))}
+            <button onClick={()=>{const name=prompt("Nom du logement supplémentaire (ex: 5ème Droite - B)");if(name)setExtraLogements(p=>[...p,name])}} style={{background:"none",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.forestLight,padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>+ Ajouter un logement supplémentaire</button>
+          </div>}
 
           <div style={{marginBottom:20}}>
             <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Email</label>
