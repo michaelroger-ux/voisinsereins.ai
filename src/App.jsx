@@ -14,6 +14,8 @@ const T = {
   leaf: "#8DB580", leafLight: "#B8D4AC",
   text: "#2C2C2C", textLight: "#6B6B6B", textMuted: "#9B9B9B",
   purple: "#8B6BAE",
+  red: "#C0392B", amber: "#E67E22", amberLight: "#FFF3CD",
+  green: "#27AE60", greenLight: "#D4EDDA",
 };
 const FONT = `'Georgia','Times New Roman',serif`;
 const SANS = `'Avenir','Segoe UI','Helvetica Neue',sans-serif`;
@@ -28,6 +30,124 @@ Article 6 - Entretien: Ne pas encombrer parties communes. Tri sélectif obligato
 Article 7 - Charges: Dues trimestriellement. Pénalités 1%/mois après 30 jours.
 Article 8 - AG: Au moins 1x/an. Convocations 21 jours avant. Majorité simple sauf travaux (2/3).
 Article 9 - Travaux: Modifications parties communes = approbation AG requise.`;
+
+/* ═══ SUJETS STRUCTURÉS ═══ */
+const SUJET_STATUS={signale:{label:"Signalé",color:"#6BA3BE",bg:"#6BA3BE18",icon:"📢"},escalade:{label:"Escalade",color:"#E67E22",bg:"#FFF3CD",icon:"⚡"},consultation:{label:"Consultation",color:"#8B6BAE",bg:"#8B6BAE15",icon:"🗳"},action:{label:"Action en cours",color:"#3D6B4F",bg:"#3D6B4F12",icon:"⚙️"},resolu:{label:"Résolu",color:"#27AE60",bg:"#D4EDDA",icon:"✅"}};
+const SUJET_CAT={securite:{label:"Sécurité",icon:"🔐",color:"#C0392B"},entretien:{label:"Entretien",icon:"🧹",color:"#E8A854"},maintenance:{label:"Maintenance",icon:"🔧",color:"#8B7355"},viecommune:{label:"Vie commune",icon:"🏠",color:"#6BA3BE"},acces:{label:"Accès / Clés",icon:"🔑",color:"#8B6BAE"}};
+const INIT_SUJETS=[
+  {id:1,title:"Porte d'entrée laissée ouverte",category:"securite",status:"escalade",signalCount:8,threshold:3,createdAt:"2024-10-08",lastSignal:"2025-02-18",residents:["Marie D.","Sophie L.","Paul V.","Thomas R."],createdBy:"Sophie L.",desc:"La porte d'entrée est régulièrement trouvée ouverte, posant un risque de sécurité pour tous.",
+    timeline:[{date:"2024-10-08",type:"signal",author:"Sophie L.",text:"Porte trouvée ouverte en rentrant de nuit."},{date:"2024-11-05",type:"signal",author:"Paul V.",text:"3ème fois cette semaine."},{date:"2024-11-05",type:"signal",author:"Marie D.",text:"Malgré les affichettes, la porte reste ouverte."},{date:"2024-11-05",type:"escalade",author:"Système",text:"Seuil de 3 signalements atteint — escalade automatique."},{date:"2024-12-06",type:"signal",author:"Marie D.",text:"Porte encore ouverte ce soir."},{date:"2025-01-23",type:"signal",author:"Sophie L.",text:"Toujours le même problème."},{date:"2025-02-18",type:"signal",author:"Marie D.",text:"8ème signalement."}],
+    aiSugg:[{type:"consultation",text:"Lancer une consultation : « Installer un ferme-porte automatique ? »",cost:"150-300€ répartis"},{type:"lettre",text:"Générer une lettre au syndic demandant un ferme-porte"},{type:"charte",text:"Ajouter à la Charte : obligation de vérifier la fermeture"}],consultation:null},
+  {id:2,title:"Propreté des parties communes",category:"entretien",status:"escalade",signalCount:6,threshold:3,createdAt:"2024-11-05",lastSignal:"2025-02-04",residents:["Marie D.","Sophie L.","Thomas R."],createdBy:"Marie D.",desc:"Déchets récurrents dans le hall, ascenseur sale, agent d'entretien absent.",
+    timeline:[{date:"2024-11-05",type:"signal",author:"Marie D.",text:"Publicités jetées par terre."},{date:"2024-12-12",type:"signal",author:"Sophie L.",text:"Ascenseur malodorant. Agent d'entretien absent."},{date:"2024-12-12",type:"escalade",author:"Système",text:"Seuil atteint."},{date:"2025-01-23",type:"signal",author:"Sophie L.",text:"Je ne nettoie plus — pas ma responsabilité."},{date:"2025-02-04",type:"signal",author:"Sophie L.",text:"Ascenseur toujours sale."}],
+    aiSugg:[{type:"lettre",text:"Générer une mise en demeure au prestataire d'entretien"},{type:"consultation",text:"Lancer un vote : « Changer de prestataire ? »"},{type:"charte",text:"Formaliser les obligations de propreté"}],consultation:null},
+  {id:3,title:"Serrure porte d'entrée cassée",category:"maintenance",status:"resolu",signalCount:1,threshold:3,createdAt:"2025-09-18",lastSignal:"2025-09-18",resolvedAt:"2025-09-18",residents:["Sophie L.","Anna K."],createdBy:"Sophie L.",desc:"Serrure défaillante — impossible d'ouvrir avec la clé.",
+    timeline:[{date:"2025-09-18",type:"signal",author:"Sophie L.",text:"Impossible d'ouvrir."},{date:"2025-09-18",type:"action",author:"Anna K.",text:"A ouvert pour les résidents bloqués."},{date:"2025-09-18",type:"action",author:"Sophie L.",text:"Serrurier appelé."},{date:"2025-09-18",type:"resolu",author:"Sophie L.",text:"Serrure changée. 2 clés par propriétaire."}],aiSugg:[],consultation:null},
+  {id:4,title:"Encombrement du hall",category:"viecommune",status:"signale",signalCount:2,threshold:3,createdAt:"2024-12-06",lastSignal:"2025-05-03",residents:["Marie D.","Anna K."],createdBy:"Marie D.",desc:"Poussettes, meubles, sacs abandonnés dans le hall.",
+    timeline:[{date:"2024-12-06",type:"signal",author:"Marie D.",text:"Poussettes et meubles dans l'entrée."},{date:"2024-12-07",type:"info",author:"Anna K.",text:"Situation temporaire. Poussette retirée."},{date:"2025-05-03",type:"signal",author:"Marie D.",text:"Sac abandonné dans le hall."}],
+    aiSugg:[{type:"charte",text:"Formaliser : aucun objet dans le hall > 48h"},{type:"consultation",text:"Consulter sur un espace de rangement"}],consultation:null},
+  {id:5,title:"Accès cave et compteurs bloqué",category:"acces",status:"signale",signalCount:1,threshold:3,createdAt:"2024-12-06",lastSignal:"2024-12-06",residents:["Paul V.","Marie D."],createdBy:"Paul V.",desc:"Clé de la cave manquante. Accès compteurs impossible.",
+    timeline:[{date:"2024-12-06",type:"signal",author:"Paul V.",text:"Pas de clé de la cave. Technicien a besoin d'accès."},{date:"2024-12-06",type:"info",author:"Marie D.",text:"C'est au propriétaire de changer la serrure."}],
+    aiSugg:[{type:"lettre",text:"Lettre au propriétaire : obligation d'accès aux compteurs"},{type:"info",text:"Rappel : accès au local compteurs obligatoire"}],consultation:null},
+];
+
+/* ═══ SIGNALEMENT — Catégories, Situations & Fiches Réflexes ═══ */
+const SIG_CATS=[
+  {id:"porte",icon:"🚪",label:"Porte / Accès",cat:"securite",sits:[
+    {id:"bloque",label:"Je suis bloqué(e) dehors",urg:true,fiche:{contact:"Serrurier Durand",tel:"04 78 55 12 34",steps:["Vérifiez si un voisin peut ouvrir","Appelez le serrurier ci-dessous","Prévenez le syndic"],cond:null}},
+    {id:"forcee",label:"Serrure cassée / forcée",urg:true,fiche:{contact:"Serrurier Durand + Syndic",tel:"04 78 55 12 34",steps:["Ne touchez à rien si effraction","Appelez le serrurier","Contactez le syndic et le 17 si vol"],cond:"Traces d'effraction ? → Appelez le 17"}},
+    {id:"ouverte",label:"Porte laissée ouverte",urg:false},
+    {id:"interph_hs",label:"Interphone défaillant",urg:false},
+  ]},
+  {id:"bruit",icon:"🔊",label:"Bruit / Nuisances",cat:"viecommune",sits:[
+    {id:"tapage_now",label:"Tapage en ce moment",urg:true,fiche:{contact:"Police (tapage nocturne)",tel:"17",steps:["Notez l'heure et la provenance","Si après 22h → appelez le 17","Si en journée → proposez une médiation"],cond:"Il est après 22h ? → Appelez le 17"}},
+    {id:"travaux_hrs",label:"Travaux hors horaires autorisés",urg:false},
+    {id:"bruit_regulier",label:"Nuisances sonores régulières",urg:false},
+    {id:"animaux_bruit",label:"Animaux bruyants",urg:false},
+  ]},
+  {id:"panne",icon:"⚡",label:"Pannes",cat:"maintenance",sits:[
+    {id:"ascenseur",label:"Ascenseur en panne",urg:true,fiche:{contact:"Schindler Maintenance",tel:"04 78 99 00 11",steps:["Vérifiez si quelqu'un est bloqué","Appelez l'ascensoriste ci-dessous","N'essayez pas d'ouvrir les portes"],cond:"Quelqu'un est bloqué ? → Appelez le 18 (pompiers)"}},
+    {id:"elec",label:"Panne électrique (communs)",urg:true,fiche:{contact:"Enedis Urgence",tel:"09 72 67 50 69",steps:["Vérifiez le disjoncteur général","Si parties communes uniquement → appelez Enedis","Prévenez le gardien/syndic"],cond:null}},
+    {id:"ampoule",label:"Ampoule grillée",urg:false},
+    {id:"sonnette",label:"Sonnette / Interphone HS",urg:false},
+    {id:"chauffage",label:"Chauffage / Ventilation",urg:false},
+  ]},
+  {id:"eau",icon:"💧",label:"Eau",cat:"maintenance",sits:[
+    {id:"fuite",label:"Fuite active / Inondation",urg:true,fiche:{contact:"Plombier Urgence Martin",tel:"04 78 33 21 00",steps:["Coupez l'arrivée d'eau si possible","Appelez le plombier","Prévenez les voisins du dessous"],cond:null}},
+    {id:"coupure",label:"Coupure d'eau",urg:true,fiche:{contact:"Régie des eaux / Syndic",tel:"09 69 39 40 50",steps:["Vérifiez si vos voisins sont aussi touchés","Si immeuble entier → appelez la régie des eaux","Prévenez le syndic"],cond:"Seul votre logement ? → Vérifiez le robinet d'arrêt"}},
+    {id:"humidite",label:"Trace d'humidité / Infiltration",urg:false},
+  ]},
+  {id:"feu",icon:"🔥",label:"Incendie / Fumée",cat:"securite",sits:[
+    {id:"fumee",label:"Fumée ou feu détecté",urg:true,fiche:{contact:"Pompiers",tel:"18",steps:["Évacuez immédiatement","Ne prenez PAS l'ascenseur","Appelez le 18 depuis l'extérieur"],cond:null}},
+  ]},
+  {id:"intrusion",icon:"🚨",label:"Intrusion / Sécurité",cat:"securite",sits:[
+    {id:"suspect",label:"Personne suspecte",urg:true,fiche:{contact:"Police",tel:"17",steps:["N'intervenez pas seul(e)","Appelez le 17","Prévenez les voisins via l'app"],cond:null}},
+    {id:"effraction",label:"Effraction / Cambriolage",urg:true,fiche:{contact:"Police + Syndic",tel:"17",steps:["Ne touchez à rien","Appelez le 17","Contactez le syndic"],cond:null}},
+  ]},
+  {id:"proprete",icon:"🧹",label:"Propreté",cat:"entretien",sits:[
+    {id:"hall",label:"Hall / Entrée",urg:false},{id:"ascenseur_sale",label:"Ascenseur",urg:false},{id:"escaliers",label:"Escaliers",urg:false},{id:"parking",label:"Parking / Cave",urg:false},
+  ]},
+  {id:"poubelle",icon:"🗑",label:"Poubelles",cat:"entretien",sits:[
+    {id:"hors_h",label:"Sacs hors horaires",urg:false},{id:"tri",label:"Tri non respecté",urg:false},{id:"sacs_hall",label:"Sacs dans le hall",urg:false},
+  ]},
+  {id:"encombrement",icon:"📦",label:"Encombrement",cat:"viecommune",sits:[
+    {id:"enc_hall",label:"Hall",urg:false},{id:"enc_esc",label:"Escaliers",urg:false},{id:"enc_cave",label:"Cave / Parking",urg:false},
+  ]},
+  {id:"stationnement",icon:"🚗",label:"Stationnement gênant",cat:"securite",sits:[
+    {id:"voie_pub",label:"Voie publique",urg:true,fiche:{contact:"Police municipale",tel:"17",steps:["Relevez la plaque si possible","Appelez la police municipale","Ne déplacez pas le véhicule vous-même"],cond:null}},
+    {id:"voie_priv",label:"Voie privée / Parking copro",urg:true,fiche:{contact:"Syndic + Fourrière",tel:"04 78 00 00 00",steps:["Vérifiez si le véhicule appartient à un résident","Contactez le syndic","Si stationnement dangereux → appelez le 17"],cond:"Véhicule bloque une sortie de secours ? → Appelez le 18"}},
+  ]},
+  {id:"autre",icon:"❓",label:"Autre problème",cat:"viecommune",sits:[
+    {id:"autre_urg",label:"Autre urgence",urg:true,fiche:{contact:"Syndic / Urgences",tel:"112",steps:["Évaluez le danger immédiat","Si danger → appelez le 112","Sinon → contactez le syndic"],cond:null}},
+    {id:"autre_nonurg",label:"Autre signalement",urg:false},
+  ]},
+];
+const ENTRAIDE_TPL=[
+  {id:"colis_recep",icon:"📦",label:"Réceptionner mon colis",fields:["Transporteur","Créneau estimé","Où déposer"],defaultText:"Quelqu'un peut-il réceptionner un colis pour moi ?"},
+  {id:"colis_signal",icon:"📬",label:"Colis dans les communs",fields:["Nom sur le colis","Où il se trouve"],defaultText:"Un colis attend dans les communs, il appartient à quelqu'un ?"},
+  {id:"ouvrir",icon:"🔑",label:"Ouvrir à un intervenant",fields:["Qui (entreprise)","Quand","Étage/lieu"],defaultText:"Quelqu'un peut-il ouvrir la porte à un intervenant ?"},
+  {id:"animal",icon:"🐾",label:"Garde d'animal",fields:["Animal","Dates","Consignes"],defaultText:"Quelqu'un pourrait-il s'occuper de mon animal ?"},
+  {id:"artisan",icon:"🔧",label:"Recommandation artisan",fields:["Type d'artisan","Urgence"],defaultText:"Avez-vous un bon artisan à recommander ?"},
+  {id:"coup_main",icon:"💪",label:"Coup de main",fields:["Description"],defaultText:"J'aurais besoin d'aide pour..."},
+  {id:"courrier",icon:"✉️",label:"Courrier mal distribué",fields:["Destinataire si connu"],defaultText:"J'ai reçu du courrier qui ne m'est pas destiné."},
+  {id:"autre_aide",icon:"❓",label:"Autre demande",fields:["Description"],defaultText:"J'aurais besoin d'aide pour quelque chose..."},
+];
+
+/* ═══ WHATSAPP PARSER ═══ */
+function parseWhatsApp(raw){
+  const lines=raw.split(/\n/);const msgs=[];const users=new Set();
+  const re=/\[?(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*[-–]?\s*([^:]+?):\s*([\s\S]*)/;
+  for(const line of lines){
+    const m=line.match(re);
+    if(m){const[,date,time,author,text]=m;const u=author.trim().replace(/^~/,"").trim();if(u&&text.trim()&&!text.includes("chiffrés de bout en bout")&&!text.includes("a créé ce groupe")&&!text.includes("vous a ajouté")){users.add(u);msgs.push({date,time,author:u,text:text.trim()});}}
+  }
+  // Detect floors/roles from messages
+  const participants=[];
+  for(const u of users){
+    const uMsgs=msgs.filter(m=>m.author===u);
+    let floor="",role="résident";
+    const allText=uMsgs.map(m=>m.text).join(" ");
+    const floorMatch=allText.match(/(\d+)\s*(?:ème|er|e)?\s*(?:étage|floor)/i);
+    if(floorMatch)floor=floorMatch[1]+"ème";
+    const rezMatch=allText.match(/rez[\s-]*(?:de[\s-]*)?chaussée/i);
+    if(rezMatch)floor="RDC";
+    if(allText.match(/propriétaire/i))role="propriétaire";
+    if(allText.match(/locataire/i))role="locataire";
+    participants.push({name:u,msgCount:uMsgs.length,floor,role,pct:Math.round(uMsgs.length/msgs.length*100)});
+  }
+  participants.sort((a,b)=>b.msgCount-a.msgCount);
+  // Detect themes
+  const themes=[];const allText=msgs.map(m=>m.text).join(" ").toLowerCase();
+  if(allText.match(/porte.*ouverte|sécurité|fermer.*porte/))themes.push({title:"Sécurité — porte d'entrée",cat:"securite",count:msgs.filter(m=>m.text.toLowerCase().match(/porte.*ouverte|fermer.*porte/)).length});
+  if(allText.match(/propre|nettoy|sale|poubelle|déchet/))themes.push({title:"Propreté des communs",cat:"entretien",count:msgs.filter(m=>m.text.toLowerCase().match(/propre|nettoy|sale|poubelle/)).length});
+  if(allText.match(/poussette|meuble|encombr|objets?\s+dans/))themes.push({title:"Encombrement parties communes",cat:"viecommune",count:msgs.filter(m=>m.text.toLowerCase().match(/poussette|meuble|encombr/)).length});
+  if(allText.match(/serrure|clé|clef|cave|compteur/))themes.push({title:"Accès / Clés / Serrures",cat:"acces",count:msgs.filter(m=>m.text.toLowerCase().match(/serrure|clé|cave|compteur/)).length});
+  if(allText.match(/colis|livraison|facteur|bpost|courrier/))themes.push({title:"Colis & Courrier",cat:"viecommune",count:msgs.filter(m=>m.text.toLowerCase().match(/colis|livraison|courrier/)).length});
+  if(allText.match(/travaux|réparation|fuite|plombier|serrurier/))themes.push({title:"Maintenance & Travaux",cat:"maintenance",count:msgs.filter(m=>m.text.toLowerCase().match(/travaux|réparation|fuite/)).length});
+  const firstDate=msgs[0]?.date||"";const lastDate=msgs[msgs.length-1]?.date||"";
+  const leaders=participants.filter(p=>p.pct>=20);
+  return{totalMsgs:msgs.length,participants,themes:themes.sort((a,b)=>b.count-a.count),firstDate,lastDate,leaders,periodMonths:msgs.length>0?Math.max(1,Math.round((new Date(lastDate.split("/").reverse().join("-"))-new Date(firstDate.split("/").reverse().join("-")))/(1000*60*60*24*30))):0};
+}
 
 /* ═══ AVATAR ═══ */
 const Av = ({name,size=36,bg}) => {
@@ -197,6 +317,88 @@ function OnboardingAddress({onFound,onCreate}) {
   );
 }
 
+/* ═══════════════════════════════════════
+   ONBOARDING — WHATSAPP IMPORT (Pioneer only)
+   ═══════════════════════════════════════ */
+function OnboardingWhatsApp({copro,onImport,onSkip}) {
+  const [show,setShow]=useState(false);
+  const [step,setStep]=useState(0); // 0=intro, 1=analyzing, 2=results
+  const [result,setResult]=useState(null);
+  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
+
+  const handleFile=(e)=>{const f=e.target.files?.[0];if(!f)return;setStep(1);const reader=new FileReader();reader.onload=(ev)=>{setTimeout(()=>{try{const parsed=parseWhatsApp(ev.target.result);setResult(parsed);setStep(2)}catch{setResult({totalMsgs:0,participants:[],themes:[],firstDate:"",lastDate:"",leaders:[],periodMonths:0});setStep(2)}},1500)};reader.readAsText(f)};
+
+  return (
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS,overflow:"auto"}}>
+      <div style={{padding:"56px 24px 20px",background:`linear-gradient(170deg,#128C7E,#25D366)`,borderRadius:"0 0 28px 28px",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.07)"}}/>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape bonus — Pionnier</p>
+        <h2 style={{fontFamily:FONT,fontSize:22,fontWeight:700,color:"#fff",margin:"0 0 6px",opacity:show?1:0,transform:show?"none":"translateY(10px)",transition:"all 0.6s 0.2s"}}>Import WhatsApp</h2>
+        <p style={{color:"rgba(255,255,255,0.85)",fontSize:13,margin:0,fontWeight:500,opacity:show?1:0,transition:"opacity 0.6s 0.3s"}}>{copro?.name||"Ma Copropriété"}</p>
+      </div>
+
+      <div style={{padding:"20px 16px",flex:1,opacity:show?1:0,transition:"opacity 0.5s 0.4s"}}>
+        {step===0&&<div>
+          <Card style={{textAlign:"center",padding:24,border:`1.5px solid #25D36630`}}>
+            <div style={{fontSize:48,marginBottom:10}}>💬</div>
+            <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:"0 0 6px"}}>Votre groupe WhatsApp est une mine d'or</h3>
+            <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:"0 0 16px"}}>En important l'historique de votre groupe, l'IA détecte les problèmes récurrents, identifie les résidents, et pré-peuple votre copropriété. Vos voisins retrouveront leur communauté déjà en place.</p>
+            <div style={{background:`${T.leafLight}18`,borderRadius:12,padding:12,marginBottom:16,textAlign:"left"}}>
+              {["👥 Participants et rôles identifiés","📋 Sujets récurrents détectés automatiquement","⚡ Escalade auto sur les problèmes fréquents","🔒 Messages originaux jamais stockés"].map((t,i)=><p key={i} style={{fontSize:12,color:T.text,margin:"4px 0",lineHeight:1.4}}>  {t}</p>)}
+            </div>
+            <label style={{display:"block",width:"100%",padding:16,borderRadius:14,border:`2px dashed #25D366`,background:"#25D36608",cursor:"pointer",marginBottom:12}}>
+              <input type="file" accept=".txt" onChange={handleFile} style={{display:"none"}}/>
+              <span style={{fontSize:24,display:"block",marginBottom:4}}>📎</span>
+              <span style={{fontSize:14,fontWeight:700,color:"#128C7E"}}>Choisir le fichier .txt</span>
+              <span style={{fontSize:11,color:T.textMuted,display:"block",marginTop:3}}>WhatsApp → Discussion → Plus → Exporter</span>
+            </label>
+            <button onClick={onSkip} style={{width:"100%",padding:12,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:13,fontWeight:500,color:T.textMuted}}>Passer cette étape →</button>
+          </Card>
+        </div>}
+
+        {step===1&&<div style={{textAlign:"center",padding:"40px 0"}}>
+          <div style={{width:56,height:56,border:`3px solid ${T.sandDark}`,borderTopColor:"#25D366",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 18px"}}/>
+          <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:"0 0 6px"}}>Analyse en cours...</h3>
+          <p style={{fontSize:13,color:T.textMuted}}>L'IA parcourt votre historique</p>
+        </div>}
+
+        {step===2&&result&&<div>
+          <Card style={{textAlign:"center",padding:16,border:`1.5px solid ${T.leafLight}`}}>
+            <div style={{fontSize:32,marginBottom:4}}>✨</div>
+            <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 4px"}}>Analyse terminée</h3>
+            <p style={{fontSize:12,color:T.textLight}}>{result.totalMsgs} messages · {result.participants.length} participants · {result.periodMonths} mois</p>
+          </Card>
+          {result.participants.length>0&&<div>
+            <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"10px 0 6px"}}>👥 Résidents détectés</h4>
+            {result.participants.slice(0,5).map((p,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
+                <div style={{width:28,height:28,borderRadius:8,background:`linear-gradient(135deg,${[T.forestLight,T.sky,T.coral,T.sunrise,T.purple][i%5]},${[T.forestLight,T.sky,T.coral,T.sunrise,T.purple][i%5]}dd)`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:10,fontFamily:SANS}}>{p.name.split(" ").map(n=>n[0]).join("")}</div>
+                <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>{p.name}</div><div style={{fontSize:9,color:T.textMuted}}>{p.floor||"—"} · {p.msgCount} msg ({p.pct}%)</div></div>
+                {p.pct>=20&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`${T.sunrise}18`,color:T.sunrise}}>Leader</span>}
+              </div>
+            ))}
+          </div>}
+          {result.themes.length>0&&<div>
+            <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"10px 0 6px"}}>📋 Sujets détectés</h4>
+            {result.themes.map((t,i)=>{const cat=SUJET_CAT[t.cat];return(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,borderLeft:`3px solid ${cat?.color||T.sky}`,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
+                <span style={{fontSize:14}}>{cat?.icon||"📌"}</span>
+                <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>{t.title}</div><div style={{fontSize:9,color:T.textMuted}}>{t.count} mentions</div></div>
+                {t.count>=3&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:T.amberLight,color:T.amber}}>⚡ Escalade</span>}
+              </div>
+            )})}
+          </div>}
+          <div style={{marginTop:16}}>
+            <Btn full onClick={()=>onImport(result)} style={{background:`linear-gradient(135deg,#25D366,${T.forest})`}}>✅ Importer et continuer</Btn>
+            <button onClick={onSkip} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,color:T.textMuted,textAlign:"center"}}>Continuer sans importer</button>
+          </div>
+        </div>}
+      </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+}
+
 function OnboardingRole({copro,onContinue}) {
   const [role,setRole]=useState(null);
   const [isCS,setIsCS]=useState(false);
@@ -333,7 +535,7 @@ function InviteKit({copro,userName,onClose}) {
 /* ═══════════════════════════════════════
    MAIN APP
    ═══════════════════════════════════════ */
-function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
+function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [tab,setTab]=useState("home");
   const [showInvite,setShowInvite]=useState(false);
   const [coproSelector,setCoproSelector]=useState(false);
@@ -369,6 +571,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   const [userFloorEdited,setUserFloorEdited]=useState(false);
   const currentApt = userFloorEdited ? userFloor : autoApt;
   const [userNotifs,setUserNotifs]=useState(true);
+  const [profilePhoto,setProfilePhoto]=useState(null);
   const [userLots,setUserLots]=useState("");
   const [extraLogements,setExtraLogements]=useState([]);
 
@@ -426,6 +629,43 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
   // ─── AGENDA STATE ───
   const [agendaTab,setAgendaTab]=useState("docs");
   const [docSearch,setDocSearch]=useState("");
+
+  // ─── SUJETS STATE ───
+  const [sujets,setSujets]=useState(INIT_SUJETS);
+  const [sujetId,setSujetId]=useState(null);
+  const [sujetFilter,setSujetFilter]=useState("all");
+  const [showNewSujet,setShowNewSujet]=useState(false);
+  const [newSujetD,setNewSujetD]=useState({title:"",category:"securite",desc:""});
+  const [sigText,setSigText]=useState("");
+  const [sujetAiIdx,setSujetAiIdx]=useState(null);
+  const [sujetAiLoading,setSujetAiLoading]=useState(false);
+  const [sujetAiResult,setSujetAiResult]=useState(null);
+  const [consultVote,setConsultVote]=useState(null);
+
+  // ─── SIGNALER+ STATE ───
+  const [showSignaler,setShowSignaler]=useState(false);
+  const [sigVoie,setSigVoie]=useState(null); // null | "probleme" | "entraide"
+  const [sigCatSel,setSigCatSel]=useState(null); // selected SIG_CATS category
+  const [sigSitSel,setSigSitSel]=useState(null); // selected situation within category
+  const [sigComment,setSigComment]=useState("");
+  const [sigDone,setSigDone]=useState(null); // {type:"new"|"added"|"urgent_called"|"urgent_alerted", title, count}
+  const [entTplSel,setEntTplSel]=useState(null);
+  const [entFields,setEntFields]=useState({});
+  const [entDone,setEntDone]=useState(false);
+
+  // ─── WHATSAPP IMPORT STATE ───
+  const [showWaImport,setShowWaImport]=useState(false);
+  const [waStep,setWaStep]=useState(0); // 0=upload, 1=analyzing, 2=results
+  const [waResult,setWaResult]=useState(null);
+  const [waImported,setWaImported]=useState(!!waData);
+
+  // Auto-import sujets from onboarding WhatsApp data
+  useEffect(()=>{
+    if(waData&&waData.themes?.length){
+      const newS=waData.themes.map((t,i)=>({id:Date.now()+i,title:t.title,category:t.cat,status:t.count>=3?"escalade":"signale",signalCount:t.count,threshold:3,createdAt:waData.firstDate?.split("/").reverse().join("-")||"2024-01-01",lastSignal:waData.lastDate?.split("/").reverse().join("-")||"2025-01-01",residents:waData.leaders?.map(l=>l.name).slice(0,3)||[],createdBy:"Import WhatsApp",desc:`Sujet détecté dans ${waData.totalMsgs} messages WhatsApp (${t.count} mentions).`,timeline:[{date:new Date().toISOString().split("T")[0],type:"info",author:"Import WhatsApp",text:`Détecté dans l'historique : ${t.count} messages sur ${waData.periodMonths} mois.`}],aiSugg:[{type:"consultation",text:"Lancer une consultation sur ce sujet"},{type:"charte",text:"Formaliser une règle dans la Charte"}],consultation:null}));
+      setSujets(p=>[...newS,...p]);
+    }
+  },[]);
 
   const EVENTS=[
     {id:1,title:"Assemblée Générale Ordinaire",date:"2026-04-15",time:"18:30",type:"ag",loc:"Salle des fêtes",desc:"Budget, travaux façade, élection CS."},
@@ -510,6 +750,69 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
     setReforming(false);setMedStep(2);
   };
 
+  // ─── SUJETS HANDLERS ───
+  const sujetDetail=sujets.find(s=>s.id===sujetId);
+  const filteredSujets=sujets.filter(s=>sujetFilter==="all"||s.status===sujetFilter).sort((a,b)=>{const o={escalade:0,consultation:1,action:2,signale:3,resolu:4};return(o[a.status]??5)-(o[b.status]??5)});
+  const sujetStats={total:sujets.length,escalade:sujets.filter(s=>s.status==="escalade").length,nonResolu:sujets.filter(s=>s.status!=="resolu").length,resolu:sujets.filter(s=>s.status==="resolu").length};
+
+  const addSignal=(sid)=>{if(!sigText.trim())return;setSujets(p=>p.map(s=>{if(s.id!==sid)return s;const nc=s.signalCount+1;const nt=[...s.timeline,{date:new Date().toISOString().split("T")[0],type:"signal",author:userName,text:sigText}];let ns=s.status;if(nc>=s.threshold&&s.status==="signale"){ns="escalade";nt.push({date:new Date().toISOString().split("T")[0],type:"escalade",author:"Système",text:`Seuil de ${s.threshold} signalements atteint — escalade automatique.`})}return{...s,signalCount:nc,status:ns,timeline:nt,lastSignal:new Date().toISOString().split("T")[0],residents:s.residents.includes(userName)?s.residents:[...s.residents,userName]}}));setSigText("")};
+
+  const launchConsult=(sid,sug)=>{setSujets(p=>p.map(s=>{if(s.id!==sid)return s;const q=sug.text.includes("«")?sug.text.split("«")[1].split("»")[0].trim():sug.text;return{...s,status:"consultation",consultation:{question:q,cost:sug.cost||null,votes:{oui:4,non:1,abstention:1},total:isNew?1:14,deadline:"2026-04-18"},timeline:[...s.timeline,{date:new Date().toISOString().split("T")[0],type:"consultation",author:userName,text:`Consultation lancée : "${q}"`}]}}));setSujetAiIdx(null)};
+
+  const genSujetAi=async(sujet,sug)=>{setSujetAiLoading(true);setSujetAiResult(null);const sys=`Tu es un assistant juridique pour copropriété française. Génère un document professionnel en français. Cite les obligations légales.`;const pr=sug.type==="lettre"?`Lettre formelle: "${sujet.title}". ${sujet.desc}. ${sujet.signalCount} signalements depuis ${sujet.createdAt}. Adressée au syndic.`:sug.type==="charte"?`Article de Charte de Vie Commune: "${sujet.title}". ${sujet.desc}. Clair et applicable.`:`Plan d'action: "${sujet.title}". ${sujet.desc}. ${sujet.signalCount} signalements. Coûts et délais.`;const r=await callAI(sys,pr);setSujetAiResult(r||"Document en cours de préparation...");setSujetAiLoading(false)};
+
+  // ─── WHATSAPP IMPORT HANDLER ───
+  const handleWaFile=(e)=>{const f=e.target.files?.[0];if(!f)return;setWaStep(1);const reader=new FileReader();reader.onload=(ev)=>{setTimeout(()=>{try{const parsed=parseWhatsApp(ev.target.result);setWaResult(parsed);setWaStep(2)}catch{setWaResult({totalMsgs:0,participants:[],themes:[],firstDate:"",lastDate:"",leaders:[],periodMonths:0});setWaStep(2)}},1500)};reader.readAsText(f)};
+
+  const importWaSujets=()=>{if(!waResult)return;const newS=waResult.themes.filter(t=>!sujets.some(s=>s.title.toLowerCase().includes(t.title.toLowerCase().split("—")[0].trim()))).map((t,i)=>({id:Date.now()+i,title:t.title,category:t.cat,status:t.count>=3?"escalade":"signale",signalCount:t.count,threshold:3,createdAt:waResult.firstDate?.split("/").reverse().join("-")||"2024-01-01",lastSignal:waResult.lastDate?.split("/").reverse().join("-")||"2025-01-01",residents:waResult.leaders.map(l=>l.name).slice(0,3),createdBy:"Import WhatsApp",desc:`Sujet détecté automatiquement dans ${waResult.totalMsgs} messages WhatsApp (${t.count} mentions).`,timeline:[{date:new Date().toISOString().split("T")[0],type:"info",author:"Import WhatsApp",text:`Détecté dans l'historique WhatsApp : ${t.count} messages sur ${waResult.periodMonths} mois.`}],aiSugg:[{type:"consultation",text:`Lancer une consultation sur ce sujet`},{type:"charte",text:`Formaliser une règle dans la Charte`}],consultation:null}));if(newS.length)setSujets(p=>[...newS,...p]);setWaImported(true);setShowWaImport(false);setWaStep(0);setWaResult(null);setAgendaTab("sujets");setTab("copro")};
+
+  // ─── SIGNALER+ HANDLERS ───
+  const resetSignaler=()=>{setShowSignaler(false);setSigVoie(null);setSigCatSel(null);setSigSitSel(null);setSigComment("");setSigDone(null);setEntTplSel(null);setEntFields({});setEntDone(false)};
+
+  const submitSignal=(cat,sit,comment)=>{
+    const title=`${cat.label} — ${sit.label}`;const txt=comment||sit.label;const today=new Date().toISOString().split("T")[0];
+    const match=sujets.find(s=>s.category===cat.cat&&(s.title.toLowerCase().includes(cat.label.toLowerCase())||cat.label.toLowerCase().includes(s.title.toLowerCase().split("—")[0].trim().toLowerCase())));
+    if(match){
+      const nc=match.signalCount+1;const nt=[...match.timeline,{date:today,type:"signal",author:userName,text:txt}];let ns=match.status;
+      if(nc>=match.threshold&&match.status==="signale"){ns="escalade";nt.push({date:today,type:"escalade",author:"Système",text:`Seuil de ${match.threshold} signalements atteint — escalade automatique.`})}
+      setSujets(p=>p.map(s=>s.id===match.id?{...s,signalCount:nc,status:ns,timeline:nt,lastSignal:today,residents:s.residents.includes(userName)?s.residents:[...s.residents,userName]}:s));
+      return{type:"added",title:match.title,count:nc};
+    }else{
+      const ns={id:Date.now(),title,category:cat.cat,status:"signale",signalCount:1,threshold:3,createdAt:today,lastSignal:today,residents:[userName],createdBy:userName,desc:txt,timeline:[{date:today,type:"signal",author:userName,text:txt}],aiSugg:[{type:"consultation",text:"Lancer une consultation"},{type:"charte",text:"Formaliser dans la Charte"}],consultation:null};
+      setSujets(p=>[ns,...p]);
+      return{type:"new",title,count:1};
+    }
+  };
+
+  const handleUrgentAction=(cat,sit,action)=>{
+    // action: "called" | "alerted"
+    const today=new Date().toISOString().split("T")[0];const title=`${cat.label} — ${sit.label}`;
+    const postText=action==="called"
+      ?`🔴 ${sit.label} signalé(e) par ${userName}. ${sit.fiche.contact} contacté. 📞 ${sit.fiche.tel}`
+      :`🔴 ${sit.label} signalé(e) par ${userName}. Quelqu'un peut-il contacter ${sit.fiche.contact} ? 📞 ${sit.fiche.tel}`;
+    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:postText,cat:"incidents",likedBy:[],role,replies:[]},...p]);
+    // Also create/update sujet
+    const r=submitSignal(cat,sit,postText);
+    setSigDone({type:action==="called"?"urgent_called":"urgent_alerted",title,count:r.count,contact:sit.fiche.contact,tel:sit.fiche.tel});
+  };
+
+  const submitNonUrgent=()=>{
+    const cat=sigCatSel;const sit=sigSitSel;if(!cat||!sit)return;
+    const comment=sigComment.trim()||sit.label;
+    const r=submitSignal(cat,sit,comment);
+    // Also post to feed
+    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:`🟡 ${cat.icon} ${cat.label} — ${sit.label}${sigComment.trim()?" : "+sigComment.trim():""}`,cat:"incidents",likedBy:[],role,replies:[]},...p]);
+    setSigDone(r);
+  };
+
+  const submitEntraide=()=>{
+    const tpl=entTplSel;if(!tpl)return;
+    const details=tpl.fields.map(f=>entFields[f]?`${f}: ${entFields[f]}`:"").filter(Boolean).join(" · ");
+    const text=`${tpl.defaultText}${details?"\n"+details:""}`;
+    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text,cat:"entraide",likedBy:[],role,replies:[]},...p]);
+    setEntDone(true);
+  };
+
   const TABS=[
     {id:"home",icon:"🏠",label:"Accueil",color:T.forest},
     {id:"feed",icon:"💬",label:"Fil",color:T.sky},
@@ -530,7 +833,10 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
       <div style={{background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,padding:"48px 16px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",flexShrink:0,zIndex:20}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
           <button onClick={()=>setShowProfile(true)} style={{background:"none",border:"2px solid rgba(255,255,255,0.3)",cursor:"pointer",padding:0,borderRadius:14,flexShrink:0}}>
-            <div style={{width:36,height:36,borderRadius:12,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:14,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
+            {profilePhoto
+              ?<img src={profilePhoto} style={{width:36,height:36,borderRadius:12,objectFit:"cover"}} alt=""/>
+              :<div style={{width:36,height:36,borderRadius:12,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:14,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
+            }
           </button>
           <button onClick={()=>setShowCoproInfo(true)} style={{background:"none",border:"none",cursor:"pointer",padding:0,minWidth:0,textAlign:"left"}}>
             <h1 style={{fontFamily:FONT,fontSize:15,color:"#fff",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:"none"}}>{activeCopro.name}</h1>
@@ -573,18 +879,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <span style={{fontSize:11,fontWeight:600,color:T.coral}}>Vérifier →</span>
             </div>
           )}
-          {/* Unverified copro banner */}
-          {role==="proprio"&&!verifiedProprio&&(
-            <div onClick={()=>setShowVerifyGate("proprio")} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:`${T.sunriseLight}18`,borderRadius:14,marginBottom:12,cursor:"pointer",border:`1.5px solid ${T.sunriseLight}44`}}>
-              <span style={{fontSize:18}}>🔒</span>
-              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.bark}}>Accès limité</div><div style={{fontSize:11,color:T.textMuted}}>Vérifiez votre statut pour accéder aux documents financiers et votes</div></div>
-              <span style={{fontSize:11,fontWeight:600,color:T.sunrise}}>Vérifier →</span>
-            </div>
-          )}
           {/* Welcome card */}
           <Card style={{background:`linear-gradient(135deg,${T.forest}08,${T.leafLight}22)`,border:`1px solid ${T.leafLight}44`,padding:20}}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-              <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:17,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
+              {profilePhoto
+                ?<img src={profilePhoto} style={{width:44,height:44,borderRadius:14,objectFit:"cover"}} alt=""/>
+                :<div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:17,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
+              }
               <div><h2 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Bonjour {userName.split(" ")[0]} !</h2><p style={{fontSize:12,color:T.textLight,margin:"2px 0 0"}}>{role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}{isCS?" · Conseil syndical":""} · App. {currentApt}</p></div>
             </div>
             {isNew?
@@ -592,6 +893,23 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>Votre copropriété est active avec {activeCopro.members} voisins connectés sur {activeCopro.logements} logements.</p>
             }
           </Card>
+
+          {/* WhatsApp import banner — shown until imported */}
+          {!waImported&&<Card style={{background:"linear-gradient(135deg,#25D36612,#128C7E08)",border:"1.5px solid #25D36630",padding:18,cursor:"pointer"}} onClick={()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:48,height:48,borderRadius:14,background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>💬</div>
+              <div style={{flex:1}}>
+                <h3 style={{margin:0,fontSize:14,fontWeight:700,color:"#128C7E"}}>Vous avez un groupe WhatsApp ?</h3>
+                <p style={{margin:"3px 0 0",fontSize:12,color:T.textLight,lineHeight:1.4}}>Importez-le pour détecter les sujets récurrents et retrouver vos voisins déjà là.</p>
+              </div>
+              <span style={{fontSize:18,color:"#25D366"}}>→</span>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:10}}>
+              {["📢 Sujets détectés","👥 Résidents identifiés","⚡ Warm start"].map((t,i)=>(
+                <span key={i} style={{flex:1,textAlign:"center",padding:"4px 2px",borderRadius:6,background:"rgba(255,255,255,0.7)",fontSize:9,fontWeight:600,color:"#128C7E"}}>{t}</span>
+              ))}
+            </div>
+          </Card>}
 
           {/* Progress card */}
           <Card style={{padding:18}}>
@@ -610,14 +928,16 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"18px 0 10px"}}>Accès rapide</h3>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
             {[
+              {icon:"⚠️",label:"Signaler +",desc:"Problème ou entraide",color:T.coral,tab:"signaler"},
               {icon:"⚖️",label:"Conseiller juridique",desc:"Posez vos questions",color:T.purple,tab:"ai"},
               {icon:"💬",label:"Fil d'actualité",desc:isNew?"En attente de voisins":`${posts.filter(p=>!p.welcome).length} messages`,color:T.sky,tab:"feed"},
               {icon:"📅",label:"Agenda",desc:`${EVENTS.length} événements`,color:T.sunrise,tab:"agenda"},
               {icon:"✉️",label:"Messages",desc:isNew?"—":`${convos.filter(c=>c.unread>0).length} non lu(s)`,color:T.forest,tab:"copro_msg"},
               {icon:"📁",label:"Documents",desc:"Règlement, AG, finances",color:T.bark,tab:"copro_docs"},
-              {icon:"🕊",label:"Médiation",desc:"Résoudre un différend",color:T.coral,tab:"mediation"},
+              {icon:"📋",label:"Sujets",desc:`${sujetStats.nonResolu} non résolu${sujetStats.nonResolu>1?"s":""}`,color:T.amber,tab:"copro_sujets"},
+              {icon:"👤",label:"Mon profil",desc:userName,color:T.forestLight,tab:"profile"},
             ].map((item,i)=>(
-              <button key={i} onClick={()=>{if(item.tab==="copro_msg"){setAgendaTab("msg");setTab("copro")}else if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+              <button key={i} onClick={()=>{if(item.tab==="copro_msg"){setAgendaTab("msg");setTab("copro")}else if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else if(item.tab==="copro_sujets"){setAgendaTab("sujets");setSujetId(null);setTab("copro")}else if(item.tab==="signaler"){setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}else if(item.tab==="profile"){setShowProfile(true)}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
                 <div style={{width:40,height:40,borderRadius:12,background:`${item.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{item.icon}</div>
                 <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{item.label}</div><div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div></div>
               </button>
@@ -668,6 +988,9 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
             <button onClick={()=>setShowCoproInfo(true)} style={{width:"100%",marginTop:8,padding:8,borderRadius:8,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forest}}>Voir toutes les infos →</button>
           </Card>
         </div>}
+
+        {/* Signaler+ FAB — visible on Home and Feed */}
+        {(tab==="home"||tab==="feed")&&<button onClick={()=>{setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}} style={{position:"absolute",bottom:68,right:18,width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.coral},${T.sunrise})`,border:"none",color:"#fff",fontSize:24,cursor:"pointer",boxShadow:`0 4px 16px ${T.coral}44`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.93)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>+</button>}
 
         {/* ═══ FEED TAB ═══ */}
         {tab==="feed"&&<div style={{padding:"14px 14px 70px"}}>
@@ -760,8 +1083,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
             </Card>
           )})}
 
-          {/* Compose FAB */}
-          <button onClick={()=>setShowComposer(true)} style={{position:"absolute",bottom:68,right:18,width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,border:"none",color:"#fff",fontSize:22,cursor:"pointer",boxShadow:`0 4px 16px ${T.forest}44`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}>✏️</button>
+          {/* Compose FAB removed — compose bar at top + Signaler+ FAB replaces */}
 
           {/* Composer */}
           {showComposer&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={()=>{setShowComposer(false);setReforms(null);setSelReform(null)}}>
@@ -831,13 +1153,22 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           </div>
         </div>}
 
-        {/* ═══ COPRO TAB (Docs + Messages) ═══ */}
+        {/* ═══ COPRO TAB (Docs + Messages + Sujets) ═══ */}
         {tab==="copro"&&<div style={{padding:14}}>
           <div style={{display:"flex",gap:6,marginBottom:14}}>
-            {[{id:"docs",l:"📁 Documents"},{id:"msg",l:"✉️ Messages"}].map(t=>(
-              <button key={t.id} onClick={()=>setAgendaTab(t.id)} style={{padding:"8px 14px",borderRadius:10,border:"none",background:agendaTab===t.id?T.forest:"#fff",color:agendaTab===t.id?"#fff":T.text,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:SANS,flex:1,textAlign:"center"}}>{t.l}</button>
+            {[{id:"docs",l:"📁 Docs"},{id:"msg",l:"✉️ Messages"},{id:"sujets",l:"📋 Sujets"}].map(t=>(
+              <button key={t.id} onClick={()=>{setAgendaTab(t.id);if(t.id==="sujets"){setSujetId(null)}}} style={{padding:"8px 14px",borderRadius:10,border:"none",background:agendaTab===t.id?T.forest:"#fff",color:agendaTab===t.id?"#fff":T.text,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS,flex:1,textAlign:"center"}}>{t.l}</button>
             ))}
           </div>
+
+          {/* Unverified copro banner */}
+          {role==="proprio"&&!verifiedProprio&&(
+            <div onClick={()=>setShowVerifyGate("proprio")} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`${T.sunriseLight}18`,borderRadius:12,marginBottom:12,cursor:"pointer",border:`1.5px solid ${T.sunriseLight}44`}}>
+              <span style={{fontSize:16}}>🔒</span>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.bark}}>Accès limité</div><div style={{fontSize:10,color:T.textMuted}}>Vérifiez votre statut pour accéder aux documents financiers et votes</div></div>
+              <span style={{fontSize:10,fontWeight:600,color:T.sunrise}}>Vérifier →</span>
+            </div>
+          )}
 
           {agendaTab==="docs"&&<div>
             <div style={{background:"#fff",borderRadius:12,padding:"3px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:8,boxShadow:"0 1px 6px rgba(0,0,0,0.04)"}}>
@@ -948,6 +1279,133 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
               </div>
             </div>}
           </div>}
+
+          {/* ═══ SUJETS SUB-TAB ═══ */}
+          {agendaTab==="sujets"&&<div>
+            {/* WhatsApp import banner */}
+            <div onClick={()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"linear-gradient(135deg,#25D36612,#25D36606)",borderRadius:14,marginBottom:10,cursor:"pointer",border:"1.5px solid #25D36630"}}>
+              <div style={{width:32,height:32,borderRadius:8,background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>💬</div>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:"#128C7E"}}>Importer un groupe WhatsApp</div><div style={{fontSize:10,color:T.textMuted}}>Détecte automatiquement les sujets récurrents</div></div>
+              <span style={{fontSize:11,color:"#128C7E",fontWeight:600}}>→</span>
+            </div>
+            {/* Stats */}
+            <div style={{display:"flex",gap:5,marginBottom:8}}>
+              {[{v:sujetStats.total,l:"Total",c:T.text},{v:sujetStats.escalade,l:"Escalade",c:T.amber},{v:sujetStats.nonResolu,l:"Non résolus",c:T.coral},{v:sujetStats.resolu,l:"Résolus",c:T.green}].map((s,i)=>(
+                <div key={i} style={{flex:1,textAlign:"center",padding:"6px 2px",background:"#fff",borderRadius:10,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                  <div style={{fontSize:16,fontWeight:700,color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:8,color:T.textMuted,fontWeight:600}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {/* Filters */}
+            <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:3,marginBottom:8}}>
+              {[{id:"all",l:"Tous"},...Object.entries(SUJET_STATUS).map(([id,v])=>({id,l:v.label}))].map(f=>(
+                <button key={f.id} onClick={()=>setSujetFilter(f.id)} style={{padding:"4px 9px",borderRadius:16,border:"none",whiteSpace:"nowrap",background:sujetFilter===f.id?T.forest:"#fff",color:sujetFilter===f.id?"#fff":T.textLight,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,boxShadow:sujetFilter===f.id?"none":"0 1px 3px rgba(0,0,0,0.06)"}}>{f.l}</button>
+              ))}
+            </div>
+
+            {/* ── DETAIL VIEW ── */}
+            {sujetId&&sujetDetail?<div>
+              <button onClick={()=>{setSujetId(null);setSujetAiIdx(null);setSujetAiResult(null);setConsultVote(null)}} style={{background:"none",border:"none",fontSize:12,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:3}}>← Retour</button>
+              {(()=>{const st=SUJET_STATUS[sujetDetail.status];const cat=SUJET_CAT[sujetDetail.category];return(<div>
+                <Card style={{borderLeft:`4px solid ${st.color}`,padding:14}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5}}>
+                    <span style={{fontSize:13}}>{cat.icon}</span>
+                    <span style={{fontSize:9,fontWeight:700,color:cat.color,textTransform:"uppercase"}}>{cat.label}</span>
+                    <div style={{flex:1}}/>
+                    <span style={{padding:"2px 8px",borderRadius:16,fontSize:9,fontWeight:700,background:st.bg,color:st.color,display:"flex",alignItems:"center",gap:2}}>{st.icon} {st.label}</span>
+                  </div>
+                  <h3 style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:T.text,fontFamily:FONT}}>{sujetDetail.title}</h3>
+                  <p style={{fontSize:11,color:T.textLight,lineHeight:1.4,margin:"0 0 8px"}}>{sujetDetail.desc}</p>
+                  <div style={{display:"flex",gap:6}}>
+                    {[{v:sujetDetail.signalCount,l:"Signalements",i:"📢",c:sujetDetail.signalCount>=sujetDetail.threshold?T.red:T.sky},{v:sujetDetail.residents.length,l:"Résidents",i:"👥",c:T.forest},{v:Math.ceil((new Date()-new Date(sujetDetail.createdAt))/(86400000)),l:"Jours",i:"📅",c:T.bark}].map((m,i)=>(
+                      <div key={i} style={{flex:1,background:T.sand,borderRadius:8,padding:"6px 2px",textAlign:"center"}}><span style={{fontSize:11}}>{m.i}</span><div style={{fontSize:15,fontWeight:700,color:m.c}}>{m.v}</div><div style={{fontSize:7,color:T.textMuted,fontWeight:600}}>{m.l}</div></div>
+                    ))}
+                  </div>
+                </Card>
+                {/* Consultation */}
+                {sujetDetail.consultation&&<Card style={{border:`2px solid ${T.purple}30`,background:`${T.purple}06`,padding:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:16}}>🗳</span><div><h4 style={{margin:0,fontSize:12,fontWeight:700,color:T.purple}}>Consultation en cours</h4><p style={{margin:0,fontSize:9,color:T.textMuted}}>Jusqu'au {sujetDetail.consultation.deadline}</p></div></div>
+                  <p style={{fontSize:12,fontWeight:600,color:T.text,margin:"0 0 8px"}}>« {sujetDetail.consultation.question} »</p>
+                  {sujetDetail.consultation.cost&&<p style={{fontSize:10,color:T.bark,margin:"0 0 8px",background:`${T.sunriseLight}33`,padding:"4px 6px",borderRadius:4}}>💰 {sujetDetail.consultation.cost}</p>}
+                  {[{l:"Pour",c:sujetDetail.consultation.votes.oui,color:T.green},{l:"Contre",c:sujetDetail.consultation.votes.non,color:T.coral},{l:"Abstention",c:sujetDetail.consultation.votes.abstention,color:T.textMuted}].map((v,i)=>(
+                    <div key={i} style={{marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between",fontSize:9,marginBottom:1}}><span style={{fontWeight:600,color:v.color}}>{v.l}</span><span style={{color:T.textMuted}}>{v.c}/{sujetDetail.consultation.total}</span></div><div style={{height:5,borderRadius:3,background:T.sand}}><div style={{height:"100%",borderRadius:3,width:`${(v.c/sujetDetail.consultation.total)*100}%`,background:v.color}}/></div></div>
+                  ))}
+                  {!consultVote?<div style={{display:"flex",gap:5,marginTop:6}}>{[{l:"Pour",c:T.green,v:"oui"},{l:"Contre",c:T.coral,v:"non"},{l:"Abstention",c:T.textMuted,v:"abs"}].map(b=><button key={b.v} onClick={()=>setConsultVote(b.v)} style={{flex:1,padding:"6px",borderRadius:8,border:`1.5px solid ${b.c}40`,background:`${b.c}08`,color:b.c,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:SANS}}>{b.l}</button>)}</div>
+                  :<div style={{padding:"6px 10px",borderRadius:8,background:`${T.green}12`,textAlign:"center",marginTop:6}}><span style={{fontSize:11,fontWeight:600,color:T.green}}>✓ Vote enregistré</span></div>}
+                </Card>}
+                {/* Resolved */}
+                {sujetDetail.status==="resolu"&&<Card style={{background:T.greenLight,border:`1.5px solid ${T.green}30`,padding:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:20}}>✅</span><div><h4 style={{margin:0,fontSize:12,fontWeight:700,color:T.green}}>Résolu</h4><p style={{margin:0,fontSize:10,color:T.textLight}}>Le {sujetDetail.resolvedAt}</p></div></div></Card>}
+                {/* AI Suggestions */}
+                {sujetDetail.status!=="resolu"&&sujetDetail.aiSugg.length>0&&<Card style={{border:`1px solid ${T.forestLight}30`,background:`linear-gradient(135deg,${T.forest}04,${T.leafLight}10)`,padding:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><div style={{width:24,height:24,borderRadius:6,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:12}}>🤖</span></div><h4 style={{margin:0,fontSize:11,fontWeight:700,color:T.forest}}>Actions IA suggérées</h4></div>
+                  {sujetDetail.aiSugg.map((sug,i)=>(
+                    <div key={i} style={{marginBottom:5}}>
+                      <button onClick={()=>{setSujetAiIdx(sujetAiIdx===i?null:i);setSujetAiResult(null)}} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:sujetAiIdx===i?`1.5px solid ${T.forest}`:`1px solid ${T.sandDark}`,background:sujetAiIdx===i?`${T.leafLight}18`:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:12}}>{sug.type==="consultation"?"🗳":sug.type==="lettre"?"✉️":sug.type==="charte"?"📜":"💡"}</span>
+                        <span style={{flex:1,fontSize:10,fontWeight:500,color:T.text,lineHeight:1.3}}>{sug.text}</span>
+                        <span style={{fontSize:10,color:T.forestLight}}>{sujetAiIdx===i?"▲":"▼"}</span>
+                      </button>
+                      {sujetAiIdx===i&&<div style={{padding:10,background:"#fff",borderRadius:"0 0 8px 8px",borderTop:`1px solid ${T.sand}`}}>
+                        {sug.type==="consultation"?<div>
+                          <p style={{fontSize:10,color:T.textLight,margin:"0 0 6px"}}>Consultation de 14 jours.</p>
+                          {sug.cost&&<p style={{fontSize:10,color:T.bark,margin:"0 0 6px"}}>💰 {sug.cost}</p>}
+                          <Btn full small onClick={()=>launchConsult(sujetDetail.id,sug)} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>🗳 Lancer</Btn>
+                        </div>:<div>
+                          <p style={{fontSize:10,color:T.textLight,margin:"0 0 6px"}}>{sug.type==="lettre"?"Courrier professionnel avec obligations légales.":sug.type==="charte"?"Article de Charte de Vie Commune.":"Plan d'action structuré."}</p>
+                          <Btn full small disabled={sujetAiLoading} onClick={()=>genSujetAi(sujetDetail,sug)}>{sujetAiLoading?"Génération...":"✨ Générer"}</Btn>
+                          {sujetAiResult&&<div style={{marginTop:6,padding:10,background:`${T.leafLight}12`,borderRadius:8,border:`1px solid ${T.leafLight}44`}}>
+                            <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><span style={{fontSize:10}}>📄</span><span style={{fontSize:10,fontWeight:700,color:T.forest}}>Document généré</span></div>
+                            <pre style={{fontSize:9,color:T.text,lineHeight:1.4,margin:0,whiteSpace:"pre-wrap",fontFamily:SANS}}>{sujetAiResult}</pre>
+                            <div style={{display:"flex",gap:4,marginTop:6}}>
+                              <button style={{flex:1,padding:"5px",borderRadius:6,border:`1px solid ${T.forest}`,background:"transparent",color:T.forest,fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>📋 Copier</button>
+                              <button style={{flex:1,padding:"5px",borderRadius:6,border:"none",background:T.forest,color:"#fff",fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>📤 Partager</button>
+                            </div>
+                          </div>}
+                        </div>}
+                      </div>}
+                    </div>
+                  ))}
+                </Card>}
+                {/* Timeline */}
+                <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"10px 0 6px"}}>Historique</h4>
+                <div style={{position:"relative",paddingLeft:16}}>
+                  <div style={{position:"absolute",left:5,top:4,bottom:4,width:2,background:T.sandDark,borderRadius:1}}/>
+                  {sujetDetail.timeline.map((ev,i)=>{const tc={signal:{c:T.sky,i:"📢"},escalade:{c:T.amber,i:"⚡"},action:{c:T.forest,i:"⚙️"},consultation:{c:T.purple,i:"🗳"},resolu:{c:T.green,i:"✅"},info:{c:T.bark,i:"💬"}}[ev.type]||{c:T.textMuted,i:"•"};return(
+                    <div key={i} style={{position:"relative",marginBottom:8,paddingLeft:10}}>
+                      <div style={{position:"absolute",left:-12,top:4,width:10,height:10,borderRadius:"50%",background:`${tc.c}18`,border:`2px solid ${tc.c}`,zIndex:1}}/>
+                      <div style={{background:"#fff",borderRadius:10,padding:"6px 10px",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:9,fontWeight:600,color:tc.c}}>{tc.i} {ev.author}</span><span style={{fontSize:8,color:T.textMuted}}>{ev.date}</span></div>
+                        <p style={{fontSize:10,color:T.text,lineHeight:1.3,margin:0}}>{ev.text}</p>
+                      </div>
+                    </div>)})}
+                </div>
+                {/* Add signal */}
+                {sujetDetail.status!=="resolu"&&<Card style={{marginTop:4,padding:10}}>
+                  <h4 style={{margin:"0 0 4px",fontSize:11,fontWeight:600,color:T.text}}>Ajouter un signalement</h4>
+                  <textarea value={sigText} onChange={e=>setSigText(e.target.value)} placeholder="Décrivez ce que vous avez constaté..." rows={2} style={{width:"100%",border:`1.5px solid ${T.sandDark}`,borderRadius:8,padding:7,fontSize:11,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+                  <Btn full small disabled={!sigText.trim()} onClick={()=>addSignal(sujetDetail.id)} style={{marginTop:4}}>📢 Signaler</Btn>
+                </Card>}
+              </div>)})()}
+            </div>:
+
+            /* ── LIST VIEW ── */
+            <div>
+              {filteredSujets.length===0&&<div style={{textAlign:"center",padding:20}}><div style={{fontSize:36,marginBottom:4}}>📋</div><p style={{fontSize:12,color:T.textMuted}}>Aucun sujet</p></div>}
+              {filteredSujets.map(s=>{const st=SUJET_STATUS[s.status];const cat=SUJET_CAT[s.category];return(
+                <div key={s.id} onClick={()=>{setSujetId(s.id);setSujetAiIdx(null);setSujetAiResult(null);setConsultVote(null)}} style={{background:"#fff",borderRadius:14,padding:12,marginBottom:7,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",cursor:"pointer",borderLeft:`3px solid ${st.color}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+                    <span style={{fontSize:11}}>{cat.icon}</span><span style={{fontSize:8,fontWeight:700,color:cat.color,textTransform:"uppercase"}}>{cat.label}</span>
+                    <div style={{flex:1}}/><span style={{padding:"2px 7px",borderRadius:12,fontSize:8,fontWeight:700,background:st.bg,color:st.color,display:"flex",alignItems:"center",gap:2}}>{st.icon} {st.label}</span>
+                  </div>
+                  <h4 style={{margin:"0 0 3px",fontSize:12,fontWeight:600,color:T.text}}>{s.title}</h4>
+                  <p style={{fontSize:10,color:T.textLight,lineHeight:1.3,margin:"0 0 6px",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{s.desc}</p>
+                  <div style={{display:"flex",alignItems:"center",gap:8,fontSize:9,color:T.textMuted}}><span>📢 {s.signalCount}</span><span>👥 {s.residents.length}</span><div style={{flex:1}}/><span>{s.status==="resolu"?`Résolu ${s.resolvedAt}`:s.lastSignal}</span></div>
+                  {s.status!=="resolu"&&<div style={{marginTop:4}}><div style={{height:3,borderRadius:2,background:T.sand}}><div style={{height:"100%",borderRadius:2,width:`${Math.min(100,(s.signalCount/s.threshold)*100)}%`,background:s.signalCount>=s.threshold?`linear-gradient(90deg,${T.amber},${T.red})`:`linear-gradient(90deg,${T.sky},${T.forestLight})`}}/></div><div style={{fontSize:7,color:T.textMuted,marginTop:1}}>{s.signalCount>=s.threshold?"Seuil dépassé":`${s.signalCount}/${s.threshold}`}</div></div>}
+                </div>)})}
+              <button onClick={()=>setShowNewSujet(true)} style={{width:"100%",padding:10,borderRadius:12,border:`2px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight,marginTop:3}}>+ Signaler un sujet</button>
+            </div>}
+          </div>}
         </div>}
 
         {/* ═══ MEDIATION (inside messages) ═══ */}
@@ -1016,6 +1474,267 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
 
       {showInvite&&<InviteKit copro={copro||{label:"Ma copropriété"}} userName={userName} onClose={()=>setShowInvite(false)}/>}
 
+      {/* ═══ NEW SUJET MODAL ═══ */}
+      {showNewSujet&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowNewSujet(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"80vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 16px"}}/>
+          <h3 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:"0 0 4px"}}>Nouveau sujet</h3>
+          <p style={{fontSize:12,color:T.textMuted,margin:"0 0 14px"}}>Signalez un problème récurrent</p>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Catégorie</label>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
+              {Object.entries(SUJET_CAT).map(([id,c])=>(
+                <button key={id} onClick={()=>setNewSujetD(p=>({...p,category:id}))} style={{padding:"5px 9px",borderRadius:16,border:newSujetD.category===id?`2px solid ${c.color}`:`1px solid ${T.sandDark}`,background:newSujetD.category===id?`${c.color}12`:"#fff",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,color:newSujetD.category===id?c.color:T.textLight,display:"flex",alignItems:"center",gap:3}}>{c.icon} {c.label}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Titre</label>
+            <input value={newSujetD.title} onChange={e=>setNewSujetD(p=>({...p,title:e.target.value}))} placeholder="Ex: Fuite d'eau au sous-sol" style={{width:"100%",marginTop:4,padding:10,borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Description</label>
+            <textarea value={newSujetD.desc} onChange={e=>setNewSujetD(p=>({...p,desc:e.target.value}))} placeholder="Décrivez le problème..." rows={3} style={{width:"100%",marginTop:4,padding:10,borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,resize:"none",outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+          </div>
+          <Btn full disabled={!newSujetD.title.trim()} onClick={()=>{setSujets(p=>[{id:Date.now(),title:newSujetD.title,category:newSujetD.category,status:"signale",signalCount:1,threshold:3,createdAt:new Date().toISOString().split("T")[0],lastSignal:new Date().toISOString().split("T")[0],residents:[userName],createdBy:userName,desc:newSujetD.desc||newSujetD.title,timeline:[{date:new Date().toISOString().split("T")[0],type:"signal",author:userName,text:newSujetD.desc||newSujetD.title}],aiSugg:[],consultation:null},...p]);setShowNewSujet(false);setNewSujetD({title:"",category:"securite",desc:""});setAgendaTab("sujets");setTab("copro")}}>📢 Créer le sujet</Btn>
+        </div>
+      </div>}
+
+      {/* ═══ WHATSAPP IMPORT MODAL ═══ */}
+      {showWaImport&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowWaImport(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 16px"}}/>
+          {waStep===0&&<div>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{width:56,height:56,borderRadius:16,background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 10px"}}>💬</div>
+              <h3 style={{fontFamily:FONT,fontSize:20,color:T.forest,margin:"0 0 4px"}}>Import WhatsApp</h3>
+              <p style={{fontSize:13,color:T.textLight,lineHeight:1.5,margin:0}}>Importez l'historique de votre groupe WhatsApp pour détecter automatiquement les sujets récurrents et pré-peupler votre copropriété.</p>
+            </div>
+            <div style={{background:`${T.leafLight}18`,borderRadius:12,padding:12,marginBottom:14}}>
+              <h4 style={{fontSize:12,fontWeight:600,color:T.forest,margin:"0 0 6px"}}>Ce que l'IA va extraire :</h4>
+              {["Participants et rôles (propriétaire, locataire, étage)","Sujets récurrents avec fréquence de mention","Leaders communautaires (qui porte la charge)","Épisodes d'entraide entre voisins"].map((t,i)=><p key={i} style={{fontSize:11,color:T.text,margin:"3px 0",lineHeight:1.4}}>▸ {t}</p>)}
+            </div>
+            <div style={{background:`${T.sunriseLight}22`,borderRadius:12,padding:12,marginBottom:14}}>
+              <p style={{fontSize:11,color:T.bark,margin:0,lineHeight:1.5}}>🔒 <strong>Privacy-by-design</strong> — Seuls les insights structurés sont conservés. Les messages originaux ne sont jamais stockés. Chaque résident peut supprimer ses données.</p>
+            </div>
+            <label style={{display:"block",width:"100%",padding:14,borderRadius:14,border:`2px dashed ${T.forestLight}`,background:`${T.forest}06`,cursor:"pointer",textAlign:"center",fontFamily:SANS}}>
+              <input type="file" accept=".txt" onChange={handleWaFile} style={{display:"none"}}/>
+              <span style={{fontSize:24,display:"block",marginBottom:4}}>📎</span>
+              <span style={{fontSize:13,fontWeight:600,color:T.forest}}>Choisir le fichier .txt</span>
+              <span style={{fontSize:11,color:T.textMuted,display:"block",marginTop:2}}>Export WhatsApp → Plus → Exporter la discussion</span>
+            </label>
+          </div>}
+          {waStep===1&&<div style={{textAlign:"center",padding:"30px 0"}}>
+            <div style={{width:50,height:50,border:`3px solid ${T.sandDark}`,borderTopColor:"#25D366",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 16px"}}/>
+            <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:"0 0 6px"}}>Analyse en cours...</h3>
+            <p style={{fontSize:12,color:T.textMuted}}>L'IA parcourt vos messages</p>
+          </div>}
+          {waStep===2&&waResult&&<div>
+            <div style={{textAlign:"center",marginBottom:14}}>
+              <div style={{fontSize:36,marginBottom:6}}>✨</div>
+              <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:"0 0 4px"}}>Analyse terminée</h3>
+              <p style={{fontSize:12,color:T.textLight}}>{waResult.totalMsgs} messages · {waResult.participants.length} participants · {waResult.periodMonths} mois</p>
+            </div>
+            {/* Participants */}
+            <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 6px"}}>👥 Résidents identifiés</h4>
+            <div style={{marginBottom:12}}>
+              {waResult.participants.slice(0,6).map((p,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
+                  <Av name={p.name} size={28}/>
+                  <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>{p.name}</div><div style={{fontSize:9,color:T.textMuted}}>{p.floor||"—"} · {p.role} · {p.msgCount} msg ({p.pct}%)</div></div>
+                  {p.pct>=20&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`${T.sunrise}18`,color:T.sunrise}}>Leader</span>}
+                </div>
+              ))}
+            </div>
+            {/* Themes */}
+            {waResult.themes.length>0&&<div>
+              <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 6px"}}>📋 Sujets détectés</h4>
+              {waResult.themes.map((t,i)=>{const cat=SUJET_CAT[t.cat];return(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,borderLeft:`3px solid ${cat?.color||T.sky}`,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
+                  <span style={{fontSize:14}}>{cat?.icon||"📌"}</span>
+                  <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>{t.title}</div><div style={{fontSize:9,color:T.textMuted}}>{t.count} mentions</div></div>
+                  {t.count>=3&&<span style={{padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:T.amberLight,color:T.amber}}>⚡ Escalade</span>}
+                </div>
+              )})}
+            </div>}
+            <div style={{display:"flex",gap:8,marginTop:14}}>
+              <Btn full onClick={importWaSujets} style={{background:`linear-gradient(135deg,#25D366,${T.forest})`}}>✅ Importer {waResult.themes.length} sujet{waResult.themes.length>1?"s":""}</Btn>
+            </div>
+            <button onClick={()=>{setShowWaImport(false);setWaStep(0)}} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,color:T.textMuted,textAlign:"center"}}>Fermer sans importer</button>
+          </div>}
+        </div>
+      </div>}
+
+      {/* ═══ SIGNALER+ MODAL ═══ */}
+      {showSignaler&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={resetSignaler}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"88vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
+
+          {/* ── Confirmation screens ── */}
+          {sigDone?<div style={{textAlign:"center",padding:"16px 0"}}>
+            <div style={{fontSize:44,marginBottom:6}}>{sigDone.type==="urgent_called"?"📞":sigDone.type==="urgent_alerted"?"📢":sigDone.type==="added"?"📊":"🆕"}</div>
+            <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 4px"}}>{sigDone.type==="urgent_called"?"Contact effectué !":sigDone.type==="urgent_alerted"?"Voisins alertés !":sigDone.type==="added"?"Signalement ajouté !":"Nouveau sujet créé !"}</h3>
+            <p style={{fontSize:13,color:T.textLight,lineHeight:1.4,margin:"0 0 4px"}}>{sigDone.title}</p>
+            {(sigDone.type==="urgent_called"||sigDone.type==="urgent_alerted")&&<p style={{fontSize:12,color:T.coral,fontWeight:600,margin:"0 0 4px"}}>Publié dans le fil d'activité</p>}
+            {sigDone.type==="added"&&<p style={{fontSize:14,fontWeight:700,color:T.amber,margin:"0 0 10px"}}>C'est le {sigDone.count}ème signalement</p>}
+            {sigDone.type==="new"&&<p style={{fontSize:11,color:T.textMuted,margin:"0 0 10px"}}>Invitez vos voisins à signaler aussi.</p>}
+            <div style={{display:"flex",gap:8}}>
+              <Btn full small onClick={()=>{resetSignaler();setAgendaTab("sujets");setTab("copro")}}>📋 Sujets</Btn>
+              <Btn full small primary={false} onClick={resetSignaler}>Fermer</Btn>
+            </div>
+          </div>
+
+          :entDone?<div style={{textAlign:"center",padding:"16px 0"}}>
+            <div style={{fontSize:44,marginBottom:6}}>✅</div>
+            <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 4px"}}>Demande publiée !</h3>
+            <p style={{fontSize:12,color:T.textLight,margin:"0 0 10px"}}>Visible dans le fil. Vos voisins peuvent répondre.</p>
+            <div style={{display:"flex",gap:8}}>
+              <Btn full small onClick={()=>{resetSignaler();setTab("feed")}}>💬 Voir le fil</Btn>
+              <Btn full small primary={false} onClick={resetSignaler}>Fermer</Btn>
+            </div>
+          </div>
+
+          /* ── Voie selection ── */
+          :!sigVoie?<div>
+            <h3 style={{fontFamily:FONT,fontSize:20,color:T.forest,margin:"0 0 4px",textAlign:"center"}}>Signaler +</h3>
+            <p style={{fontSize:12,color:T.textMuted,margin:"0 0 14px",textAlign:"center"}}>Que souhaitez-vous faire ?</p>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setSigVoie("probleme")} style={{flex:1,padding:18,borderRadius:16,border:`2px solid ${T.coral}30`,background:`${T.coral}06`,cursor:"pointer",textAlign:"center",fontFamily:SANS}}>
+                <div style={{fontSize:32,marginBottom:6}}>⚠️</div>
+                <div style={{fontSize:13,fontWeight:700,color:T.coral}}>Un problème</div>
+                <div style={{fontSize:10,color:T.textMuted,marginTop:2,lineHeight:1.3}}>Urgent ou récurrent</div>
+              </button>
+              <button onClick={()=>setSigVoie("entraide")} style={{flex:1,padding:18,borderRadius:16,border:`2px solid ${T.sky}30`,background:`${T.sky}06`,cursor:"pointer",textAlign:"center",fontFamily:SANS}}>
+                <div style={{fontSize:32,marginBottom:6}}>🤝</div>
+                <div style={{fontSize:13,fontWeight:700,color:T.sky}}>De l'aide</div>
+                <div style={{fontSize:10,color:T.textMuted,marginTop:2,lineHeight:1.3}}>Demander ou proposer</div>
+              </button>
+            </div>
+          </div>
+
+          /* ── Problème flow ── */
+          :sigVoie==="probleme"?<div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <button onClick={()=>{if(sigSitSel){setSigSitSel(null)}else if(sigCatSel){setSigCatSel(null)}else{setSigVoie(null)}}} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600}}>←</button>
+              <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:0}}>Signaler un problème</h3>
+            </div>
+
+            {/* Step 1: Category grid */}
+            {!sigCatSel?<div>
+              <p style={{fontSize:12,color:T.textMuted,margin:"0 0 8px"}}>Quel type de problème ?</p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                {SIG_CATS.map(c=>{
+                  const hasUrg=c.sits.some(s=>s.urg);
+                  return(
+                  <button key={c.id} onClick={()=>setSigCatSel(c)} style={{padding:"14px 6px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",textAlign:"center",fontFamily:SANS,boxShadow:"0 1px 6px rgba(0,0,0,0.05)",display:"flex",flexDirection:"column",alignItems:"center",gap:4,position:"relative",transition:"transform 0.1s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.95)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+                    {hasUrg&&<div style={{position:"absolute",top:6,right:6,width:8,height:8,borderRadius:4,background:T.red}}/>}
+                    <span style={{fontSize:24}}>{c.icon}</span>
+                    <span style={{fontSize:10,fontWeight:600,color:T.text,lineHeight:1.2}}>{c.label}</span>
+                  </button>)
+                })}
+              </div>
+            </div>
+
+            /* Step 2: Situation selection */
+            :!sigSitSel?<div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,background:`${SUJET_CAT[sigCatSel.cat]?.color||T.sky}10`,borderRadius:10,padding:"8px 12px"}}>
+                <span style={{fontSize:18}}>{sigCatSel.icon}</span>
+                <span style={{fontSize:13,fontWeight:600,color:T.text}}>{sigCatSel.label}</span>
+              </div>
+              <p style={{fontSize:12,color:T.textMuted,margin:"0 0 8px"}}>Que se passe-t-il ?</p>
+              {sigCatSel.sits.map(s=>(
+                <button key={s.id} onClick={()=>setSigSitSel(s)} style={{width:"100%",padding:"11px 14px",borderRadius:12,border:"none",background:"#fff",cursor:"pointer",marginBottom:5,display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.04)",textAlign:"left"}}>
+                  <div style={{width:10,height:10,borderRadius:5,background:s.urg?T.red:T.amber,flexShrink:0}}/>
+                  <span style={{flex:1,fontSize:12,fontWeight:500,color:T.text}}>{s.label}</span>
+                  {s.urg&&<span style={{padding:"2px 7px",borderRadius:6,fontSize:9,fontWeight:700,background:`${T.red}15`,color:T.red}}>URGENT</span>}
+                </button>
+              ))}
+            </div>
+
+            /* Step 3a: Fiche réflexe (urgent) */
+            :sigSitSel.urg?<div>
+              <div style={{background:`${T.red}08`,border:`2px solid ${T.red}25`,borderRadius:16,padding:16,marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <div style={{width:10,height:10,borderRadius:5,background:T.red}}/>
+                  <h4 style={{margin:0,fontSize:14,fontWeight:700,color:T.red}}>{sigSitSel.label}</h4>
+                </div>
+                {/* Contact */}
+                <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:10,display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{width:42,height:42,borderRadius:12,background:`${T.forest}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📞</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.text}}>{sigSitSel.fiche.contact}</div>
+                    <div style={{fontSize:15,fontWeight:700,color:T.forest,marginTop:1}}>{sigSitSel.fiche.tel}</div>
+                  </div>
+                </div>
+                {/* Steps */}
+                <div style={{marginBottom:10}}>
+                  {sigSitSel.fiche.steps.map((step,i)=>(
+                    <div key={i} style={{display:"flex",gap:8,marginBottom:6,alignItems:"flex-start"}}>
+                      <div style={{width:22,height:22,borderRadius:11,background:T.forest,color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
+                      <p style={{margin:0,fontSize:12,color:T.text,lineHeight:1.4,paddingTop:2}}>{step}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Conditional */}
+                {sigSitSel.fiche.cond&&<div style={{background:`${T.amber}12`,borderRadius:10,padding:"8px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:14}}>⚠️</span>
+                  <p style={{margin:0,fontSize:11,color:T.bark,fontWeight:600,lineHeight:1.3}}>{sigSitSel.fiche.cond}</p>
+                </div>}
+              </div>
+              {/* Action buttons */}
+              <div style={{display:"flex",gap:8}}>
+                <Btn full small onClick={()=>handleUrgentAction(sigCatSel,sigSitSel,"called")} style={{background:`linear-gradient(135deg,${T.forest},${T.forestLight})`}}>📞 J'appelle</Btn>
+                <Btn full small onClick={()=>handleUrgentAction(sigCatSel,sigSitSel,"alerted")} style={{background:`linear-gradient(135deg,${T.coral},${T.sunrise})`}}>📢 Alerter les voisins</Btn>
+              </div>
+            </div>
+
+            /* Step 3b: Comment + submit (non-urgent) */
+            :<div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,background:`${T.amber}10`,borderRadius:10,padding:"8px 12px"}}>
+                <div style={{width:10,height:10,borderRadius:5,background:T.amber}}/>
+                <span style={{fontSize:12,fontWeight:600,color:T.text}}>{sigCatSel.icon} {sigCatSel.label} — {sigSitSel.label}</span>
+              </div>
+              <textarea value={sigComment} onChange={e=>setSigComment(e.target.value)} placeholder="Commentaire optionnel (lieu, heure, détail...)" rows={2} style={{width:"100%",border:`1.5px solid ${T.sandDark}`,borderRadius:10,padding:10,fontSize:12,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box",marginBottom:10}}/>
+              <Btn full onClick={submitNonUrgent} style={{background:`linear-gradient(135deg,${T.amber},${T.sunrise})`}}>📢 Signaler</Btn>
+            </div>}
+          </div>
+
+          /* ── Entraide flow ── */
+          :<div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <button onClick={()=>{if(entTplSel){setEntTplSel(null);setEntFields({})}else{setSigVoie(null)}}} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600}}>←</button>
+              <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:0}}>Demander ou proposer de l'aide</h3>
+            </div>
+            {!entTplSel?<div>
+              <p style={{fontSize:12,color:T.textMuted,margin:"0 0 8px"}}>De quoi avez-vous besoin ?</p>
+              {ENTRAIDE_TPL.map(t=>(
+                <button key={t.id} onClick={()=>setEntTplSel(t)} style={{width:"100%",padding:"11px 14px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",marginBottom:5,display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.04)",textAlign:"left"}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:`${T.sky}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{t.icon}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:600,color:T.text}}>{t.label}</div>
+                    <div style={{fontSize:10,color:T.textMuted,marginTop:1}}>{t.defaultText}</div>
+                  </div>
+                  <span style={{fontSize:12,color:T.textMuted}}>→</span>
+                </button>
+              ))}
+            </div>
+            :<div>
+              <div style={{background:`${T.sky}10`,borderRadius:10,padding:"8px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:16}}>{entTplSel.icon}</span>
+                <span style={{fontSize:12,fontWeight:600,color:T.text}}>{entTplSel.label}</span>
+              </div>
+              {entTplSel.fields.map(f=>(
+                <div key={f} style={{marginBottom:7}}>
+                  <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5}}>{f}</label>
+                  <input value={entFields[f]||""} onChange={e=>setEntFields(p=>({...p,[f]:e.target.value}))} placeholder={f} style={{width:"100%",marginTop:3,padding:9,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+                </div>
+              ))}
+              <Btn full onClick={submitEntraide} style={{background:`linear-gradient(135deg,${T.sky},${T.forest})`}}>🤝 Publier</Btn>
+            </div>}
+          </div>}
+        </div>
+      </div>}
+
       {/* ═══ PROFILE MODAL ═══ */}
       {showProfile&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
@@ -1024,8 +1743,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew}) {
           {/* Profile header */}
           <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:24}}>
             <div style={{position:"relative"}}>
-              <div style={{width:60,height:60,borderRadius:18,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:22,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
-              {(verifiedProprio||verifiedSyndic)&&<div style={{position:"absolute",bottom:-2,right:-2,width:20,height:20,borderRadius:10,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff"}}>✓</div>}
+              <label style={{cursor:"pointer",display:"block"}}>
+                {profilePhoto
+                  ?<img src={profilePhoto} style={{width:60,height:60,borderRadius:18,objectFit:"cover"}} alt=""/>
+                  :<div style={{width:60,height:60,borderRadius:18,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:22,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
+                }
+                <input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>setProfilePhoto(ev.target.result);r.readAsDataURL(f)}}} style={{display:"none"}}/>
+                <div style={{position:"absolute",bottom:-2,right:-2,width:22,height:22,borderRadius:11,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff"}}>📷</div>
+              </label>
+              {(verifiedProprio||verifiedSyndic)&&<div style={{position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:9,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff"}}>✓</div>}
             </div>
             <div style={{flex:1}}>
               <h3 style={{fontFamily:FONT,fontSize:20,color:T.text,margin:"0 0 2px"}}>{userName}</h3>
@@ -1375,16 +2101,18 @@ export default function VoisinSereins() {
   const [isNew,setIsNew]=useState(false);
   const [userRole,setUserRole]=useState("proprio");
   const [userIsCS,setUserIsCS]=useState(false);
+  const [waData,setWaData]=useState(null); // WhatsApp parsed data from onboarding
 
   return (
     <div style={{maxWidth:420,margin:"0 auto",height:"100dvh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
       {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")}/>}
       {screen==="address"&&<OnboardingAddress
         onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
-        onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("role")}}
+        onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
       />}
+      {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
       {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
-      {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew}/>}
+      {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData}/>}
     </div>
   );
 }
