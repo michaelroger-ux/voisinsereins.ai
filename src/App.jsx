@@ -71,6 +71,7 @@ const SIG_CATS=[
     {id:"ampoule",label:"Ampoule grillée",urg:false},
     {id:"sonnette",label:"Sonnette / Interphone HS",urg:false},
     {id:"chauffage",label:"Chauffage / Ventilation",urg:false},
+    {id:"internet",label:"Internet / Télécoms",urg:false},
   ]},
   {id:"eau",icon:"💧",label:"Eau",cat:"maintenance",sits:[
     {id:"fuite",label:"Fuite active / Inondation",urg:true,fiche:{contact:"Plombier Urgence Martin",tel:"04 78 33 21 00",steps:["Coupez l'arrivée d'eau si possible","Appelez le plombier","Prévenez les voisins du dessous"],cond:null}},
@@ -599,6 +600,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [longPressTimer,setLongPressTimer]=useState(null);
   const [editingCat,setEditingCat]=useState(null); // postId or null
 
+  // ─── SONDAGE STATE ───
+  const [showPoll,setShowPoll]=useState(false);
+  const [pollQ,setPollQ]=useState("");
+  const [pollOpts,setPollOpts]=useState(["",""]);
+  const [pollMode,setPollMode]=useState("residents"); // "residents" | "logement" | "copro_lot" | "copro_tantiemes"
+
+  // Mock tantièmes per lot (for copro vote)
+  const TANTIEMES={total:1000,lots:{"1A":120,"1C":95,"2A":130,"2B":110,"3B":150,"4C":90,"5A":160,"RDC":145}};
+
   // ─── MESSAGES STATE ───
   const [msgView,setMsgView]=useState("list");
   const [activeConv,setActiveConv]=useState(null);
@@ -757,7 +767,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
   const addSignal=(sid)=>{if(!sigText.trim())return;setSujets(p=>p.map(s=>{if(s.id!==sid)return s;const nc=s.signalCount+1;const nt=[...s.timeline,{date:new Date().toISOString().split("T")[0],type:"signal",author:userName,text:sigText}];let ns=s.status;if(nc>=s.threshold&&s.status==="signale"){ns="escalade";nt.push({date:new Date().toISOString().split("T")[0],type:"escalade",author:"Système",text:`Seuil de ${s.threshold} signalements atteint — escalade automatique.`})}return{...s,signalCount:nc,status:ns,timeline:nt,lastSignal:new Date().toISOString().split("T")[0],residents:s.residents.includes(userName)?s.residents:[...s.residents,userName]}}));setSigText("")};
 
-  const launchConsult=(sid,sug)=>{setSujets(p=>p.map(s=>{if(s.id!==sid)return s;const q=sug.text.includes("«")?sug.text.split("«")[1].split("»")[0].trim():sug.text;return{...s,status:"consultation",consultation:{question:q,cost:sug.cost||null,votes:{oui:4,non:1,abstention:1},total:isNew?1:14,deadline:"2026-04-18"},timeline:[...s.timeline,{date:new Date().toISOString().split("T")[0],type:"consultation",author:userName,text:`Consultation lancée : "${q}"`}]}}));setSujetAiIdx(null)};
+  const launchConsult=(sid,sug)=>{setSujets(p=>p.map(s=>{if(s.id!==sid)return s;const q=sug.text.includes("«")?sug.text.split("«")[1].split("»")[0].trim():sug.text;const hasCost=!!sug.cost;return{...s,status:"consultation",consultation:{question:q,cost:sug.cost||null,votes:{oui:4,non:1,abstention:1},total:isNew?1:14,deadline:"2026-04-18",mode:hasCost?"copro_lot":"residents"},timeline:[...s.timeline,{date:new Date().toISOString().split("T")[0],type:"consultation",author:userName,text:`Consultation lancée : "${q}"`}]}}));setSujetAiIdx(null)};
 
   const genSujetAi=async(sujet,sug)=>{setSujetAiLoading(true);setSujetAiResult(null);const sys=`Tu es un assistant juridique pour copropriété française. Génère un document professionnel en français. Cite les obligations légales.`;const pr=sug.type==="lettre"?`Lettre formelle: "${sujet.title}". ${sujet.desc}. ${sujet.signalCount} signalements depuis ${sujet.createdAt}. Adressée au syndic.`:sug.type==="charte"?`Article de Charte de Vie Commune: "${sujet.title}". ${sujet.desc}. Clair et applicable.`:`Plan d'action: "${sujet.title}". ${sujet.desc}. ${sujet.signalCount} signalements. Coûts et délais.`;const r=await callAI(sys,pr);setSujetAiResult(r||"Document en cours de préparation...");setSujetAiLoading(false)};
 
@@ -812,6 +822,26 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
     setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text,cat:"entraide",likedBy:[],role,replies:[]},...p]);
     setEntDone(true);
   };
+
+  // ─── SONDAGE HANDLER ───
+  const submitPoll=()=>{
+    const opts=pollOpts.filter(o=>o.trim());if(!pollQ.trim()||opts.length<2)return;
+    const isCopro=pollMode==="copro_lot"||pollMode==="copro_tantiemes";
+    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:pollQ,cat:"convivialité",likedBy:[],role,replies:[],poll:{mode:pollMode,options:opts.map(o=>({label:o,voters:[]})),myVote:null,coproOnly:isCopro}},...p]);
+    setShowPoll(false);setPollQ("");setPollOpts(["",""]);setPollMode("residents");
+  };
+
+  const votePoll=(postId,optIdx)=>{
+    setPosts(p=>p.map(x=>{
+      if(x.id!==postId||!x.poll)return x;
+      // Block vote if copro-only and user is locataire/concierge
+      if(x.poll.coproOnly&&(role==="locataire"||role==="concierge"))return x;
+      const poll={...x.poll,options:x.poll.options.map((o,i)=>({...o,voters:i===optIdx?[...o.voters.filter(v=>v!==userName),userName]:o.voters.filter(v=>v!==userName)})),myVote:optIdx};
+      return{...x,poll};
+    }));
+  };
+
+  const getPollLabel=(mode)=>mode==="residents"?"👥 1 voix/personne":mode==="logement"?"🏠 1 voix/logement":mode==="copro_lot"?"🔑 1 voix/lot":mode==="copro_tantiemes"?"⚖️ Aux tantièmes":"";
 
   const TABS=[
     {id:"home",icon:"🏠",label:"Accueil",color:T.forest},
@@ -995,11 +1025,16 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
         {/* ═══ FEED TAB ═══ */}
         {tab==="feed"&&<div style={{padding:"14px 14px 70px"}}>
           {/* Compose bar */}
-          <button onClick={()=>setShowComposer(true)} style={{width:"100%",padding:"12px 16px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",marginBottom:14,textAlign:"left"}}>
-            <div style={{width:32,height:32,borderRadius:10,background:`${T.forest}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✏️</div>
-            <span style={{fontSize:13,color:T.textMuted,flex:1}}>Écrire un message à la copropriété...</span>
-            <span style={{fontSize:11,fontWeight:600,color:T.forest}}>Publier</span>
-          </button>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            <button onClick={()=>setShowComposer(true)} style={{flex:1,padding:"12px 16px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",textAlign:"left"}}>
+              <div style={{width:32,height:32,borderRadius:10,background:`${T.forest}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✏️</div>
+              <span style={{fontSize:13,color:T.textMuted,flex:1}}>Écrire un message...</span>
+            </button>
+            <button onClick={()=>setShowPoll(true)} style={{padding:"12px 14px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)"}}>
+              <span style={{fontSize:18}}>📊</span>
+              <span style={{fontSize:9,fontWeight:600,color:T.purple}}>Sondage</span>
+            </button>
+          </div>
 
           <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{CATS.map(c=><Chip key={c.id} label={c.l} icon={c.i} active={feedCat===c.id} color={CC[c.id]||T.forest} onClick={()=>setFeedCat(c.id)}/>)}</div>
           {filteredPosts.map(p=>{
@@ -1040,6 +1075,33 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 </div>
               </div>
               <p style={{fontSize:13.5,color:T.text,lineHeight:1.6,margin:"0 0 8px"}}>{p.text}</p>
+              {/* Poll */}
+              {p.poll&&<div style={{marginBottom:10}}>
+                {/* Mode badge */}
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                  <span style={{fontSize:10,fontWeight:700,color:p.poll.coproOnly?T.forest:T.purple,padding:"2px 8px",borderRadius:6,background:p.poll.coproOnly?`${T.forest}12`:`${T.purple}12`}}>{getPollLabel(p.poll.mode)}</span>
+                  {p.poll.coproOnly&&<span style={{fontSize:9,color:T.textMuted}}>Copropriétaires uniquement</span>}
+                </div>
+                {/* Copro restriction for locataires */}
+                {p.poll.coproOnly&&(role==="locataire"||role==="concierge")&&<div style={{padding:"6px 10px",borderRadius:8,background:`${T.sunriseLight}18`,marginBottom:6}}><p style={{fontSize:10,color:T.bark,margin:0}}>🔒 Vote réservé aux copropriétaires. Vous pouvez commenter ci-dessous.</p></div>}
+                {p.poll.options.map((opt,oi)=>{
+                  const totalV=p.poll.options.reduce((s,o)=>s+o.voters.length,0);
+                  const pct=totalV?Math.round(opt.voters.length/totalV*100):0;
+                  const voted=p.poll.myVote===oi;
+                  const canVote=!p.poll.coproOnly||(role!=="locataire"&&role!=="concierge");
+                  return(
+                  <button key={oi} onClick={()=>canVote&&votePoll(p.id,oi)} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:voted?`2px solid ${T.purple}`:`1.5px solid ${T.sandDark}`,background:voted?`${T.purple}08`:"#fff",cursor:canVote?"pointer":"default",opacity:canVote?1:0.7,marginBottom:5,fontFamily:SANS,textAlign:"left",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,background:voted?`${T.purple}15`:`${T.sand}`,borderRadius:10,transition:"width 0.4s"}}/>
+                    <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontSize:12,fontWeight:voted?700:500,color:voted?T.purple:T.text}}>{voted?"✓ ":""}{opt.label}</span>
+                      <span style={{fontSize:11,fontWeight:600,color:totalV?T.textLight:T.textMuted}}>{totalV?`${pct}%`:""}</span>
+                    </div>
+                  </button>
+                )})}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:2}}>
+                  <p style={{fontSize:10,color:T.textMuted,margin:0}}>{p.poll.options.reduce((s,o)=>s+o.voters.length,0)} vote{p.poll.options.reduce((s,o)=>s+o.voters.length,0)>1?"s":""}{p.poll.mode==="logement"?" (par logement)":p.poll.mode==="copro_lot"?" (par lot)":p.poll.mode==="copro_tantiemes"?" (aux tantièmes)":""}</p>
+                </div>
+              </div>}
               {/* Replies */}
               {p.replies.length>0&&<div style={{marginBottom:8,paddingLeft:12,borderLeft:`2px solid ${T.sandDark}`}}>
                 {p.replies.map((r,ri)=>(
@@ -1326,12 +1388,16 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 {/* Consultation */}
                 {sujetDetail.consultation&&<Card style={{border:`2px solid ${T.purple}30`,background:`${T.purple}06`,padding:12}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:16}}>🗳</span><div><h4 style={{margin:0,fontSize:12,fontWeight:700,color:T.purple}}>Consultation en cours</h4><p style={{margin:0,fontSize:9,color:T.textMuted}}>Jusqu'au {sujetDetail.consultation.deadline}</p></div></div>
+                  {/* Mode badge */}
+                  <div style={{marginBottom:6}}><span style={{fontSize:9,fontWeight:700,color:sujetDetail.consultation.mode?.includes("copro")?T.forest:T.purple,padding:"2px 7px",borderRadius:5,background:sujetDetail.consultation.mode?.includes("copro")?`${T.forest}12`:`${T.purple}12`}}>{getPollLabel(sujetDetail.consultation.mode||"residents")}</span></div>
                   <p style={{fontSize:12,fontWeight:600,color:T.text,margin:"0 0 8px"}}>« {sujetDetail.consultation.question} »</p>
                   {sujetDetail.consultation.cost&&<p style={{fontSize:10,color:T.bark,margin:"0 0 8px",background:`${T.sunriseLight}33`,padding:"4px 6px",borderRadius:4}}>💰 {sujetDetail.consultation.cost}</p>}
+                  {/* Copro restriction */}
+                  {sujetDetail.consultation.mode?.includes("copro")&&(role==="locataire"||role==="concierge")&&<div style={{padding:"5px 8px",borderRadius:6,background:`${T.sunriseLight}18`,marginBottom:6}}><p style={{fontSize:9,color:T.bark,margin:0}}>🔒 Vote réservé aux copropriétaires vérifiés</p></div>}
                   {[{l:"Pour",c:sujetDetail.consultation.votes.oui,color:T.green},{l:"Contre",c:sujetDetail.consultation.votes.non,color:T.coral},{l:"Abstention",c:sujetDetail.consultation.votes.abstention,color:T.textMuted}].map((v,i)=>(
-                    <div key={i} style={{marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between",fontSize:9,marginBottom:1}}><span style={{fontWeight:600,color:v.color}}>{v.l}</span><span style={{color:T.textMuted}}>{v.c}/{sujetDetail.consultation.total}</span></div><div style={{height:5,borderRadius:3,background:T.sand}}><div style={{height:"100%",borderRadius:3,width:`${(v.c/sujetDetail.consultation.total)*100}%`,background:v.color}}/></div></div>
+                    <div key={i} style={{marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between",fontSize:9,marginBottom:1}}><span style={{fontWeight:600,color:v.color}}>{v.l}</span><span style={{color:T.textMuted}}>{v.c}/{sujetDetail.consultation.total}{sujetDetail.consultation.mode==="copro_lot"?" lots":sujetDetail.consultation.mode==="copro_tantiemes"?" tantièmes":""}</span></div><div style={{height:5,borderRadius:3,background:T.sand}}><div style={{height:"100%",borderRadius:3,width:`${(v.c/sujetDetail.consultation.total)*100}%`,background:v.color}}/></div></div>
                   ))}
-                  {!consultVote?<div style={{display:"flex",gap:5,marginTop:6}}>{[{l:"Pour",c:T.green,v:"oui"},{l:"Contre",c:T.coral,v:"non"},{l:"Abstention",c:T.textMuted,v:"abs"}].map(b=><button key={b.v} onClick={()=>setConsultVote(b.v)} style={{flex:1,padding:"6px",borderRadius:8,border:`1.5px solid ${b.c}40`,background:`${b.c}08`,color:b.c,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:SANS}}>{b.l}</button>)}</div>
+                  {!consultVote?(sujetDetail.consultation.mode?.includes("copro")&&(role==="locataire"||role==="concierge")?null:<div style={{display:"flex",gap:5,marginTop:6}}>{[{l:"Pour",c:T.green,v:"oui"},{l:"Contre",c:T.coral,v:"non"},{l:"Abstention",c:T.textMuted,v:"abs"}].map(b=><button key={b.v} onClick={()=>setConsultVote(b.v)} style={{flex:1,padding:"6px",borderRadius:8,border:`1.5px solid ${b.c}40`,background:`${b.c}08`,color:b.c,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:SANS}}>{b.l}</button>)}</div>)
                   :<div style={{padding:"6px 10px",borderRadius:8,background:`${T.green}12`,textAlign:"center",marginTop:6}}><span style={{fontSize:11,fontWeight:600,color:T.green}}>✓ Vote enregistré</span></div>}
                 </Card>}
                 {/* Resolved */}
@@ -1732,6 +1798,56 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               <Btn full onClick={submitEntraide} style={{background:`linear-gradient(135deg,${T.sky},${T.forest})`}}>🤝 Publier</Btn>
             </div>}
           </div>}
+        </div>
+      </div>}
+
+      {/* ═══ POLL CREATOR MODAL ═══ */}
+      {showPoll&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowPoll(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"82vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <span style={{fontSize:24}}>📊</span>
+            <h3 style={{fontFamily:FONT,fontSize:19,color:T.purple,margin:0}}>Créer un sondage</h3>
+          </div>
+
+          {/* Vote mode selector */}
+          <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Qui peut voter ?</label>
+          <div style={{display:"flex",gap:5,marginTop:4,marginBottom:12}}>
+            {[{id:"residents",l:"👥 Résidents",d:"1 voix/personne"},{id:"logement",l:"🏠 Logements",d:"1 voix/logement"}].map(m=>(
+              <button key={m.id} onClick={()=>setPollMode(m.id)} style={{flex:1,padding:"8px 6px",borderRadius:10,border:pollMode===m.id?`2px solid ${T.purple}`:`1.5px solid ${T.sandDark}`,background:pollMode===m.id?`${T.purple}08`:"#fff",cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>
+                <div style={{fontSize:11,fontWeight:600,color:pollMode===m.id?T.purple:T.text}}>{m.l}</div>
+                <div style={{fontSize:9,color:T.textMuted,marginTop:1}}>{m.d}</div>
+              </button>
+            ))}
+          </div>
+          {(role==="proprio"||role==="syndic"||isCS)&&<div>
+            <div style={{display:"flex",gap:5,marginBottom:12}}>
+              {[{id:"copro_lot",l:"🔑 Copropriétaires",d:"1 voix/lot"},{id:"copro_tantiemes",l:"⚖️ Tantièmes",d:"Vote pondéré"}].map(m=>(
+                <button key={m.id} onClick={()=>setPollMode(m.id)} style={{flex:1,padding:"8px 6px",borderRadius:10,border:pollMode===m.id?`2px solid ${T.forest}`:`1.5px solid ${T.sandDark}`,background:pollMode===m.id?`${T.forest}08`:"#fff",cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>
+                  <div style={{fontSize:11,fontWeight:600,color:pollMode===m.id?T.forest:T.text}}>{m.l}</div>
+                  <div style={{fontSize:9,color:T.textMuted,marginTop:1}}>{m.d}</div>
+                </button>
+              ))}
+            </div>
+            {(pollMode==="copro_lot"||pollMode==="copro_tantiemes")&&<div style={{padding:"6px 10px",borderRadius:8,background:`${T.forest}08`,marginBottom:10}}>
+              <p style={{fontSize:10,color:T.forest,margin:0}}>🔒 Seuls les copropriétaires vérifiés pourront voter. Les résidents voient les résultats.{pollMode==="copro_tantiemes"?" Tantièmes : "+TANTIEMES.total+"/1000e":""}</p>
+            </div>}
+          </div>}
+
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Question</label>
+            <input value={pollQ} onChange={e=>setPollQ(e.target.value)} placeholder={pollMode==="copro_lot"||pollMode==="copro_tantiemes"?"Ex: Approuvez-vous les travaux de ravalement ?":"Ex: Apéro voisins — quelle date ?"} style={{width:"100%",marginTop:4,padding:12,borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+          </div>
+          <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Options</label>
+          {pollOpts.map((opt,i)=>(
+            <div key={i} style={{display:"flex",gap:6,marginTop:4,alignItems:"center"}}>
+              <div style={{width:22,height:22,borderRadius:11,background:`${T.purple}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:T.purple,flexShrink:0}}>{i+1}</div>
+              <input value={opt} onChange={e=>{const n=[...pollOpts];n[i]=e.target.value;setPollOpts(n)}} placeholder={`Option ${i+1}`} style={{flex:1,padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+              {pollOpts.length>2&&<button onClick={()=>setPollOpts(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:16,color:T.textMuted,cursor:"pointer"}}>×</button>}
+            </div>
+          ))}
+          {pollOpts.length<6&&<button onClick={()=>setPollOpts(p=>[...p,""])} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,border:`1.5px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.purple}}>+ Ajouter une option</button>}
+          <Btn full onClick={submitPoll} disabled={!pollQ.trim()||pollOpts.filter(o=>o.trim()).length<2} style={{marginTop:16,background:(pollMode==="copro_lot"||pollMode==="copro_tantiemes")?`linear-gradient(135deg,${T.forest},${T.forestLight})`:`linear-gradient(135deg,${T.purple},${T.sky})`}}>📊 Publier le sondage</Btn>
         </div>
       </div>}
 
