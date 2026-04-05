@@ -51,6 +51,49 @@ const INIT_SUJETS=[
     aiSugg:[{type:"lettre",text:"Lettre au propriétaire : obligation d'accès aux compteurs"},{type:"info",text:"Rappel : accès au local compteurs obligatoire"}],consultation:null},
 ];
 
+/* ═══ DOSSIERS TRAVAUX — Pipeline & Mock Data ═══ */
+const TRAV_STEPS=[
+  {id:"identification",icon:"📋",l:"Identifié",short:"Ident."},
+  {id:"diagnostic",icon:"🔍",l:"Diagnostic",short:"Diag."},
+  {id:"devis",icon:"📑",l:"Devis",short:"Devis"},
+  {id:"vote",icon:"🗳",l:"Vote",short:"Vote"},
+  {id:"travaux",icon:"🔨",l:"Travaux",short:"Trav."},
+  {id:"reception",icon:"✅",l:"Réception",short:"Récep."},
+  {id:"garantie",icon:"🛡",l:"Garantie",short:"Garant."},
+];
+const TRAV_CAT={structure:{l:"Structure",c:"#8B5E3C"},equipement:{l:"Équipement",c:"#4A90D9"},facade:{l:"Façade",c:"#E07A5F"},toiture:{l:"Toiture",c:"#7C3AED"},communs:{l:"Parties communes",c:"#3D6B4F"},reseaux:{l:"Réseaux",c:"#D97706"}};
+const INIT_TRAVAUX=[
+  {id:101,title:"Remplacement porte d'entrée",category:"communs",status:"devis",createdAt:"2024-09-15",updatedAt:"2025-03-20",createdBy:"Xavier M.",
+    description:"Vitre de la porte sur rue cassée depuis mars 2024. Remplacement complet nécessaire (menuiserie + vitrage + serrure).",photos:[],
+    expert:{name:"Architecte Lachaut (E2AC)",date:"2024-11-10",conclusions:"Porte vétuste, réparation impossible. Remplacement intégral recommandé."},
+    devis:[
+      {prestataire:"Daucalis",montant:24171,delai:"8 semaines",description:"Porte chêne massif + vitrage feuilleté + serrure 5 points + pose + garantie 10 ans",recommended:false},
+      {prestataire:"Lacombe",montant:13121,delai:"6 semaines",description:"Porte bois composite + vitrage securit + serrure 3 points + pose",recommended:true},
+    ],
+    vote:null,travaux:null,reception:null,garanties:null,sujetId:null,
+    timeline:[
+      {date:"2024-09-15",type:"creation",author:"Xavier M.",text:"Dossier ouvert : vitre porte d'entrée cassée."},
+      {date:"2024-11-10",type:"diagnostic",author:"Boris R.",text:"Visite architecte Lachaut. Remplacement intégral recommandé."},
+      {date:"2025-02-20",type:"devis",author:"Xavier M.",text:"Devis Daucalis reçu : 24 171€"},
+      {date:"2025-03-20",type:"devis",author:"Xavier M.",text:"Devis Lacombe reçu : 13 121€. CS recommande Lacombe."},
+    ]},
+  {id:102,title:"Reprise peinture cage d'escalier",category:"communs",status:"travaux",createdAt:"2025-01-10",updatedAt:"2026-03-15",createdBy:"Raphaël H.",
+    description:"Peinture écaillée du RDC au 6ème suite à travaux privatifs et infiltrations. Coordination avec plusieurs copropriétaires.",photos:[],
+    expert:{name:"M. Lachaut — Architecte",date:"2025-03-15",conclusions:"Attendre séchage complet des murs (infiltrations colmatées). Reprendre enduits puis peinture du 6ème au RDC."},
+    devis:[{prestataire:"MS Concept",montant:8500,delai:"3 semaines",description:"Enduits + peinture cage escalier complète RDC-6ème",recommended:true}],
+    vote:{method:"ag",result:"pour",date:"2025-09-05",resolution:"Résolution n°4 — AGE du 05/09/2025",majorite:"Article 24"},
+    travaux:{prestataire:"MS Concept",debut:"2025-10-20",finPrevue:"2026-04-15",finReelle:null,progression:65,jalons:[{label:"Dépose protections",date:"2025-10-20",done:true},{label:"Enduits 4-6ème",date:"2025-11-15",done:true},{label:"Peinture 4-6ème",date:"2025-12-10",done:true},{label:"Enduits 1-3ème",date:"2026-02-01",done:true},{label:"Peinture 1-3ème",date:"2026-03-15",done:false},{label:"RDC + finitions",date:"2026-04-15",done:false}]},
+    reception:null,garanties:null,sujetId:null,
+    timeline:[
+      {date:"2025-01-10",type:"creation",author:"Raphaël H.",text:"Dossier ouvert suite aux dégradations liées aux travaux privatifs."},
+      {date:"2025-03-15",type:"diagnostic",author:"Raphaël H.",text:"Architecte recommande d'attendre séchage complet."},
+      {date:"2025-07-24",type:"info",author:"Jean-David B.",text:"Locataire signale peinture qui s'effrite à chaque étage."},
+      {date:"2025-09-05",type:"vote",author:"Boris R.",text:"Voté en AGE — Résolution n°4 adoptée."},
+      {date:"2025-10-20",type:"travaux",author:"Raphaël H.",text:"Début des travaux MS Concept."},
+      {date:"2026-03-15",type:"info",author:"Raphaël H.",text:"Peinture 4-6ème terminée. Reste 1-3ème et RDC."},
+    ]},
+];
+
 /* ═══ SIGNALEMENT — Catégories, Situations & Fiches Réflexes ═══ */
 const SIG_CATS=[
   {id:"porte",icon:"🚪",label:"Porte / Accès",cat:"securite",sits:[
@@ -190,7 +233,7 @@ const Dots = () => <div style={{display:"flex",gap:4,padding:16}}>{[0,1,2].map(i
 /* ═══════════════════════════════════════
    ONBOARDING
    ═══════════════════════════════════════ */
-function OnboardingWelcome({onNext}) {
+function OnboardingWelcome({onNext,onFacebook}) {
   const [show,setShow]=useState(false);
   useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
   return (
@@ -205,8 +248,8 @@ function OnboardingWelcome({onNext}) {
         <p style={{fontSize:12,color:T.barkLight,fontWeight:600,letterSpacing:"2px",textTransform:"uppercase",margin:"0 0 24px"}}>L'app de votre copropriété</p>
         <p style={{fontSize:16,color:T.textLight,textAlign:"center",lineHeight:1.6,maxWidth:280,margin:"0 0 40px"}}>Échangez sereinement avec vos voisins, consultez vos documents et obtenez des conseils juridiques instantanés.</p>
         <div style={{width:"100%",maxWidth:300,display:"flex",flexDirection:"column",gap:11}}>
-          {[{l:"Continuer avec Google",i:"G",bg:"#fff",c:T.text,b:`1px solid ${T.sandDark}`},{l:"Continuer avec Apple",i:"",bg:"#000",c:"#fff",b:"none"},{l:"Continuer avec Facebook",i:"f",bg:"#1877F2",c:"#fff",b:"none"}].map((btn,i)=>(
-            <button key={i} onClick={onNext} style={{width:"100%",padding:"13px 20px",borderRadius:12,border:btn.b,background:btn.bg,color:btn.c,fontSize:14,fontWeight:600,fontFamily:SANS,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",opacity:show?1:0,transform:show?"none":"translateY(12px)",transition:`all 0.5s ${0.3+i*0.1}s cubic-bezier(0.16,1,0.3,1)`}}>
+          {[{l:"Continuer avec Google",i:"G",bg:"#fff",c:T.text,b:`1px solid ${T.sandDark}`,action:onNext},{l:"Continuer avec Apple",i:"",bg:"#000",c:"#fff",b:"none",action:onNext},{l:"Continuer avec Facebook",i:"f",bg:"#1877F2",c:"#fff",b:"none",action:onFacebook||onNext}].map((btn,i)=>(
+            <button key={i} onClick={btn.action} style={{width:"100%",padding:"13px 20px",borderRadius:12,border:btn.b,background:btn.bg,color:btn.c,fontSize:14,fontWeight:600,fontFamily:SANS,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",opacity:show?1:0,transform:show?"none":"translateY(12px)",transition:`all 0.5s ${0.3+i*0.1}s cubic-bezier(0.16,1,0.3,1)`}}>
               <span style={{fontSize:16,fontWeight:700,width:20,textAlign:"center"}}>{btn.i}</span>{btn.l}
             </button>
           ))}
@@ -542,6 +585,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [coproSelector,setCoproSelector]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
   const [showCoproInfo,setShowCoproInfo]=useState(false);
+  const [showAnnuaire,setShowAnnuaire]=useState(false);
   const [showVerifyGate,setShowVerifyGate]=useState(null); // null | "proprio" | "syndic" | "cs"
   const [showRoleSwitch,setShowRoleSwitch]=useState(false);
 
@@ -572,7 +616,33 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [userFloorEdited,setUserFloorEdited]=useState(false);
   const currentApt = userFloorEdited ? userFloor : autoApt;
   const [userNotifs,setUserNotifs]=useState(true);
+  const [notifsUrgent,setNotifsUrgent]=useState(true);
+  const [notifsGeneral,setNotifsGeneral]=useState(true);
   const [profilePhoto,setProfilePhoto]=useState(null);
+  const [annuaireVisible,setAnnuaireVisible]=useState(true);
+  const [annuaireSearch,setAnnuaireSearch]=useState("");
+  const [addLogementInput,setAddLogementInput]=useState("");
+  const [showAddLogement,setShowAddLogement]=useState(false);
+  const [infoPratiques,setInfoPratiques]=useState([
+    {l:"Code porte",v:"89A27"},{l:"Jour poubelles",v:"Mardi & vendredi"},{l:"Ménage communs",v:"Mercredi matin"},{l:"Email CS",v:"cs@14ruemanuel.fr"},
+  ]);
+  const [prestataires,setPrestataires]=useState([
+    {name:"Syndic Urbania",tel:"04 78 12 34 56",type:"Syndic professionnel",isSyndic:true},
+    {name:"Schindler Maintenance",tel:"04 78 99 00 11",type:"Ascensoriste",isSyndic:false},
+    {name:"Plombier Martin",tel:"04 78 33 21 00",type:"Plomberie urgence",isSyndic:false},
+    {name:"Serrurier Durand",tel:"04 78 55 12 34",type:"Serrurerie",isSyndic:false},
+    {name:"Utile & Agréable",tel:"04 78 66 00 00",type:"Ménage parties communes",isSyndic:false},
+  ]);
+  const [syndicRevealed,setSyndicRevealed]=useState(false);
+  const [msgModCheck,setMsgModCheck]=useState(null);
+  const [showAddPrest,setShowAddPrest]=useState(false);
+  const [addPrestForm,setAddPrestForm]=useState({name:"",type:"",tel:"",email:""});
+  const [showAddInfo,setShowAddInfo]=useState(false);
+  const [addInfoForm,setAddInfoForm]=useState({l:"",v:""});
+  const [editPrestIdx,setEditPrestIdx]=useState(null);
+  const [editPrestForm,setEditPrestForm]=useState({name:"",type:"",tel:"",email:""});
+  const [editInfoIdx,setEditInfoIdx]=useState(null);
+  const [editInfoVal,setEditInfoVal]=useState(""); // null | {original, suggestion, tone}
   const [userLots,setUserLots]=useState("");
   const [extraLogements,setExtraLogements]=useState([]);
 
@@ -614,15 +684,17 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [activeConv,setActiveConv]=useState(null);
   const [msgDraft,setMsgDraft]=useState("");
   const convos=[
-    {id:1,name:"Marie D.",floor:"3B",role:"CS",lastMsg:"D'accord pour mardi !",time:"09:14",unread:2},
-    {id:2,name:"Syndic Urbania",floor:"",role:"syndic",lastMsg:"Votre demande a bien été...",time:"Hier",unread:0},
-    {id:3,name:"Thomas R.",floor:"1A",role:"proprio",lastMsg:"Merci pour le tuyau !",time:"Lun.",unread:0},
+    {id:1,name:"Marie D.",floor:"3B",role:"CS",lastMsg:"D'accord pour mardi !",time:"09:14",unread:2,group:false},
+    {id:2,name:"Syndic Urbania",floor:"",role:"syndic",lastMsg:"Votre demande a bien été...",time:"Hier",unread:0,group:false},
+    {id:3,name:"Thomas R.",floor:"1A",role:"proprio",lastMsg:"Merci pour le tuyau !",time:"Lun.",unread:0,group:false},
+    {id:4,name:"Conseil Syndical",floor:"",role:"group",lastMsg:"RDV confirmé pour le 15",time:"Mar.",unread:1,group:true,members:["Marie D.","Boris R.","Xavier M."]},
+    {id:5,name:"Voisins du 3ème",floor:"3ème",role:"group",lastMsg:"Ok pour l'apéro samedi !",time:"Dim.",unread:0,group:true,members:["Marie D.","Thomas R.","Sophie L."]},
   ];
   const [convMsgs,setConvMsgs]=useState([
-    {from:"them",text:"Bonjour ! Avez-vous reçu la convocation pour l'AG ?",time:"09:10"},
-    {from:"them",text:"J'aimerais discuter du point 5 de l'ordre du jour avant.",time:"09:12"},
+    {from:"Marie D.",text:"Bonjour ! Avez-vous reçu la convocation pour l'AG ?",time:"09:10"},
+    {from:"Marie D.",text:"J'aimerais discuter du point 5 de l'ordre du jour avant.",time:"09:12"},
     {from:"me",text:"Oui, bien reçue ! On peut en discuter mardi si vous voulez ?",time:"09:13"},
-    {from:"them",text:"D'accord pour mardi !",time:"09:14"},
+    {from:"Marie D.",text:"D'accord pour mardi !",time:"09:14"},
   ]);
 
   // ─── CONSEIL AI STATE ───
@@ -652,6 +724,19 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [sujetAiResult,setSujetAiResult]=useState(null);
   const [consultVote,setConsultVote]=useState(null);
 
+  // ─── DOSSIERS TRAVAUX STATE ───
+  const [dossiers,setDossiers]=useState(INIT_TRAVAUX);
+  const [dossierId,setDossierId]=useState(null);
+  const [travChat,setTravChat]=useState({}); // {dossierID: [{from,text,time},...]}
+  const [travChatDraft,setTravChatDraft]=useState("");
+  const [travTab,setTravTab]=useState("detail"); // "detail" | "chat" | "docs"
+  const [showNewGroup,setShowNewGroup]=useState(false);
+  const [newGroupName,setNewGroupName]=useState("");
+  const [newGroupSel,setNewGroupSel]=useState([]);
+  const [showNewTrav,setShowNewTrav]=useState(false);
+  const [newTravD,setNewTravD]=useState({title:"",category:"communs",desc:""});
+  const nowTime=()=>{const d=new Date();return `${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`};
+
   // ─── SIGNALER+ STATE ───
   const [showSignaler,setShowSignaler]=useState(false);
   const [sigVoie,setSigVoie]=useState(null); // null | "probleme" | "entraide"
@@ -677,13 +762,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
     }
   },[]);
 
-  const EVENTS=[
+  const [events,setEvents]=useState([
     {id:1,title:"Assemblée Générale Ordinaire",date:"2026-04-15",time:"18:30",type:"ag",loc:"Salle des fêtes",desc:"Budget, travaux façade, élection CS."},
     {id:2,title:"Début travaux ravalement",date:"2026-05-02",type:"travaux",desc:"Échafaudages côté rue. Durée 3 mois."},
     {id:3,title:"Fête des voisins",date:"2026-05-29",time:"18:00",type:"social",loc:"Jardin commun",desc:"Chacun apporte un plat !"},
     {id:4,title:"Paiement charges Q2",date:"2026-06-30",type:"echeance",desc:"Appel de charges 2ème trimestre."},
     {id:5,title:"Entretien chaudière",date:"2026-04-08",time:"09:00",type:"entretien",desc:"Intervention Engie."},
-  ];
+  ]);
+  const [showAddEvent,setShowAddEvent]=useState(false);
+  const [newEvent,setNewEvent]=useState({title:"",date:"",time:"",type:"social",loc:"",desc:""});
   const DOCS=[
     {name:"Règlement de copropriété",type:"pdf",cat:"reglement",date:"2020-03-15"},
     {name:"PV AG 2025",type:"pdf",cat:"ag",date:"2025-04-20",isNew:true},
@@ -846,7 +933,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const TABS=[
     {id:"home",icon:"🏠",label:"Accueil",color:T.forest},
     {id:"feed",icon:"💬",label:"Fil",color:T.sky},
-    {id:"agenda",icon:"📅",label:"Agenda",color:T.sunrise},
+    {id:"msg",icon:"✉️",label:"Messages",color:T.forestLight},
     {id:"ai",icon:"⚖️",label:"Conseil",color:T.purple},
     {id:"copro",icon:"🏢",label:"Copro",color:T.bark},
   ];
@@ -918,9 +1005,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               }
               <div><h2 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Bonjour {userName.split(" ")[0]} !</h2><p style={{fontSize:12,color:T.textLight,margin:"2px 0 0"}}>{role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}{isCS?" · Conseil syndical":""} · App. {currentApt}</p></div>
             </div>
-            {isNew?
-              <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>Bienvenue sur VoisinSereins ! Vous êtes le premier membre de votre copropriété. Invitez vos voisins pour profiter pleinement de l'app.</p>:
-              <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>Votre copropriété est active avec {activeCopro.members} voisins connectés sur {activeCopro.logements} logements.</p>
+            {isNew&&
+              <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>Bienvenue sur VoisinSereins ! Vous êtes le premier membre de votre copropriété. Invitez vos voisins pour profiter pleinement de l'app.</p>
             }
           </Card>
 
@@ -959,15 +1045,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
             {[
               {icon:"⚠️",label:"Signaler +",desc:"Problème ou entraide",color:T.coral,tab:"signaler"},
+              {icon:"📒",label:"Annuaire",desc:"Résidents & contacts",color:T.forestLight,tab:"annuaire"},
               {icon:"⚖️",label:"Conseiller juridique",desc:"Posez vos questions",color:T.purple,tab:"ai"},
+              {icon:"📅",label:"Agenda",desc:`${events.length} événements`,color:T.sunrise,tab:"agenda"},
               {icon:"💬",label:"Fil d'actualité",desc:isNew?"En attente de voisins":`${posts.filter(p=>!p.welcome).length} messages`,color:T.sky,tab:"feed"},
-              {icon:"📅",label:"Agenda",desc:`${EVENTS.length} événements`,color:T.sunrise,tab:"agenda"},
-              {icon:"✉️",label:"Messages",desc:isNew?"—":`${convos.filter(c=>c.unread>0).length} non lu(s)`,color:T.forest,tab:"copro_msg"},
-              {icon:"📁",label:"Documents",desc:"Règlement, AG, finances",color:T.bark,tab:"copro_docs"},
               {icon:"📋",label:"Sujets",desc:`${sujetStats.nonResolu} non résolu${sujetStats.nonResolu>1?"s":""}`,color:T.amber,tab:"copro_sujets"},
+              {icon:"📁",label:"Documents",desc:"Règlement, AG, finances",color:T.bark,tab:"copro_docs"},
               {icon:"👤",label:"Mon profil",desc:userName,color:T.forestLight,tab:"profile"},
             ].map((item,i)=>(
-              <button key={i} onClick={()=>{if(item.tab==="copro_msg"){setAgendaTab("msg");setTab("copro")}else if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else if(item.tab==="copro_sujets"){setAgendaTab("sujets");setSujetId(null);setTab("copro")}else if(item.tab==="signaler"){setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}else if(item.tab==="profile"){setShowProfile(true)}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+              <button key={i} onClick={()=>{if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else if(item.tab==="copro_sujets"){setAgendaTab("sujets");setSujetId(null);setTab("copro")}else if(item.tab==="signaler"){setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}else if(item.tab==="profile"){setShowProfile(true)}else if(item.tab==="annuaire"){setShowAnnuaire(true)}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
                 <div style={{width:40,height:40,borderRadius:12,background:`${item.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{item.icon}</div>
                 <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{item.label}</div><div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div></div>
               </button>
@@ -976,7 +1062,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
           {/* Upcoming events */}
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>Prochains événements</h3>
-          {EVENTS.sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,3).map(e=>(
+          {events.sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,3).map(e=>(
             <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#fff",borderRadius:14,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",cursor:"pointer"}} onClick={()=>setTab("agenda")}>
               <div style={{width:42,height:42,borderRadius:12,background:`${EC[e.type]}15`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <span style={{fontSize:12,fontWeight:700,color:EC[e.type]}}>{new Date(e.date).getDate()}</span>
@@ -1114,8 +1200,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               </div>}
               {/* Reply input */}
               {replyingTo===p.id&&<div style={{display:"flex",gap:6,marginBottom:8}}>
-                <input value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="Votre réponse..." autoFocus style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}} onKeyDown={e=>{if(e.key==="Enter"&&replyDraft.trim()){setPosts(prev=>prev.map(x=>x.id===p.id?{...x,replies:[...x.replies,{author:userName,text:replyDraft,time:"Maint."}]}:x));setReplyDraft("");setReplyingTo(null)}}}/>
-                <button onClick={()=>{if(replyDraft.trim()){setPosts(prev=>prev.map(x=>x.id===p.id?{...x,replies:[...x.replies,{author:userName,text:replyDraft,time:"Maint."}]}:x));setReplyDraft("");setReplyingTo(null)}}} style={{width:36,height:36,borderRadius:10,border:"none",background:replyDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+                <input value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="Votre réponse..." autoFocus style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}} onKeyDown={e=>{if(e.key==="Enter"&&replyDraft.trim()){setPosts(prev=>prev.map(x=>x.id===p.id?{...x,replies:[...x.replies,{author:userName,text:replyDraft,time:nowTime()}]}:x));setReplyDraft("");setReplyingTo(null)}}}/>
+                <button onClick={()=>{if(replyDraft.trim()){setPosts(prev=>prev.map(x=>x.id===p.id?{...x,replies:[...x.replies,{author:userName,text:replyDraft,time:nowTime()}]}:x));setReplyDraft("");setReplyingTo(null)}}} style={{width:36,height:36,borderRadius:10,border:"none",background:replyDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
               </div>}
               {/* Actions: like + reply */}
               <div style={{display:"flex",gap:14,alignItems:"center"}}>
@@ -1177,19 +1263,173 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
         </div>}
 
         {/* ═══ MESSAGES TAB ═══ */}
+        {/* ═══ MESSAGES TAB (standalone) ═══ */}
+        {tab==="msg"&&<div style={{padding:14}}>
+          {msgView==="list"?<div>
+            {/* Action buttons */}
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <button onClick={()=>setTab("mediation")} style={{flex:1,padding:"10px 12px",borderRadius:14,background:`linear-gradient(135deg,${T.purple}10,${T.sky}10)`,border:`1px solid ${T.purple}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS}}>
+                <span style={{fontSize:18}}>🕊</span>
+                <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.purple}}>Médiation</div><div style={{fontSize:9,color:T.textMuted}}>Résoudre un différend</div></div>
+              </button>
+              <button onClick={()=>setMsgView("newmsg")} style={{flex:1,padding:"10px 12px",borderRadius:14,background:`${T.forest}06`,border:`1.5px dashed ${T.forestLight}44`,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS}}>
+                <span style={{fontSize:18}}>✏️</span>
+                <div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:600,color:T.forest}}>Nouveau</div><div style={{fontSize:9,color:T.textMuted}}>Message privé</div></div>
+              </button>
+            </div>
+            {/* Create group button */}
+            <button onClick={()=>{setShowNewGroup(true);setNewGroupName("");setNewGroupSel([])}} style={{width:"100%",padding:"9px 12px",borderRadius:12,border:`1.5px dashed ${T.sky}44`,background:`${T.sky}06`,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS,marginBottom:12}}>
+              <div style={{width:32,height:32,borderRadius:8,background:`${T.sky}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>👥</div>
+              <div style={{fontSize:12,fontWeight:600,color:T.sky}}>Créer un groupe</div>
+            </button>
+            {/* Conversation list */}
+            {convos.filter(c=>!(role==="locataire"&&c.role==="syndic")).map(c=>(
+              <button key={c.id} onClick={()=>{setActiveConv(c);setMsgView("conv")}} style={{width:"100%",padding:"10px 12px",background:"#fff",borderRadius:14,border:"none",marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",textAlign:"left"}}>
+                {c.group
+                  ?<div style={{width:36,height:36,borderRadius:10,background:`${T.sky}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>👥</div>
+                  :<Av name={c.name} size={36}/>
+                }
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</span>
+                    <span style={{fontSize:10,color:T.textMuted}}>{c.time}</span>
+                  </div>
+                  <p style={{fontSize:11,color:T.textMuted,margin:"1px 0 0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.lastMsg}</p>
+                  {c.group&&<p style={{fontSize:9,color:T.textMuted,margin:"2px 0 0"}}>{c.members.join(", ")}</p>}
+                </div>
+                {c.unread>0&&<div style={{width:18,height:18,borderRadius:9,background:T.coral,color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{c.unread}</div>}
+              </button>
+            ))}
+          </div>:
+          msgView==="newmsg"?<div>
+            <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:4}}>← Retour</button>
+            <h3 style={{fontFamily:FONT,fontSize:16,color:T.forest,margin:"0 0 4px"}}>Nouveau message</h3>
+            <p style={{fontSize:11,color:T.textMuted,margin:"0 0 10px"}}>Choisissez un destinataire</p>
+            {[
+              {name:"Marie D.",floor:"3B",role:"CS"},
+              {name:"Thomas R.",floor:"1A",role:"proprio"},
+              {name:"Sophie L.",floor:"4C",role:"locataire"},
+              {name:"Anna K.",floor:"5A",role:"proprio"},
+              {name:"Paul V.",floor:"1C",role:"proprio"},
+              ...(role!=="locataire"?[{name:"Syndic Urbania",floor:"",role:"syndic"}]:[]),
+            ].map((dest,i)=>(
+              <button key={i} onClick={()=>{setActiveConv({id:Date.now(),name:dest.name,floor:dest.floor});setConvMsgs([]);setMsgView("conv")}} style={{width:"100%",padding:"8px 12px",background:"#fff",borderRadius:12,border:"none",marginBottom:5,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",textAlign:"left"}}>
+                <Av name={dest.name} size={32}/>
+                <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.text}}>{dest.name}</div>{dest.floor&&<div style={{fontSize:9,color:T.textMuted}}>App. {dest.floor}</div>}</div>
+                {dest.role==="syndic"&&<span style={{padding:"2px 5px",borderRadius:3,fontSize:8,fontWeight:700,background:T.coral,color:"#fff"}}>SYNDIC</span>}
+                {dest.role==="CS"&&<span style={{padding:"2px 5px",borderRadius:3,fontSize:8,fontWeight:700,background:T.sky,color:"#fff"}}>CS</span>}
+              </button>
+            ))}
+            {role==="locataire"&&<div style={{background:`${T.sunriseLight}22`,borderRadius:10,padding:10,marginTop:6}}><p style={{fontSize:11,color:T.bark,margin:0}}>ℹ️ En tant que locataire, les messages au syndic ne sont pas disponibles.</p></div>}
+          </div>:
+          <div style={{display:"flex",flexDirection:"column",minHeight:300}}>
+            <div style={{padding:"10px 12px",background:"#fff",borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:8,borderRadius:"12px 12px 0 0"}}>
+              <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",color:T.forest}}>←</button>
+              {activeConv?.group
+                ?<div style={{width:28,height:28,borderRadius:8,background:`${T.sky}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>👥</div>
+                :<Av name={activeConv?.name||""} size={28}/>
+              }
+              <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{activeConv?.name}</div>
+              {activeConv?.group&&<div style={{fontSize:9,color:T.textMuted}}>{activeConv.members?.join(", ")}</div>}</div>
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:10,minHeight:200,background:"#fff"}}>
+              {convMsgs.length===0&&<div style={{textAlign:"center",padding:30}}><div style={{fontSize:28,marginBottom:6}}>💬</div><p style={{fontSize:12,color:T.textMuted}}>{activeConv?.group?"Premier message dans ce groupe":`Premier message à ${activeConv?.name}`}</p></div>}
+              {convMsgs.map((m,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:m.from==="me"?"flex-end":"flex-start",marginBottom:8}}>
+                  <div style={{maxWidth:"80%"}}>
+                    {activeConv?.group&&m.from!=="me"&&<div style={{fontSize:9,fontWeight:600,color:T.purple,marginBottom:2}}>{m.from}</div>}
+                    <div style={{padding:"8px 12px",borderRadius:12,background:m.from==="me"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#f5f5f5",color:m.from==="me"?"#fff":T.text,fontSize:12,lineHeight:1.5}}>
+                      {m.text}<div style={{fontSize:8,marginTop:3,opacity:0.6,textAlign:"right"}}>{m.time}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{padding:"8px 10px",background:T.warmWhite,borderTop:`1px solid ${T.sandDark}`,borderRadius:"0 0 12px 12px"}}>
+              {/* AI Moderation suggestion */}
+              {msgModCheck&&<div style={{marginBottom:8,padding:10,borderRadius:10,background:`${T.sky}08`,border:`1px solid ${T.sky}25`}}>
+                <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}><span style={{fontSize:12}}>✨</span><span style={{fontSize:10,fontWeight:700,color:T.sky}}>Coach AI — Suggestion</span></div>
+                <p style={{fontSize:11,color:T.textLight,margin:"0 0 4px",lineHeight:1.4}}>Votre message pourrait être perçu comme {msgModCheck.tone}. Voici une reformulation :</p>
+                <div style={{background:"#fff",borderRadius:8,padding:8,marginBottom:6,border:`1px solid ${T.sandDark}`}}>
+                  <p style={{fontSize:12,color:T.text,margin:0,lineHeight:1.4}}>{msgModCheck.suggestion}</p>
+                </div>
+                <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>{setConvMsgs(p=>[...p,{from:"me",text:msgModCheck.suggestion,time:nowTime()}]);setMsgDraft("");setMsgModCheck(null)}} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✨ Envoyer la version améliorée</button>
+                  <button onClick={()=>{setConvMsgs(p=>[...p,{from:"me",text:msgModCheck.original,time:nowTime()}]);setMsgDraft("");setMsgModCheck(null)}} style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:11,fontWeight:500,cursor:"pointer",fontFamily:SANS}}>Envoyer l'original</button>
+                </div>
+              </div>}
+              <div style={{display:"flex",gap:6}}>
+                <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msgDraft.trim()){
+                  const d=msgDraft.trim().toLowerCase();const flagWords=["marre","ras le bol","insupportable","inadmissible","honteux","scandaleux","dégueulasse","bruit","encore","toujours","jamais","foutez","bordel","putain","merde"];
+                  if(flagWords.some(w=>d.includes(w))){
+                    const reforms={"direct":"J'aimerais que nous puissions trouver une solution ensemble concernant ce sujet.","diplomatique":"Je souhaite attirer votre attention sur un point qui me préoccupe, et j'espère que nous pourrons en discuter sereinement.","factuel":"Je constate un problème récurrent et souhaite que nous en discutions pour trouver une solution."};
+                    const styles=["direct","diplomatique","factuel"];const pick=styles[Math.floor(Math.random()*3)];
+                    setMsgModCheck({original:msgDraft,suggestion:reforms[pick],tone:"un peu vif"});
+                  }else{setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:nowTime()}]);setMsgDraft("")}
+                }}} placeholder="Message..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+                <button onClick={()=>{if(msgDraft.trim()){
+                  const d=msgDraft.trim().toLowerCase();const flagWords=["marre","ras le bol","insupportable","inadmissible","honteux","scandaleux","dégueulasse","bruit","encore","toujours","jamais","foutez","bordel","putain","merde"];
+                  if(flagWords.some(w=>d.includes(w))){
+                    const reforms={"direct":"J'aimerais que nous puissions trouver une solution ensemble concernant ce sujet.","diplomatique":"Je souhaite attirer votre attention sur un point qui me préoccupe, et j'espère que nous pourrons en discuter sereinement.","factuel":"Je constate un problème récurrent et souhaite que nous en discutions pour trouver une solution."};
+                    const styles=["direct","diplomatique","factuel"];const pick=styles[Math.floor(Math.random()*3)];
+                    setMsgModCheck({original:msgDraft,suggestion:reforms[pick],tone:"un peu vif"});
+                  }else{setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:nowTime()}]);setMsgDraft("")}
+                }}} style={{width:36,height:36,borderRadius:10,border:"none",background:msgDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+              </div>
+            </div>
+          </div>}
+        </div>}
+
         {/* ═══ AGENDA TAB (standalone) ═══ */}
         {tab==="agenda"&&<div style={{padding:14}}>
-          <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:"0 0 14px"}}>📅 Agenda de la copropriété</h3>
-          {EVENTS.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e=>(
-            <Card key={e.id} style={{borderLeft:`4px solid ${EC[e.type]}`}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-                <div><h4 style={{margin:"0 0 3px",fontSize:14,color:T.text}}>{e.title}</h4>
-                  <p style={{margin:0,fontSize:12,color:T.textMuted}}>{new Date(e.date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}{e.time&&` · ${e.time}`}</p>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <h3 style={{fontFamily:FONT,fontSize:18,color:T.forest,margin:0}}>📅 Agenda</h3>
+            {(isCS||role==="syndic")&&<button onClick={()=>{setShowAddEvent(true);setNewEvent({title:"",date:"",time:"",type:"social",loc:"",desc:""})}} style={{padding:"7px 12px",borderRadius:10,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>+ Événement</button>}
+          </div>
+          {/* Add event form */}
+          {showAddEvent&&<Card style={{padding:14,marginBottom:12,border:`2px solid ${T.forest}30`}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:T.forest,margin:"0 0 10px"}}>Nouvel événement</h4>
+            <input value={newEvent.title} onChange={e=>setNewEvent(p=>({...p,title:e.target.value}))} placeholder="Titre de l'événement" style={{width:"100%",padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff",marginBottom:6}}/>
+            <div style={{display:"flex",gap:6,marginBottom:6}}>
+              <input type="date" value={newEvent.date} onChange={e=>setNewEvent(p=>({...p,date:e.target.value}))} style={{flex:1,padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+              <input type="time" value={newEvent.time} onChange={e=>setNewEvent(p=>({...p,time:e.target.value}))} style={{width:100,padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+            </div>
+            <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
+              {[{id:"ag",l:"AG"},{id:"travaux",l:"Travaux"},{id:"social",l:"Social"},{id:"echeance",l:"Échéance"},{id:"entretien",l:"Entretien"}].map(t=>(
+                <button key={t.id} onClick={()=>setNewEvent(p=>({...p,type:t.id}))} style={{padding:"5px 10px",borderRadius:8,border:newEvent.type===t.id?`2px solid ${EC[t.id]}`:`1px solid ${T.sandDark}`,background:newEvent.type===t.id?`${EC[t.id]}12`:"#fff",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,color:newEvent.type===t.id?EC[t.id]:T.text}}>{t.l}</button>
+              ))}
+            </div>
+            <input value={newEvent.loc} onChange={e=>setNewEvent(p=>({...p,loc:e.target.value}))} placeholder="📍 Lieu (optionnel)" style={{width:"100%",padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff",marginBottom:6}}/>
+            <textarea value={newEvent.desc} onChange={e=>setNewEvent(p=>({...p,desc:e.target.value}))} placeholder="Description (optionnel)" rows={2} style={{width:"100%",padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",boxSizing:"border-box",marginBottom:6}}/>
+            <label style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,border:`1.5px dashed ${T.sandDark}`,cursor:"pointer",marginBottom:8}}>
+              <span style={{fontSize:14}}>📎</span>
+              <span style={{fontSize:11,color:T.textMuted}}>Joindre un fichier ou une photo</span>
+              <input type="file" accept="image/*,.pdf,.doc,.docx" style={{display:"none"}} onChange={e=>{if(e.target.files?.[0])setNewEvent(p=>({...p,attachment:e.target.files[0].name}))}}/>
+              {newEvent.attachment&&<span style={{fontSize:10,color:T.forest,fontWeight:600,marginLeft:"auto"}}>{newEvent.attachment}</span>}
+            </label>
+            <div style={{display:"flex",gap:6}}>
+              <Btn full small disabled={!newEvent.title.trim()||!newEvent.date} onClick={()=>{setEvents(p=>[...p,{id:Date.now(),...newEvent}]);setShowAddEvent(false)}}>📅 Ajouter</Btn>
+              <Btn full small primary={false} onClick={()=>setShowAddEvent(false)}>Annuler</Btn>
+            </div>
+          </Card>}
+          {events.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(e=>(
+            <Card key={e.id} style={{borderLeft:`4px solid ${EC[e.type]}`,padding:"12px 14px"}}>
+              <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                <div style={{textAlign:"center",minWidth:46,flexShrink:0}}>
+                  <div style={{fontSize:22,fontWeight:800,color:EC[e.type],lineHeight:1}}>{new Date(e.date).getDate()}</div>
+                  <div style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase"}}>{new Date(e.date).toLocaleDateString("fr-FR",{month:"short"})}</div>
+                  {e.time&&<div style={{fontSize:10,color:T.textMuted,marginTop:2}}>{e.time}</div>}
                 </div>
-                <span style={{padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${EC[e.type]}18`,color:EC[e.type]}}>{EL[e.type]}</span>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <h4 style={{margin:0,fontSize:13,color:T.text,fontWeight:600}}>{e.title}</h4>
+                    <span style={{padding:"2px 7px",borderRadius:6,fontSize:9,fontWeight:700,background:`${EC[e.type]}18`,color:EC[e.type],flexShrink:0}}>{EL[e.type]}</span>
+                  </div>
+                  {e.desc&&<p style={{fontSize:11,color:T.textLight,lineHeight:1.4,marginTop:4,marginBottom:0}}>{e.desc}</p>}
+                  {e.loc&&<p style={{fontSize:10,color:T.textMuted,marginTop:3,marginBottom:0}}>📍 {e.loc}</p>}
+                  {e.attachment&&<p style={{fontSize:10,color:T.forest,marginTop:3,marginBottom:0}}>📎 {e.attachment}</p>}
+                </div>
               </div>
-              {e.desc&&<p style={{fontSize:12,color:T.textLight,lineHeight:1.5,marginTop:6,marginBottom:0}}>{e.desc}</p>}
-              {e.loc&&<p style={{fontSize:11,color:T.textMuted,marginTop:4,marginBottom:0}}>📍 {e.loc}</p>}
             </Card>
           ))}
         </div>}
@@ -1215,11 +1455,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           </div>
         </div>}
 
-        {/* ═══ COPRO TAB (Docs + Messages + Sujets) ═══ */}
+        {/* ═══ COPRO TAB (Docs + Sujets + Travaux) ═══ */}
         {tab==="copro"&&<div style={{padding:14}}>
-          <div style={{display:"flex",gap:6,marginBottom:14}}>
-            {[{id:"docs",l:"📁 Docs"},{id:"msg",l:"✉️ Messages"},{id:"sujets",l:"📋 Sujets"}].map(t=>(
-              <button key={t.id} onClick={()=>{setAgendaTab(t.id);if(t.id==="sujets"){setSujetId(null)}}} style={{padding:"8px 14px",borderRadius:10,border:"none",background:agendaTab===t.id?T.forest:"#fff",color:agendaTab===t.id?"#fff":T.text,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS,flex:1,textAlign:"center"}}>{t.l}</button>
+          <div style={{display:"flex",gap:6,background:"#E0DDD5",borderRadius:12,padding:4,marginBottom:14}}>
+            {[{id:"docs",l:"📁 Docs"},{id:"sujets",l:"📋 Sujets"},{id:"travaux",l:"🔨 Travaux"}].map(t=>(
+              <button key={t.id} onClick={()=>{setAgendaTab(t.id);if(t.id==="sujets"){setSujetId(null)}if(t.id==="travaux"){setDossierId(null);setTravTab("detail")}}} style={{flex:1,padding:"10px 8px",borderRadius:10,border:"none",background:agendaTab===t.id?"#2C3E6B":"transparent",color:agendaTab===t.id?"#fff":"#888780",fontSize:12,fontWeight:agendaTab===t.id?700:500,cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>{t.l}</button>
             ))}
           </div>
 
@@ -1274,74 +1514,6 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           </div>}
 
           {/* Messages inside Copro */}
-          {agendaTab==="msg"&&<div>
-            {msgView==="list"?<div>
-              {/* Mediation card */}
-              <div onClick={()=>setTab("mediation")} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:`linear-gradient(135deg,${T.purple}10,${T.sky}10)`,borderRadius:14,marginBottom:12,cursor:"pointer",border:`1px solid ${T.purple}22`}}>
-                <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${T.purple}20,${T.sky}20)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🕊</div>
-                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.purple}}>Médiation entre voisins</div><div style={{fontSize:10,color:T.textMuted}}>Résoudre un différend avec l'AI</div></div>
-                <span style={{fontSize:12,color:T.purple}}>→</span>
-              </div>
-              {/* New message */}
-              <button onClick={()=>setMsgView("newmsg")} style={{width:"100%",padding:"10px 12px",background:`${T.forest}06`,borderRadius:14,border:`1.5px dashed ${T.forestLight}44`,marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,textAlign:"left"}}>
-                <div style={{width:36,height:36,borderRadius:10,background:`${T.forest}10`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✏️</div>
-                <div><div style={{fontSize:13,fontWeight:600,color:T.forest}}>Nouveau message</div><div style={{fontSize:10,color:T.textMuted}}>{role==="locataire"?"Écrire à un voisin":"Écrire à un voisin ou au syndic"}</div></div>
-              </button>
-              {convos.filter(c=>!(role==="locataire"&&c.role==="syndic")).map(c=>(
-                <button key={c.id} onClick={()=>{setActiveConv(c);setMsgView("conv")}} style={{width:"100%",padding:"10px 12px",background:"#fff",borderRadius:14,border:"none",marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",textAlign:"left"}}>
-                  <Av name={c.name} size={36}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</span><span style={{fontSize:10,color:T.textMuted}}>{c.time}</span></div>
-                    <p style={{fontSize:11,color:T.textMuted,margin:"1px 0 0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.lastMsg}</p>
-                  </div>
-                  {c.unread>0&&<div style={{width:18,height:18,borderRadius:9,background:T.coral,color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{c.unread}</div>}
-                </button>
-              ))}
-            </div>:
-            msgView==="newmsg"?<div>
-              <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:4}}>← Retour</button>
-              <h3 style={{fontFamily:FONT,fontSize:16,color:T.forest,margin:"0 0 4px"}}>Nouveau message</h3>
-              <p style={{fontSize:11,color:T.textMuted,margin:"0 0 10px"}}>Choisissez un destinataire</p>
-              {[
-                {name:"Marie D.",floor:"3B",role:"CS"},
-                {name:"Thomas R.",floor:"1A",role:"proprio"},
-                {name:"Sophie L.",floor:"4C",role:"locataire"},
-                {name:"Anna K.",floor:"5A",role:"proprio"},
-                {name:"Paul V.",floor:"1C",role:"proprio"},
-                ...(role!=="locataire"?[{name:"Syndic Urbania",floor:"",role:"syndic"}]:[]),
-              ].map((dest,i)=>(
-                <button key={i} onClick={()=>{setActiveConv({id:Date.now(),name:dest.name,floor:dest.floor});setConvMsgs([]);setMsgView("conv")}} style={{width:"100%",padding:"8px 12px",background:"#fff",borderRadius:12,border:"none",marginBottom:5,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",textAlign:"left"}}>
-                  <Av name={dest.name} size={32}/>
-                  <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.text}}>{dest.name}</div>{dest.floor&&<div style={{fontSize:9,color:T.textMuted}}>App. {dest.floor}</div>}</div>
-                  {dest.role==="syndic"&&<span style={{padding:"2px 5px",borderRadius:3,fontSize:8,fontWeight:700,background:T.coral,color:"#fff"}}>SYNDIC</span>}
-                  {dest.role==="CS"&&<span style={{padding:"2px 5px",borderRadius:3,fontSize:8,fontWeight:700,background:T.sky,color:"#fff"}}>CS</span>}
-                </button>
-              ))}
-              {role==="locataire"&&<div style={{background:`${T.sunriseLight}22`,borderRadius:10,padding:10,marginTop:6}}><p style={{fontSize:11,color:T.bark,margin:0}}>ℹ️ En tant que locataire, les messages au syndic ne sont pas disponibles.</p></div>}
-            </div>:
-            <div style={{display:"flex",flexDirection:"column",minHeight:300}}>
-              <div style={{padding:"10px 12px",background:"#fff",borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:8,borderRadius:"12px 12px 0 0"}}>
-                <button onClick={()=>setMsgView("list")} style={{background:"none",border:"none",fontSize:16,cursor:"pointer",color:T.forest}}>←</button>
-                <Av name={activeConv?.name||""} size={28}/>
-                <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{activeConv?.name}</div></div>
-              </div>
-              <div style={{flex:1,overflowY:"auto",padding:10,minHeight:200,background:"#fff"}}>
-                {convMsgs.length===0&&<div style={{textAlign:"center",padding:30}}><div style={{fontSize:28,marginBottom:6}}>💬</div><p style={{fontSize:12,color:T.textMuted}}>Premier message à {activeConv?.name}</p></div>}
-                {convMsgs.map((m,i)=>(
-                  <div key={i} style={{display:"flex",justifyContent:m.from==="me"?"flex-end":"flex-start",marginBottom:8}}>
-                    <div style={{maxWidth:"80%",padding:"8px 12px",borderRadius:12,background:m.from==="me"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#f5f5f5",color:m.from==="me"?"#fff":T.text,fontSize:12,lineHeight:1.5}}>
-                      {m.text}<div style={{fontSize:8,marginTop:3,opacity:0.6,textAlign:"right"}}>{m.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{padding:"8px 10px",background:T.warmWhite,borderTop:`1px solid ${T.sandDark}`,display:"flex",gap:6,borderRadius:"0 0 12px 12px"}}>
-                <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} placeholder="Message..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
-                <button onClick={()=>{if(msgDraft.trim()){setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:"Maint."}]);setMsgDraft("")}}} style={{width:36,height:36,borderRadius:10,border:"none",background:msgDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
-              </div>
-            </div>}
-          </div>}
-
           {/* ═══ SUJETS SUB-TAB ═══ */}
           {agendaTab==="sujets"&&<div>
             {/* WhatsApp import banner */}
@@ -1472,11 +1644,233 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               <button onClick={()=>setShowNewSujet(true)} style={{width:"100%",padding:10,borderRadius:12,border:`2px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight,marginTop:3}}>+ Signaler un sujet</button>
             </div>}
           </div>}
-        </div>}
 
-        {/* ═══ MEDIATION (inside messages) ═══ */}
+          {/* ═══ TRAVAUX SUB-TAB ═══ */}
+          {agendaTab==="travaux"&&<div>
+            {!dossierId?<div>
+              {/* Premium badge */}
+              <div style={{display:"flex",alignItems:"center",gap:6,padding:"8px 12px",background:`${T.purple}08`,borderRadius:10,marginBottom:10,border:`1px solid ${T.purple}20`}}>
+                <span style={{fontSize:14}}>⭐</span>
+                <span style={{fontSize:10,fontWeight:600,color:T.purple}}>Fonction Premium — Suivi de travaux copropriété</span>
+              </div>
+              {/* Dossier list */}
+              {dossiers.map(d=>{
+                const stepIdx=TRAV_STEPS.findIndex(s=>s.id===d.status);const cat=TRAV_CAT[d.category]||{l:"Autre",c:T.text};
+                return(
+                <button key={d.id} onClick={()=>setDossierId(d.id)} style={{width:"100%",padding:14,borderRadius:14,border:"none",background:"#fff",cursor:"pointer",marginBottom:8,fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",textAlign:"left"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{width:38,height:38,borderRadius:10,background:`${cat.c}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{TRAV_STEPS[stepIdx]?.icon||"📋"}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.title}</div>
+                      <div style={{display:"flex",gap:4,marginTop:2}}>
+                        <span style={{padding:"1px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`${cat.c}15`,color:cat.c}}>{cat.l}</span>
+                        <span style={{padding:"1px 6px",borderRadius:4,fontSize:8,fontWeight:600,background:`${T.purple}12`,color:T.purple}}>{TRAV_STEPS[stepIdx]?.l}</span>
+                      </div>
+                    </div>
+                    <span style={{fontSize:12,color:T.textMuted}}>→</span>
+                  </div>
+                  {/* Mini pipeline */}
+                  <div style={{display:"flex",gap:2}}>
+                    {TRAV_STEPS.map((st,si)=>(
+                      <div key={st.id} style={{flex:1,height:4,borderRadius:2,background:si<stepIdx?T.forest:si===stepIdx?T.purple:`${T.sandDark}60`}}/>
+                    ))}
+                  </div>
+                  {d.status==="travaux"&&d.travaux&&<div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+                    <div style={{flex:1,height:6,borderRadius:3,background:T.sand}}><div style={{height:"100%",borderRadius:3,width:`${d.travaux.progression}%`,background:`linear-gradient(90deg,${T.forest},${T.leaf})`}}/></div>
+                    <span style={{fontSize:10,fontWeight:700,color:T.forest}}>{d.travaux.progression}%</span>
+                  </div>}
+                  {d.devis.length>0&&d.status==="devis"&&<p style={{fontSize:10,color:T.textMuted,margin:"6px 0 0"}}>{d.devis.length} devis · {d.devis.find(x=>x.recommended)?"CS recommande "+d.devis.find(x=>x.recommended).prestataire:""}</p>}
+                </button>)
+              })}
+              {/* New project button — CS/syndic only */}
+              {(isCS||role==="syndic")&&<button onClick={()=>{setShowNewTrav(true);setNewTravD({title:"",category:"communs",desc:""})}} style={{width:"100%",padding:12,borderRadius:14,border:`2px dashed ${T.bark}44`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.bark,display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:4}}>🔨 Nouveau dossier travaux</button>}
+            </div>
+
+            /* ── Dossier detail ── */
+            :(()=>{const d=dossiers.find(x=>x.id===dossierId);if(!d)return null;const stepIdx=TRAV_STEPS.findIndex(s=>s.id===d.status);const cat=TRAV_CAT[d.category]||{l:"Autre",c:T.text};return(
+            <div>
+              <button onClick={()=>setDossierId(null)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:4}}>← Dossiers</button>
+
+              {/* Pipeline header */}
+              <Card style={{padding:12,marginBottom:8}}>
+                <h3 style={{fontFamily:FONT,fontSize:16,color:T.text,margin:"0 0 8px"}}>{d.title}</h3>
+                <div style={{display:"flex",gap:3,marginBottom:4}}>
+                  {TRAV_STEPS.map((st,si)=>{const done=si<stepIdx;const active=si===stepIdx;return(
+                    <div key={st.id} style={{flex:1,textAlign:"center"}}>
+                      <div style={{width:"100%",height:6,borderRadius:3,background:done?T.forest:active?T.purple:`${T.sandDark}50`,marginBottom:3}}/>
+                      <div style={{fontSize:12,marginBottom:1}}>{st.icon}</div>
+                      <div style={{fontSize:7,fontWeight:done||active?700:500,color:done?T.forest:active?T.purple:T.textMuted}}>{st.short}</div>
+                    </div>
+                  )})}
+                </div>
+                <div style={{display:"flex",gap:4,marginTop:6}}>
+                  <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${cat.c}15`,color:cat.c}}>{cat.l}</span>
+                  <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:T.sand,color:T.bark}}>Ouvert le {d.createdAt}</span>
+                  <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:T.sand,color:T.bark}}>par {d.createdBy}</span>
+                </div>
+              </Card>
+
+              {/* Detail sub-tabs */}
+              <div style={{display:"flex",gap:5,background:"#E0DDD5",borderRadius:10,padding:3,marginBottom:12}}>
+                {[{id:"detail",l:"📋 Détail"},{id:"chat",l:"💬 Discussion"},{id:"docs",l:"📎 Documents"}].map(st=>(
+                  <button key={st.id} onClick={()=>setTravTab(st.id)} style={{flex:1,padding:"8px 6px",borderRadius:8,border:"none",background:travTab===st.id?"#A0522D":"transparent",color:travTab===st.id?"#fff":"#888780",fontSize:11,fontWeight:travTab===st.id?700:500,cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>{st.l}</button>
+                ))}
+              </div>
+
+              {/* ── Detail tab ── */}
+              {travTab==="detail"&&<div>
+              {/* Description */}
+              <Card style={{padding:12,marginBottom:8}}>
+                <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:0.5}}>Description</h4>
+                <p style={{fontSize:12,color:T.text,lineHeight:1.5,margin:0}}>{d.description}</p>
+              </Card>
+
+              {/* Diagnostic */}
+              {d.expert&&<Card style={{padding:12,marginBottom:8,border:`1px solid ${T.sky}30`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:14}}>🔍</span><h4 style={{fontSize:11,fontWeight:700,color:T.sky,margin:0}}>Diagnostic</h4></div>
+                <p style={{fontSize:11,color:T.text,margin:"0 0 2px"}}><strong>{d.expert.name}</strong> · {d.expert.date}</p>
+                <p style={{fontSize:11,color:T.textLight,lineHeight:1.4,margin:0}}>{d.expert.conclusions}</p>
+              </Card>}
+
+              {/* Devis comparison */}
+              {d.devis.length>0&&<Card style={{padding:12,marginBottom:8,border:`1px solid ${T.amber}30`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><span style={{fontSize:14}}>📑</span><h4 style={{fontSize:11,fontWeight:700,color:T.amber,margin:0}}>Devis comparatifs ({d.devis.length})</h4></div>
+                {d.devis.map((dv,di)=>(
+                  <div key={di} style={{padding:10,borderRadius:10,border:dv.recommended?`2px solid ${T.forest}`:`1px solid ${T.sandDark}`,background:dv.recommended?`${T.forest}06`:"#fff",marginBottom:6}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                      <span style={{fontSize:12,fontWeight:700,color:T.text}}>{dv.prestataire}</span>
+                      <span style={{fontSize:14,fontWeight:700,color:dv.recommended?T.forest:T.text}}>{dv.montant.toLocaleString("fr-FR")} €</span>
+                    </div>
+                    <p style={{fontSize:10,color:T.textLight,margin:"0 0 3px",lineHeight:1.3}}>{dv.description}</p>
+                    <div style={{display:"flex",gap:8}}>
+                      <span style={{fontSize:9,color:T.textMuted}}>⏱ {dv.delai}</span>
+                      {dv.recommended&&<span style={{fontSize:9,fontWeight:700,color:T.forest}}>✓ Recommandé CS</span>}
+                    </div>
+                  </div>
+                ))}
+              </Card>}
+
+              {/* Vote result */}
+              {d.vote&&<Card style={{padding:12,marginBottom:8,border:`1px solid ${T.purple}30`,background:`${T.purple}06`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{fontSize:14}}>🗳</span><h4 style={{fontSize:11,fontWeight:700,color:T.purple,margin:0}}>Décision</h4></div>
+                <p style={{fontSize:11,color:T.text,margin:"0 0 2px"}}>{d.vote.method==="ag"?"Voté en AG":"Consultation in-app"} · {d.vote.date}</p>
+                <p style={{fontSize:11,color:T.text,margin:"0 0 2px"}}><strong>Résultat : {d.vote.result==="pour"?"✅ Approuvé":"❌ Rejeté"}</strong></p>
+                {d.vote.resolution&&<p style={{fontSize:10,color:T.textMuted,margin:"2px 0 0"}}>{d.vote.resolution} — Majorité {d.vote.majorite}</p>}
+              </Card>}
+
+              {/* Travaux progress */}
+              {d.travaux&&<Card style={{padding:12,marginBottom:8,border:`1px solid ${T.forest}30`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><span style={{fontSize:14}}>🔨</span><h4 style={{fontSize:11,fontWeight:700,color:T.forest,margin:0}}>Travaux en cours — {d.travaux.prestataire}</h4></div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                  <div style={{flex:1,height:10,borderRadius:5,background:T.sand}}><div style={{height:"100%",borderRadius:5,width:`${d.travaux.progression}%`,background:`linear-gradient(90deg,${T.forest},${T.leaf})`,transition:"width 0.5s"}}/></div>
+                  <span style={{fontSize:14,fontWeight:700,color:T.forest}}>{d.travaux.progression}%</span>
+                </div>
+                <div style={{display:"flex",gap:8,marginBottom:8,fontSize:10,color:T.textMuted}}>
+                  <span>Début : {d.travaux.debut}</span>
+                  <span>Fin prévue : {d.travaux.finPrevue}</span>
+                </div>
+                {d.travaux.jalons&&<div>
+                  <p style={{fontSize:9,fontWeight:700,color:T.textMuted,margin:"0 0 4px",textTransform:"uppercase"}}>Jalons</p>
+                  {d.travaux.jalons.map((j,ji)=>(
+                    <div key={ji} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                      <div style={{width:18,height:18,borderRadius:9,background:j.done?T.forest:`${T.sandDark}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",flexShrink:0}}>{j.done?"✓":"·"}</div>
+                      <span style={{fontSize:11,color:j.done?T.text:T.textMuted,flex:1,textDecoration:j.done?"none":"none"}}>{j.label}</span>
+                      <span style={{fontSize:9,color:T.textMuted}}>{j.date}</span>
+                    </div>
+                  ))}
+                </div>}
+              </Card>}
+
+              {/* Garantie */}
+              {d.garanties&&<Card style={{padding:12,marginBottom:8,border:`1px solid ${T.sky}30`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:14}}>🛡</span><h4 style={{fontSize:11,fontWeight:700,color:T.sky,margin:0}}>Garanties</h4></div>
+                {[{l:"Parfait achèvement (1 an)",d:d.garanties.parfaitAchevement},{l:"Biennale (2 ans)",d:d.garanties.biennale},{l:"Décennale (10 ans)",d:d.garanties.decennale}].filter(g=>g.d).map((g,gi)=>(
+                  <div key={gi} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:gi<2?`1px solid ${T.sand}`:"none"}}>
+                    <span style={{fontSize:10,color:T.text}}>{g.l}</span>
+                    <span style={{fontSize:10,fontWeight:600,color:T.bark}}>→ {g.d.expire}</span>
+                  </div>
+                ))}
+              </Card>}
+
+              {/* Timeline */}
+              <Card style={{padding:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><span style={{fontSize:14}}>📅</span><h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,margin:0}}>Historique</h4></div>
+                {[...d.timeline].reverse().map((ev,ei)=>(
+                  <div key={ei} style={{display:"flex",gap:8,marginBottom:8}}>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
+                      <div style={{width:10,height:10,borderRadius:5,background:ev.type==="creation"?T.forest:ev.type==="vote"?T.purple:ev.type==="travaux"?T.amber:ev.type==="devis"?T.sky:T.textMuted}}/>
+                      {ei<d.timeline.length-1&&<div style={{width:2,flex:1,background:T.sandDark,marginTop:2}}/>}
+                    </div>
+                    <div style={{flex:1,paddingBottom:4}}>
+                      <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,fontWeight:600,color:T.text}}>{ev.author}</span><span style={{fontSize:9,color:T.textMuted}}>{ev.date}</span></div>
+                      <p style={{fontSize:10,color:T.textLight,lineHeight:1.4,margin:"2px 0 0"}}>{ev.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </Card>
+              </div>}
+
+              {/* ── Chat tab ── */}
+              {travTab==="chat"&&<div>
+                <Card style={{padding:0,overflow:"hidden"}}>
+                  <div style={{padding:"10px 12px",background:`${T.bark}08`,borderBottom:`1px solid ${T.sandDark}`,display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:14}}>💬</span>
+                    <span style={{fontSize:12,fontWeight:600,color:T.bark}}>Discussion — {d.title}</span>
+                  </div>
+                  <div style={{minHeight:200,maxHeight:300,overflowY:"auto",padding:10}}>
+                    {(!travChat[d.id]||travChat[d.id].length===0)&&<div style={{textAlign:"center",padding:30}}><div style={{fontSize:28,marginBottom:6}}>💬</div><p style={{fontSize:11,color:T.textMuted}}>Commencez la discussion sur ce dossier.<br/>Membres du CS et syndic peuvent participer.</p></div>}
+                    {(travChat[d.id]||[]).map((m,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:m.from===userName?"flex-end":"flex-start",marginBottom:6}}>
+                        <div style={{maxWidth:"80%"}}>
+                          {m.from!==userName&&<div style={{fontSize:9,fontWeight:600,color:T.textMuted,marginBottom:2}}>{m.from}</div>}
+                          <div style={{padding:"7px 11px",borderRadius:10,background:m.from===userName?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#f5f5f5",color:m.from===userName?"#fff":T.text,fontSize:11,lineHeight:1.4}}>
+                            {m.text}<div style={{fontSize:7,marginTop:2,opacity:0.6,textAlign:"right"}}>{m.time}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{padding:"8px 10px",borderTop:`1px solid ${T.sandDark}`,display:"flex",gap:6}}>
+                    <input value={travChatDraft} onChange={e=>setTravChatDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&travChatDraft.trim()){setTravChat(p=>({...p,[d.id]:[...(p[d.id]||[]),{from:userName,text:travChatDraft,time:nowTime()}]}));setTravChatDraft("")}}} placeholder="Message au groupe travaux..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:11,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+                    <button onClick={()=>{if(travChatDraft.trim()){setTravChat(p=>({...p,[d.id]:[...(p[d.id]||[]),{from:userName,text:travChatDraft,time:nowTime()}]}));setTravChatDraft("")}}} style={{width:34,height:34,borderRadius:10,border:"none",background:travChatDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+                  </div>
+                </Card>
+              </div>}
+
+              {/* ── Documents tab ── */}
+              {travTab==="docs"&&<div>
+                <Card style={{padding:12,marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                    <span style={{fontSize:14}}>📎</span>
+                    <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,margin:0}}>Documents du dossier</h4>
+                  </div>
+                  {/* Mock documents */}
+                  {(d.devis||[]).map((dv,di)=>(
+                    <div key={di} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:5,border:`1px solid ${T.sandDark}`}}>
+                      <div style={{width:32,height:32,borderRadius:8,background:`${T.amber}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📄</div>
+                      <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>Devis {dv.prestataire}</div><div style={{fontSize:9,color:T.textMuted}}>{dv.montant.toLocaleString("fr-FR")}€ · PDF</div></div>
+                      <span style={{fontSize:10,color:T.forest,fontWeight:600}}>Voir</span>
+                    </div>
+                  ))}
+                  {d.expert&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:5,border:`1px solid ${T.sandDark}`}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:`${T.sky}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🔍</div>
+                    <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>Rapport diagnostic</div><div style={{fontSize:9,color:T.textMuted}}>{d.expert.name} · {d.expert.date}</div></div>
+                    <span style={{fontSize:10,color:T.forest,fontWeight:600}}>Voir</span>
+                  </div>}
+                  {d.vote&&d.vote.resolution&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:5,border:`1px solid ${T.sandDark}`}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:`${T.purple}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🗳</div>
+                    <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:T.text}}>PV de vote</div><div style={{fontSize:9,color:T.textMuted}}>{d.vote.resolution}</div></div>
+                    <span style={{fontSize:10,color:T.forest,fontWeight:600}}>Voir</span>
+                  </div>}
+                  <button style={{width:"100%",marginTop:6,padding:10,borderRadius:10,border:`1.5px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.forestLight}}>+ Ajouter un document</button>
+                </Card>
+              </div>}
+
+            </div>)})()}
+          </div>}
+        </div>}
         {tab==="mediation"&&<div style={{padding:14}}>
-          <button onClick={()=>{setAgendaTab("msg");setTab("copro")}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour aux messages</button>
+          <button onClick={()=>{setTab("msg");setMsgView("list")}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour aux messages</button>
 
           {medStep===0&&<div>
             <Card style={{textAlign:"center",padding:28}}>
@@ -1531,7 +1925,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
       {tab!=="mediation"&&<div style={{background:"rgba(253,251,247,0.97)",backdropFilter:"blur(12px)",borderTop:`1px solid ${T.sandDark}`,padding:"6px 4px calc(10px + env(safe-area-inset-bottom, 8px))",display:"flex",justifyContent:"space-around",flexShrink:0,zIndex:20}}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 8px 6px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative"}}>
-            <span style={{fontSize:22}}>{t.icon}</span>
+            <span style={{fontSize:22,filter:tab===t.id?"none":"grayscale(0.5) opacity(0.6)"}}>{t.icon}</span>
             <span style={{fontSize:10,fontWeight:700,fontFamily:SANS,color:tab===t.id?t.color:T.textMuted}}>{t.label}</span>
             {tab===t.id&&<div style={{position:"absolute",bottom:2,left:"50%",transform:"translateX(-50%)",width:22,height:3,borderRadius:2,background:t.color}}/>}
           </button>
@@ -1851,6 +2245,205 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
         </div>
       </div>}
 
+      {/* ═══ NEW TRAVAUX MODAL ═══ */}
+      {showNewTrav&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowNewTrav(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"80vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <span style={{fontSize:22}}>🔨</span>
+            <h3 style={{fontFamily:FONT,fontSize:19,color:T.bark,margin:0}}>Nouveau dossier travaux</h3>
+          </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Titre du dossier</label>
+            <input value={newTravD.title} onChange={e=>setNewTravD(p=>({...p,title:e.target.value}))} placeholder="Ex: Remplacement chaudière collective" style={{width:"100%",marginTop:4,padding:12,borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+          </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Catégorie</label>
+            <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4}}>
+              {Object.entries(TRAV_CAT).map(([k,v])=>(
+                <button key={k} onClick={()=>setNewTravD(p=>({...p,category:k}))} style={{padding:"7px 12px",borderRadius:8,border:newTravD.category===k?`2px solid ${v.c}`:`1px solid ${T.sandDark}`,background:newTravD.category===k?`${v.c}10`:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:newTravD.category===k?700:500,color:newTravD.category===k?v.c:T.text}}>{v.l}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Description du problème</label>
+            <textarea value={newTravD.desc} onChange={e=>setNewTravD(p=>({...p,desc:e.target.value}))} placeholder="Décrivez le problème constaté, le contexte, l'urgence..." rows={3} style={{width:"100%",marginTop:4,padding:12,borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+          </div>
+          <Btn full disabled={!newTravD.title.trim()||!newTravD.desc.trim()} onClick={()=>{
+            const today=new Date().toISOString().split("T")[0];const cat=TRAV_CAT[newTravD.category]||{l:"Autre"};
+            const nd={id:Date.now(),title:newTravD.title,category:newTravD.category,status:"identification",createdAt:today,updatedAt:today,createdBy:userName,description:newTravD.desc,photos:[],expert:null,devis:[],vote:null,travaux:null,reception:null,garanties:null,sujetId:null,timeline:[{date:today,type:"creation",author:userName,text:`Dossier ouvert : ${newTravD.title}`}]};
+            setDossiers(p=>[nd,...p]);
+            setPosts(p=>[{id:Date.now()+1,author:userName,floor:currentApt,time:"À l'instant",text:`🔨 Nouveau dossier travaux ouvert : "${newTravD.title}" (${cat.l}). Consultez l'onglet Copro > Travaux pour suivre l'avancement.`,cat:"officiel",likedBy:[],role,replies:[]},...p]);
+            setShowNewTrav(false);
+          }} style={{background:`linear-gradient(135deg,${T.bark},${T.forest})`}}>🔨 Créer le dossier</Btn>
+        </div>
+      </div>}
+
+      {/* ═══ ANNUAIRE MODAL ═══ */}
+      {showAnnuaire&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>{setShowAnnuaire(false);setAnnuaireSearch("");setSyndicRevealed(false)}}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <span style={{fontSize:22}}>📒</span>
+            <h3 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Annuaire de la copropriété</h3>
+          </div>
+
+          {/* Residents */}
+          {(()=>{
+            const residents=[
+              {name:"Marie D.",floor:"3B",role:"proprio",cs:true,verified:true,visible:true},
+              {name:"Thomas R.",floor:"1A",role:"proprio",cs:false,verified:true,visible:true},
+              {name:"Sophie L.",floor:"4C",role:"locataire",cs:false,verified:false,visible:true},
+              {name:"Anna K.",floor:"5A",role:"proprio",cs:false,verified:true,visible:true},
+              {name:"Paul V.",floor:"1C",role:"proprio",cs:false,verified:false,visible:true},
+              {name:"Lucas M.",floor:"RDC",role:"concierge",cs:false,verified:true,visible:true},
+              {name:userName,floor:currentApt,role,cs:isCS,verified:true,visible:annuaireVisible},
+            ].filter(r=>r.visible);
+            const filtered=annuaireSearch?residents.filter(r=>r.name.toLowerCase().includes(annuaireSearch.toLowerCase())||r.floor.toLowerCase().includes(annuaireSearch.toLowerCase())):residents;
+            return(<div>
+              <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:"0 0 8px"}}>👥 Résidents ({residents.length})</h4>
+              {residents.length>15&&<div style={{background:"#fff",borderRadius:10,padding:"3px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:6,border:`1px solid ${T.sandDark}`}}>
+                <span style={{fontSize:12}}>🔍</span><input value={annuaireSearch} onChange={e=>setAnnuaireSearch(e.target.value)} placeholder="Rechercher un résident..." style={{flex:1,border:"none",outline:"none",padding:"8px 0",fontSize:12,fontFamily:SANS,background:"transparent"}}/>
+              </div>}
+              {filtered.map((r,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
+                  <Av name={r.name} size={34}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{r.name}{r.verified?" ✓":""}</div>
+                    <div style={{display:"flex",gap:4,marginTop:1}}>
+                      <span style={{fontSize:11,color:T.bark}}>App. {r.floor}</span>
+                      <span style={{fontSize:11,color:T.bark}}>· {r.role==="proprio"?"Copropriétaire":r.role==="locataire"?"Locataire":r.role==="concierge"?"Concierge":"Syndic"}</span>
+                      {r.cs&&<span style={{padding:"0 5px",borderRadius:3,fontSize:9,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>CS</span>}
+                    </div>
+                  </div>
+                  {r.name!==userName&&<button onClick={()=>{setShowAnnuaire(false);setAnnuaireSearch("");setActiveConv({id:Date.now(),name:r.name,floor:r.floor});setConvMsgs([]);setMsgView("conv");setTab("msg")}} style={{padding:"5px 10px",borderRadius:6,border:"none",background:`${T.forest}10`,cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>✉️</button>}
+                </div>
+              ))}
+            </div>)
+          })()}
+
+          {/* Prestataires */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"14px 0 8px"}}>
+            <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:0}}>🔧 Prestataires & contacts</h4>
+            {(isCS||role==="syndic")&&!showAddPrest&&<button onClick={()=>{setShowAddPrest(true);setAddPrestForm({name:"",type:"",tel:""})}} style={{background:"none",border:"none",cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>+ Ajouter</button>}
+          </div>
+          {/* Add prestataire form */}
+          {showAddPrest&&<div style={{padding:10,background:"#fff",borderRadius:10,marginBottom:6,border:`2px solid ${T.forest}30`}}>
+            <input value={addPrestForm.name} onChange={e=>setAddPrestForm(p=>({...p,name:e.target.value}))} placeholder="Nom du prestataire" style={{width:"100%",padding:8,borderRadius:8,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",marginBottom:4}}/>
+            <input value={addPrestForm.type} onChange={e=>setAddPrestForm(p=>({...p,type:e.target.value}))} placeholder="Type (Plomberie, Électricité...)" style={{width:"100%",padding:8,borderRadius:8,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",marginBottom:4}}/>
+            <input value={addPrestForm.tel} onChange={e=>setAddPrestForm(p=>({...p,tel:e.target.value}))} placeholder="Numéro de téléphone" style={{width:"100%",padding:8,borderRadius:8,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",marginBottom:4}}/>
+            <input value={addPrestForm.email} onChange={e=>setAddPrestForm(p=>({...p,email:e.target.value}))} placeholder="Email (optionnel)" type="email" style={{width:"100%",padding:8,borderRadius:8,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",marginBottom:6}}/>
+            <div style={{display:"flex",gap:6}}>
+              <button disabled={!addPrestForm.name.trim()||!addPrestForm.tel.trim()} onClick={()=>{setPrestataires(p=>[...p,{name:addPrestForm.name,tel:addPrestForm.tel,email:addPrestForm.email||"",type:addPrestForm.type||"Autre",isSyndic:false}]);setShowAddPrest(false)}} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"none",background:addPrestForm.name.trim()&&addPrestForm.tel.trim()?T.forest:T.sandDark,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✓ Ajouter</button>
+              <button onClick={()=>setShowAddPrest(false)} style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:11,cursor:"pointer",fontFamily:SANS}}>Annuler</button>
+            </div>
+          </div>}
+          {prestataires.map((p,i)=>{
+            const isSyndicEntry=p.isSyndic;
+            const canSeeSyndic=role==="proprio"||role==="syndic"||isCS;
+            const isEditing=editPrestIdx===i;
+            return(
+            <div key={i} style={{padding:"10px 12px",background:isSyndicEntry&&!canSeeSyndic?`${T.sand}`:"#fff",borderRadius:10,marginBottom:5,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",opacity:isSyndicEntry&&!canSeeSyndic?0.6:1,border:isEditing?`2px solid ${T.forest}30`:"none"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:34,height:34,borderRadius:8,background:isSyndicEntry?`${T.coral}12`:`${T.amber}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{isSyndicEntry?"🏛":"🔧"}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600,color:T.text}}>{p.name}</div>
+                  <div style={{fontSize:11,color:T.bark}}>{p.type}{isSyndicEntry?" · Pour copropriétaires, sauf urgence":""}</div>
+                  {p.email&&<div style={{fontSize:11,color:"#2C6EAA",fontWeight:500}}>{p.email}</div>}
+                </div>
+                {isSyndicEntry
+                  ?<button onClick={()=>setSyndicRevealed(!syndicRevealed)} style={{background:"none",border:"none",cursor:"pointer",fontFamily:SANS}}>
+                    {syndicRevealed
+                      ?<span style={{fontSize:12,fontWeight:600,color:T.forest}}>{p.tel}</span>
+                      :<span style={{fontSize:11,fontWeight:600,color:T.coral}}>Voir le n°</span>
+                    }
+                  </button>
+                  :!isEditing&&<span style={{fontSize:12,fontWeight:600,color:T.forest}}>{p.tel}</span>
+                }
+                {(isCS||role==="syndic")&&!isSyndicEntry&&!isEditing&&<button onClick={()=>{setEditPrestIdx(i);setEditPrestForm({name:p.name,type:p.type,tel:p.tel,email:p.email||""})}} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:T.textMuted,padding:2}}>✏️</button>}
+              </div>
+              {/* Inline full edit */}
+              {isEditing&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:4}}>
+                <div style={{display:"flex",gap:4}}>
+                  <input value={editPrestForm.name} onChange={e=>setEditPrestForm(f=>({...f,name:e.target.value}))} placeholder="Nom" style={{flex:1,padding:"6px 8px",borderRadius:6,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none"}}/>
+                  <input value={editPrestForm.type} onChange={e=>setEditPrestForm(f=>({...f,type:e.target.value}))} placeholder="Type" style={{flex:1,padding:"6px 8px",borderRadius:6,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none"}}/>
+                </div>
+                <div style={{display:"flex",gap:4}}>
+                  <input value={editPrestForm.tel} onChange={e=>setEditPrestForm(f=>({...f,tel:e.target.value}))} placeholder="Téléphone" style={{flex:1,padding:"6px 8px",borderRadius:6,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none"}}/>
+                  <input value={editPrestForm.email} onChange={e=>setEditPrestForm(f=>({...f,email:e.target.value}))} placeholder="Email" type="email" style={{flex:1,padding:"6px 8px",borderRadius:6,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none"}}/>
+                </div>
+                <div style={{display:"flex",gap:4,marginTop:2}}>
+                  <button onClick={()=>{setPrestataires(prev=>prev.map((x,j)=>j===i?{...x,...editPrestForm}:x));setEditPrestIdx(null)}} style={{flex:1,padding:"6px 8px",borderRadius:6,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✓ Enregistrer</button>
+                  <button onClick={()=>setEditPrestIdx(null)} style={{padding:"6px 10px",borderRadius:6,border:`1px solid ${T.sandDark}`,background:"#fff",fontSize:11,cursor:"pointer",color:T.textMuted,fontFamily:SANS}}>Annuler</button>
+                </div>
+              </div>}
+            </div>
+          )})}
+
+          {/* Infos pratiques */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"14px 0 8px"}}>
+            <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:0}}>📌 Infos pratiques</h4>
+            {(isCS||role==="syndic")&&!showAddInfo&&<button onClick={()=>{setShowAddInfo(true);setAddInfoForm({l:"",v:""})}} style={{background:"none",border:"none",cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>+ Ajouter</button>}
+          </div>
+          {/* Add info form */}
+          {showAddInfo&&<div style={{padding:10,background:"#fff",borderRadius:10,marginBottom:6,border:`2px solid ${T.forest}30`}}>
+            <input value={addInfoForm.l} onChange={e=>setAddInfoForm(p=>({...p,l:e.target.value}))} placeholder="Intitulé (ex: Digicode parking)" style={{width:"100%",padding:8,borderRadius:8,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",marginBottom:4}}/>
+            <input value={addInfoForm.v} onChange={e=>setAddInfoForm(p=>({...p,v:e.target.value}))} placeholder="Valeur" style={{width:"100%",padding:8,borderRadius:8,border:`1px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",boxSizing:"border-box",marginBottom:6}}/>
+            <div style={{display:"flex",gap:6}}>
+              <button disabled={!addInfoForm.l.trim()||!addInfoForm.v.trim()} onClick={()=>{setInfoPratiques(p=>[...p,{l:addInfoForm.l,v:addInfoForm.v}]);setShowAddInfo(false)}} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"none",background:addInfoForm.l.trim()&&addInfoForm.v.trim()?T.forest:T.sandDark,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✓ Ajouter</button>
+              <button onClick={()=>setShowAddInfo(false)} style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:11,cursor:"pointer",fontFamily:SANS}}>Annuler</button>
+            </div>
+          </div>}
+          <Card style={{padding:12}}>
+            {infoPratiques.map((info,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<infoPratiques.length-1?`1px solid ${T.sand}`:"none"}}>
+                <span style={{fontSize:12,color:T.bark,fontWeight:500}}>{info.l}</span>
+                <div style={{display:"flex",alignItems:"center",gap:4}}>
+                  {editInfoIdx===i
+                    ?<div style={{display:"flex",gap:4}}>
+                      <input value={editInfoVal} onChange={e=>setEditInfoVal(e.target.value)} style={{width:120,padding:"4px 8px",borderRadius:6,border:`1px solid ${T.forestLight}`,fontSize:11,fontFamily:SANS,outline:"none"}}/>
+                      <button onClick={()=>{setInfoPratiques(p=>p.map((x,j)=>j===i?{...x,v:editInfoVal}:x));setEditInfoIdx(null)}} style={{padding:"3px 7px",borderRadius:6,border:"none",background:T.forest,color:"#fff",fontSize:9,cursor:"pointer",fontFamily:SANS}}>OK</button>
+                      <button onClick={()=>setEditInfoIdx(null)} style={{padding:"3px 5px",borderRadius:6,border:`1px solid ${T.sandDark}`,background:"#fff",fontSize:9,cursor:"pointer",color:T.textMuted}}>×</button>
+                    </div>
+                    :<>
+                      <span style={{fontSize:12,fontWeight:700,color:T.text}}>{info.v}</span>
+                      {(isCS||role==="syndic")&&<button onClick={()=>{setEditInfoIdx(i);setEditInfoVal(info.v)}} style={{background:"none",border:"none",cursor:"pointer",fontSize:9,color:T.textMuted,padding:0}}>✏️</button>}
+                    </>
+                  }
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      </div>}
+
+      {/* ═══ NEW GROUP MODAL ═══ */}
+      {showNewGroup&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowNewGroup(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"80vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <span style={{fontSize:22}}>👥</span>
+            <h3 style={{fontFamily:FONT,fontSize:19,color:T.sky,margin:0}}>Créer un groupe</h3>
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Nom du groupe</label>
+            <input value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Ex: Voisins du 2ème, Comité fête..." style={{width:"100%",marginTop:4,padding:12,borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff"}}/>
+          </div>
+          <label style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1}}>Membres ({newGroupSel.length} sélectionnés)</label>
+          {[
+            {name:"Marie D.",floor:"3B"},{name:"Thomas R.",floor:"1A"},{name:"Sophie L.",floor:"4C"},
+            {name:"Anna K.",floor:"5A"},{name:"Paul V.",floor:"1C"},{name:"Lucas M.",floor:"RDC"},
+          ].map((p,i)=>{const sel=newGroupSel.includes(p.name);return(
+            <button key={i} onClick={()=>setNewGroupSel(s=>sel?s.filter(n=>n!==p.name):[...s,p.name])} style={{width:"100%",padding:"8px 12px",background:sel?`${T.sky}10`:"#fff",borderRadius:10,border:sel?`2px solid ${T.sky}`:`1px solid ${T.sandDark}`,marginTop:5,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:SANS}}>
+              <div style={{width:22,height:22,borderRadius:6,background:sel?T.sky:T.sandDark,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff"}}>{sel?"✓":""}</div>
+              <Av name={p.name} size={28}/>
+              <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:12,fontWeight:500,color:T.text}}>{p.name}</div><div style={{fontSize:9,color:T.textMuted}}>App. {p.floor}</div></div>
+            </button>
+          )})}
+          <Btn full disabled={!newGroupName.trim()||newGroupSel.length<2} onClick={()=>{setActiveConv({id:Date.now(),name:newGroupName,group:true,members:newGroupSel});setConvMsgs([]);setMsgView("conv");setShowNewGroup(false);setTab("msg")}} style={{marginTop:16,background:`linear-gradient(135deg,${T.sky},${T.forest})`}}>👥 Créer le groupe ({newGroupSel.length} membres)</Btn>
+        </div>
+      </div>}
+
       {/* ═══ PROFILE MODAL ═══ */}
       {showProfile&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
@@ -1948,7 +2541,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             {userFloorEdited&&<p style={{fontSize:10,color:T.sunrise,margin:"3px 0 0"}}>✏️ Modifié manuellement</p>}
           </div>
 
-          {/* Multi-logement — compact "add" link */}
+          {/* Multi-logement */}
           {role!=="syndic"&&<div style={{marginBottom:16}}>
             {extraLogements.length>0&&extraLogements.map((lg,i)=>(
               <div key={i} style={{display:"flex",gap:6,alignItems:"center",padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,border:`1px solid ${T.sandDark}`}}>
@@ -1957,7 +2550,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 <button onClick={()=>setExtraLogements(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
               </div>
             ))}
-            <button onClick={()=>{const name=prompt("Nom du logement supplémentaire (ex: 5ème Droite - B)");if(name)setExtraLogements(p=>[...p,name])}} style={{background:"none",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.forestLight,padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>+ Ajouter un logement supplémentaire</button>
+            {showAddLogement?<div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <input value={addLogementInput} onChange={e=>setAddLogementInput(e.target.value)} placeholder="Ex: 5ème Droite - B" autoFocus onKeyDown={e=>{if(e.key==="Enter"&&addLogementInput.trim()){setExtraLogements(p=>[...p,addLogementInput.trim()]);setAddLogementInput("");setShowAddLogement(false)}}} style={{flex:1,padding:"8px 10px",borderRadius:8,border:`1.5px solid ${T.forestLight}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+              <button onClick={()=>{if(addLogementInput.trim()){setExtraLogements(p=>[...p,addLogementInput.trim()]);setAddLogementInput("");setShowAddLogement(false)}}} style={{padding:"7px 12px",borderRadius:8,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>OK</button>
+              <button onClick={()=>{setShowAddLogement(false);setAddLogementInput("")}} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
+            </div>
+            :<button onClick={()=>setShowAddLogement(true)} style={{background:"none",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.forestLight,padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>+ Ajouter un logement supplémentaire</button>}
           </div>}
 
           <div style={{marginBottom:20}}>
@@ -1976,10 +2574,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Préférences</h4>
 
           {[
-            {label:"Notifications push",desc:"Nouveaux messages, voisins, événements",value:userNotifs,set:setUserNotifs,disabled:false},
+            {label:"Notifications prioritaires",desc:"Urgences, messages directs, signalements 🔴",value:notifsUrgent,set:setNotifsUrgent,disabled:false},
+            {label:"Notifications générales",desc:"Fil d'actualité, sondages, agenda, sujets",value:notifsGeneral,set:setNotifsGeneral,disabled:false},
+            {label:"Visible dans l'annuaire",desc:"Les voisins peuvent me trouver dans l'annuaire",value:annuaireVisible,set:setAnnuaireVisible,disabled:false},
             {label:"Coach AI à l'écriture",desc:"Toujours actif — non désactivable",value:true,set:()=>{},disabled:true,locked:true},
           ].map((s,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:i===0?`1px solid ${T.sand}`:"none"}}>
+            <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:i<3?`1px solid ${T.sand}`:"none"}}>
               <div style={{opacity:s.disabled?0.7:1}}>
                 <div style={{fontSize:14,fontWeight:500,color:T.text,display:"flex",alignItems:"center",gap:5}}>
                   {s.label}
@@ -2221,7 +2821,10 @@ export default function VoisinSereins() {
 
   return (
     <div style={{maxWidth:420,margin:"0 auto",height:"100dvh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
-      {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")}/>}
+      {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")} onFacebook={()=>{
+        setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
+        setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
+      }}/>}
       {screen==="address"&&<OnboardingAddress
         onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
         onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
