@@ -617,6 +617,15 @@ function InviteKit({copro,userName,onClose}) {
 function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [tab,setTab]=useState("home");
   const [showInvite,setShowInvite]=useState(false);
+  const [parrainages,setParrainages]=useState([
+    {id:1,contact:"Sophie Martin",city:"Lyon 3ème",copro:"Résidence du Parc",date:"2026-03-15",actifs:7,seuil:5,status:"actif",paidReward:true},
+    {id:2,contact:"Thomas Durand",city:"Paris 11ème",copro:"Le Voltaire",date:"2026-03-28",actifs:2,seuil:5,status:"en_cours",paidReward:false},
+  ]);
+  const [showParrainage,setShowParrainage]=useState(false);
+  const [parrainageStep,setParrainageStep]=useState(0); // 0=list, 1=new, 2=share, 3=done
+  const [newParr,setNewParr]=useState({contact:"",city:"",channel:"whatsapp"});
+  const [parrMsgEdited,setParrMsgEdited]=useState("");
+  const parrRewards=parrainages.filter(p=>p.actifs>=p.seuil).length;
   const [coproSelector,setCoproSelector]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
   const [showCoproInfo,setShowCoproInfo]=useState(false);
@@ -984,6 +993,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const filteredPosts = feedCat==="all"?posts:posts.filter(p=>p.cat===feedCat);
 
   const activeCopro = COPROS[0];
+  const userTier=(activeCopro.members/activeCopro.logements>=0.4)?"pilier":(activeCopro.members/activeCopro.logements>=0.2)?"animateur":"fondateur";
+  const canParrain=userTier==="animateur"||userTier==="pilier";
 
   return (
     <div style={{height:"100%",background:T.sand,fontFamily:SANS,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
@@ -1074,6 +1085,22 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               <button onClick={()=>setShowInvite(true)} style={{padding:"6px 12px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:SANS,flexShrink:0,whiteSpace:"nowrap"}}>📨 Inviter</button>
             </div>
           </Card>
+
+          {/* Parrainage widget — Animateurs & Piliers */}
+          {canParrain&&<Card style={{background:`linear-gradient(135deg,${T.purple}08,${T.sky}08)`,border:`1.5px solid ${T.purple}25`,padding:14,cursor:"pointer"}} onClick={()=>{setShowParrainage(true);setParrainageStep(0)}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${T.purple},${T.sky})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🚀</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.purple}}>Ambassadeur VoisinSereins</div>
+                <div style={{fontSize:11,color:T.textLight,lineHeight:1.3}}>Parrainez une copro — Pass Perso + chèque cadeau 20€</div>
+              </div>
+              <span style={{fontSize:14,color:T.purple}}>→</span>
+            </div>
+            {parrainages.length>0&&<div style={{display:"flex",gap:6,marginTop:8}}>
+              <span style={{fontSize:10,fontWeight:600,color:T.purple,background:`${T.purple}12`,padding:"2px 8px",borderRadius:6}}>{parrainages.length} copro{parrainages.length>1?"s":""} parrainée{parrainages.length>1?"s":""}</span>
+              {parrRewards>0&&<span style={{fontSize:10,fontWeight:600,color:T.forest,background:`${T.forest}12`,padding:"2px 8px",borderRadius:6}}>🎁 {parrRewards} mois Pass Perso gagné{parrRewards>1?"s":""}</span>}
+            </div>}
+          </Card>}
 
           {/* Quick access grid */}
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"18px 0 10px"}}>Accès rapide</h3>
@@ -2014,6 +2041,174 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
       {showInvite&&<InviteKit copro={copro||{label:"Ma copropriété"}} userName={userName} onClose={()=>setShowInvite(false)}/>}
 
+      {/* ═══ PARRAINAGE MODAL ═══ */}
+      {showParrainage&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowParrainage(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 16px"}}/>
+
+          {parrainageStep===0&&<div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+              <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${T.purple},${T.sky})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🚀</div>
+              <div><h3 style={{fontFamily:FONT,fontSize:18,color:T.purple,margin:0}}>Ambassadeur VoisinSereins</h3><p style={{fontSize:11,color:T.textMuted,margin:"2px 0 0"}}>Parrainez des copros partout en France</p></div>
+            </div>
+            {/* Stats */}
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              {[{v:parrainages.length,l:"Parrainées",c:T.purple},{v:parrRewards,l:"Mois offerts",c:T.forest},{v:parrainages.filter(p=>p.paidReward).length,l:"Chèques 20€",c:T.sunrise}].map((s,i)=>(
+                <div key={i} style={{flex:1,textAlign:"center",padding:"10px 6px",background:`${s.c}08`,borderRadius:12,border:`1px solid ${s.c}20`}}>
+                  <div style={{fontSize:22,fontWeight:700,color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:9,color:T.textMuted}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {/* How it works */}
+            <Card style={{padding:14,marginBottom:12,background:`${T.purple}04`,border:`1px solid ${T.purple}15`}}>
+              <h4 style={{fontSize:12,fontWeight:700,color:T.purple,margin:"0 0 8px"}}>Comment ça marche ?</h4>
+              {[
+                "Vous connaissez quelqu'un dans une copro (ami, famille, collègue)",
+                "Vous lui envoyez un lien — il reçoit 3 mois de Pass Perso offerts",
+                "Quand sa copro atteint 5 actifs → vous gagnez 1 mois de Pass Perso",
+                "Quand sa copro passe en payant → vous recevez un chèque cadeau de 20€"
+              ].map((t,i)=>(
+                <div key={i} style={{display:"flex",gap:8,marginBottom:4,alignItems:"flex-start"}}>
+                  <div style={{width:18,height:18,borderRadius:9,background:T.purple,color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
+                  <p style={{margin:0,fontSize:11,color:T.text,lineHeight:1.4}}>{t}</p>
+                </div>
+              ))}
+            </Card>
+            {/* List */}
+            {parrainages.length>0&&<div style={{marginBottom:12}}>
+              <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,margin:"0 0 8px",textTransform:"uppercase"}}>Mes copros parrainées</h4>
+              {parrainages.map(p=>(
+                <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#fff",borderRadius:12,marginBottom:6,border:`1px solid ${p.actifs>=p.seuil?T.forest:T.sandDark}30`}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:p.actifs>=p.seuil?`${T.forest}15`:`${T.purple}10`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{p.actifs>=p.seuil?"✅":"⏳"}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:600,color:T.text}}>{p.copro}</div>
+                    <div style={{fontSize:10,color:T.textMuted}}>{p.city} · Filleul : {p.contact}</div>
+                    <div style={{marginTop:3,display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{flex:1,height:4,borderRadius:2,background:T.sand}}><div style={{height:"100%",borderRadius:2,width:`${Math.min((p.actifs/p.seuil)*100,100)}%`,background:p.actifs>=p.seuil?T.forest:T.purple}}/></div>
+                      <span style={{fontSize:9,fontWeight:600,color:p.actifs>=p.seuil?T.forest:T.textMuted}}>{p.actifs}/{p.seuil} actifs</span>
+                    </div>
+                  </div>
+                  {p.actifs>=p.seuil&&<span style={{fontSize:9,fontWeight:700,color:T.forest,background:`${T.forest}12`,padding:"3px 6px",borderRadius:6}}>🎁 Pass Perso</span>}
+                  {p.paidReward&&<span style={{fontSize:9,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"3px 6px",borderRadius:6}}>🎁 20€</span>}
+                </div>
+              ))}
+            </div>}
+            {(()=>{const now=new Date();const thisMonth=parrainages.filter(p=>{const d=new Date(p.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;const remaining=5-thisMonth;return(<div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <span style={{fontSize:10,color:T.textMuted}}>Parrainages ce mois-ci : <strong>{thisMonth}/5</strong></span>
+                {remaining>0?<span style={{fontSize:10,fontWeight:600,color:T.forest}}>{remaining} restant{remaining>1?"s":""}</span>:<span style={{fontSize:10,fontWeight:600,color:T.coral}}>Limite atteinte</span>}
+              </div>
+              <Btn full disabled={remaining<=0} onClick={()=>{setParrainageStep(1);setNewParr({contact:"",city:"",channel:"whatsapp"});setParrMsgEdited("")}} style={{background:remaining>0?`linear-gradient(135deg,${T.purple},${T.sky})`:T.sandDark}}>🚀 Parrainer une nouvelle copro</Btn>
+            </div>)})()}
+          </div>}
+
+          {parrainageStep===1&&<div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+              <button onClick={()=>setParrainageStep(0)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.purple,fontFamily:SANS,fontWeight:600}}>←</button>
+              <h3 style={{fontFamily:FONT,fontSize:17,color:T.purple,margin:0}}>Nouveau parrainage</h3>
+            </div>
+            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Prénom de votre contact</label>
+            <input value={newParr.contact} onChange={e=>setNewParr(p=>({...p,contact:e.target.value}))} placeholder="Sophie, Thomas, Marie..." style={{width:"100%",padding:12,borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff",marginBottom:12}}/>
+            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Ville de sa copropriété</label>
+            <input value={newParr.city} onChange={e=>setNewParr(p=>({...p,city:e.target.value}))} placeholder="Lyon, Paris 11ème, Toulouse..." style={{width:"100%",padding:12,borderRadius:12,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",boxSizing:"border-box",background:"#fff",marginBottom:14}}/>
+            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:6}}>Envoyer via</label>
+            <div style={{display:"flex",gap:8,marginBottom:16}}>
+              {[{id:"whatsapp",icon:"💬",l:"WhatsApp",c:"#25D366"},{id:"sms",icon:"✉️",l:"SMS",c:T.sky},{id:"email",icon:"📧",l:"Email",c:T.sunrise}].map(ch=>(
+                <button key={ch.id} onClick={()=>setNewParr(p=>({...p,channel:ch.id}))} style={{flex:1,padding:"10px 6px",borderRadius:12,border:newParr.channel===ch.id?`2px solid ${ch.c}`:`1.5px solid ${T.sandDark}`,background:newParr.channel===ch.id?`${ch.c}08`:"#fff",cursor:"pointer",textAlign:"center",fontFamily:SANS}}>
+                  <div style={{fontSize:18}}>{ch.icon}</div>
+                  <div style={{fontSize:10,fontWeight:600,color:newParr.channel===ch.id?ch.c:T.text,marginTop:2}}>{ch.l}</div>
+                </button>
+              ))}
+            </div>
+            <Btn full disabled={!newParr.contact.trim()||!newParr.city.trim()} onClick={()=>setParrainageStep(2)} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>Préparer le message →</Btn>
+          </div>}
+
+          {parrainageStep===2&&(()=>{
+            const defaultMsg=`Salut ${newParr.contact} ! 😊\n\nDans mon immeuble (${activeCopro.name}, ${activeCopro.addr?.split(",").pop()?.trim()||"Cannes"}), on utilise VoisinSereins pour gérer notre copro — signalements, conseiller juridique AI, messagerie entre voisins.\n\nOn est ${activeCopro.members} dessus et ça a déjà résolu pas mal de sujets.\n\nJe me suis dit que ça pourrait t'aider aussi dans ta copro à ${newParr.city}. En passant par mon lien, tu reçois 3 mois de Pass Perso offerts (valeur 30€) — conseiller juridique AI illimité, analyse de tes documents, etc.\n\n👉 https://voisinsereins.ai/p/${userName.toLowerCase().replace(/\s/g,"")}\n\n${userName}`;
+            const msg=parrMsgEdited||defaultMsg;
+            return(<div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <button onClick={()=>setParrainageStep(1)} style={{background:"none",border:"none",fontSize:13,cursor:"pointer",color:T.purple,fontFamily:SANS,fontWeight:600}}>←</button>
+              <h3 style={{fontFamily:FONT,fontSize:17,color:T.purple,margin:0}}>Message de parrainage</h3>
+            </div>
+
+            <p style={{fontSize:11,color:T.textMuted,margin:"0 0 8px",lineHeight:1.4}}>✏️ Vous pouvez personnaliser le message ci-dessous avant de l'envoyer :</p>
+
+            <textarea value={msg} onChange={e=>setParrMsgEdited(e.target.value)} rows={10} style={{width:"100%",border:`2px solid ${T.purple}30`,borderRadius:12,padding:12,fontSize:12,fontFamily:SANS,resize:"vertical",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box",lineHeight:1.5,marginBottom:10}}/>
+
+            {/* Explications par canal */}
+            <Card style={{padding:12,marginBottom:12,background:`${newParr.channel==="whatsapp"?"#25D366":newParr.channel==="sms"?T.sky:T.sunrise}08`,border:`1px solid ${newParr.channel==="whatsapp"?"#25D366":newParr.channel==="sms"?T.sky:T.sunrise}20`}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <span style={{fontSize:16}}>{newParr.channel==="whatsapp"?"💬":newParr.channel==="sms"?"✉️":"📧"}</span>
+                <span style={{fontSize:12,fontWeight:700,color:T.text}}>Envoi via {newParr.channel==="whatsapp"?"WhatsApp":newParr.channel==="sms"?"SMS":"Email"}</span>
+              </div>
+              <p style={{fontSize:11,color:T.textLight,margin:0,lineHeight:1.4}}>
+                {newParr.channel==="whatsapp"
+                  ?"En cliquant sur le bouton, le message sera copié dans votre presse-papier et WhatsApp s'ouvrira. Collez le message dans la conversation avec "+newParr.contact+"."
+                  :newParr.channel==="sms"
+                  ?"En cliquant sur le bouton, l'app SMS de votre téléphone s'ouvrira avec le message pré-rempli. Sélectionnez "+newParr.contact+" comme destinataire et envoyez."
+                  :"En cliquant sur le bouton, votre client email s'ouvrira avec le message pré-rempli. Renseignez l'adresse email de "+newParr.contact+" et envoyez."}
+              </p>
+            </Card>
+
+            {/* Recap rewards */}
+            <div style={{display:"flex",gap:6,marginBottom:12}}>
+              <div style={{flex:1,padding:"8px 6px",borderRadius:10,background:`${T.purple}08`,textAlign:"center"}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.purple}}>🎁 {newParr.contact}</div>
+                <div style={{fontSize:9,color:T.textMuted}}>3 mois Pass Perso offerts</div>
+              </div>
+              <div style={{flex:1,padding:"8px 6px",borderRadius:10,background:`${T.forest}08`,textAlign:"center"}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.forest}}>🎁 Vous</div>
+                <div style={{fontSize:9,color:T.textMuted}}>Pass Perso + chèque 20€</div>
+              </div>
+            </div>
+
+            <Btn full onClick={()=>{
+              // Copy to clipboard
+              try{navigator.clipboard.writeText(msg)}catch{}
+              // Add parrainage
+              setParrainages(p=>[...p,{id:Date.now(),contact:newParr.contact,city:newParr.city,copro:"En attente",date:new Date().toISOString().split("T")[0],actifs:0,seuil:5,status:"en_cours",paidReward:false}]);
+              // Open channel
+              const encoded=encodeURIComponent(msg);
+              if(newParr.channel==="whatsapp")try{window.open("https://wa.me/?text="+encoded,"_blank")}catch{}
+              else if(newParr.channel==="sms")try{window.open("sms:?body="+encoded,"_blank")}catch{}
+              else try{window.open("mailto:?subject="+encodeURIComponent("VoisinSereins — Invitation de "+userName)+"&body="+encoded,"_blank")}catch{}
+              setParrainageStep(3);
+            }} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>
+              {newParr.channel==="whatsapp"?"💬 Copier et ouvrir WhatsApp":newParr.channel==="sms"?"✉️ Ouvrir l'app SMS":"📧 Ouvrir l'email"}
+            </Btn>
+            <button onClick={()=>{try{navigator.clipboard.writeText(msg)}catch{};setParrainages(p=>[...p,{id:Date.now(),contact:newParr.contact,city:newParr.city,copro:"En attente",date:new Date().toISOString().split("T")[0],actifs:0,seuil:5,status:"en_cours",paidReward:false}]);setParrainageStep(3)}} style={{width:"100%",marginTop:6,padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.textMuted,textAlign:"center"}}>📋 Juste copier le message</button>
+          </div>)})()}
+
+          {parrainageStep===3&&<div style={{textAlign:"center"}}>
+            <div style={{fontSize:56,marginBottom:12}}>🎉</div>
+            <h3 style={{fontFamily:FONT,fontSize:20,color:T.purple,margin:"0 0 8px"}}>Parrainage envoyé !</h3>
+            <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:"0 0 20px"}}>Le message a été copié et {newParr.channel==="whatsapp"?"WhatsApp ouvert":newParr.channel==="sms"?"l'app SMS ouverte":"votre email ouvert"}. Envoyez-le à {newParr.contact} !</p>
+
+            <Card style={{padding:14,textAlign:"left",marginBottom:16}}>
+              <h4 style={{fontSize:12,fontWeight:700,color:T.forest,margin:"0 0 10px"}}>Et maintenant ?</h4>
+              {[
+                {icon:"📩",text:`${newParr.contact} reçoit votre message et clique sur le lien`},
+                {icon:"🚀",text:`${newParr.contact} crée sa copropriété à ${newParr.city} en 2 minutes`},
+                {icon:"🎁",text:`${newParr.contact} profite de 3 mois de Pass Perso offerts immédiatement`},
+                {icon:"👥",text:`${newParr.contact} invite ses voisins — vous suivez la progression ici`},
+                {icon:"✅",text:"5 résidents actifs atteints → vous gagnez 1 mois de Pass Perso"},
+                {icon:"💰",text:"La copro passe en payant → vous recevez un chèque cadeau de 20€"},
+              ].map((s,i)=>(
+                <div key={i} style={{display:"flex",gap:8,marginBottom:6,alignItems:"flex-start"}}>
+                  <span style={{fontSize:14,flexShrink:0}}>{s.icon}</span>
+                  <p style={{margin:0,fontSize:11,color:T.text,lineHeight:1.4}}>{s.text}</p>
+                </div>
+              ))}
+            </Card>
+
+            <Btn full onClick={()=>{setParrainageStep(0);setParrMsgEdited("")}} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>Voir mes parrainages</Btn>
+            <button onClick={()=>{setShowParrainage(false);setParrainageStep(0);setParrMsgEdited("")}} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.textMuted}}>Fermer</button>
+          </div>}
+        </div>
+      </div>}
+
       {/* ═══ NEW SUJET MODAL ═══ */}
       {showNewSujet&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowNewSujet(false)}>
         <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"80vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
@@ -2668,9 +2863,33 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             <p style={{fontSize:10,color:T.textMuted,margin:"4px 0 0",lineHeight:1.4}}>🔒 Visible uniquement par le syndic — utile pour identifier vos lots dans les échanges officiels.</p>
           </div>}
 
-          {/* Settings toggles */}
+          {/* Mes parrainages — Ambassadeur */}
+          {canParrain&&<div style={{marginBottom:20}}>
+            <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>🚀 Mes parrainages</h4>
+            <div style={{padding:12,background:`linear-gradient(135deg,${T.purple}06,${T.sky}06)`,borderRadius:12,border:`1px solid ${T.purple}20`,marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-around",textAlign:"center",marginBottom:10}}>
+                <div><div style={{fontSize:20,fontWeight:700,color:T.purple}}>{parrainages.length}</div><div style={{fontSize:9,color:T.textMuted}}>Copros parrainées</div></div>
+                <div><div style={{fontSize:20,fontWeight:700,color:T.forest}}>{parrRewards}</div><div style={{fontSize:9,color:T.textMuted}}>Mois Pass Perso</div></div>
+                <div><div style={{fontSize:20,fontWeight:700,color:T.sunrise}}>{parrainages.filter(p=>p.paidReward).length}</div><div style={{fontSize:9,color:T.textMuted}}>Chèques 20€</div></div>
+              </div>
+              {parrainages.map(p=>(
+                <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,border:`1px solid ${p.actifs>=p.seuil?T.forest:T.sandDark}30`}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:p.actifs>=p.seuil?`${T.forest}15`:`${T.purple}10`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{p.actifs>=p.seuil?"✅":"⏳"}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:11,fontWeight:600,color:T.text}}>{p.copro} <span style={{fontWeight:400,color:T.textMuted}}>· {p.city}</span></div>
+                    <div style={{fontSize:9,color:T.textMuted}}>Filleul : {p.contact} · {p.actifs}/{p.seuil} actifs</div>
+                  </div>
+                  {p.actifs>=p.seuil&&<span style={{fontSize:8,fontWeight:700,color:T.forest,background:`${T.forest}12`,padding:"2px 6px",borderRadius:4}}>🎁 Pass Perso</span>}
+                  {p.paidReward&&<span style={{fontSize:8,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"2px 6px",borderRadius:4}}>🎁 20€</span>}
+                </div>
+              ))}
+            </div>
+            <button onClick={()=>{setShowProfile(false);setTimeout(()=>{setShowParrainage(true);setParrainageStep(1);setNewParr({contact:"",city:"",channel:"whatsapp"});setParrMsgEdited("")},150)}} style={{width:"100%",padding:10,borderRadius:10,border:`1.5px dashed ${T.purple}40`,background:`${T.purple}06`,cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.purple,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🚀 Parrainer une nouvelle copro</button>
+          </div>}
+
+          {/* Mes documents */}
           <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Mes documents</h4>
-          <p style={{fontSize:11,color:T.textMuted,margin:"0 0 10px",lineHeight:1.4}}>Uploadez vos documents (bail, PV d'AG, etc.) — le Conseil AI pourra s'en servir pour vous donner des réponses personnalisées.</p>
+          <p style={{fontSize:11,color:T.textMuted,margin:"-8px 0 10px",lineHeight:1.4}}>Uploadez vos documents (bail, PV d'AG, etc.) — le Conseil AI pourra s'en servir pour vous donner des réponses personnalisées.</p>
           {userDocs.map((doc,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"#fff",borderRadius:10,marginBottom:5,border:`1px solid ${T.sandDark}`}}>
               <div style={{width:32,height:32,borderRadius:8,background:`${T.purple}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📄</div>
