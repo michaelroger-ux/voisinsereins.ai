@@ -267,21 +267,60 @@ function OnboardingAddress({onFound,onCreate}) {
   const [sel,setSel]=useState(null);
   const [searching,setSearching]=useState(false);
   const [result,setResult]=useState(null);
+  const [rnicData,setRnicData]=useState(null);
   const timer=useRef(null);
   useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
 
-  const ADDRS=[
-    {label:"12 Rue des Tilleuls, 69003 Lyon",city:"Lyon",copro:true,name:"Résidence Les Tilleuls",members:14,logements:24,year:1975,syndic:"Cabinet Urbania",dpe:"D",immat:"AA-0024-RNC",periodeConst:"1971-1980"},
-    {label:"12 Rue des Tilleuls, 75011 Paris",city:"Paris",copro:false},
-    {label:"124 Avenue des Tilleuls, 69003 Lyon",city:"Lyon",copro:true,name:"Le Parc des Tilleuls",members:8,logements:36,year:2002,syndic:"Nexity Lamy",dpe:"C",immat:"AA-0158-RNC",periodeConst:"2001-2010"},
-    {label:"15 Rue Voltaire, 69001 Lyon",city:"Lyon",copro:false},
-  ];
-
-  const handleInput=v=>{setQ(v);setSel(null);setResult(null);
+  // ─── Real API Adresse (data.gouv.fr) ───
+  const handleInput=v=>{setQ(v);setSel(null);setResult(null);setRnicData(null);
     if(timer.current)clearTimeout(timer.current);
-    if(v.length>=3){timer.current=setTimeout(()=>{const f=ADDRS.filter(a=>a.label.toLowerCase().includes(v.toLowerCase()));setSugs(f.length?f:[{label:v+", France",copro:false}])},400)}else setSugs([])};
+    if(v.length>=3){timer.current=setTimeout(async()=>{
+      try{
+        const r=await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(v)}&type=housenumber&limit=6`);
+        const data=await r.json();
+        const results=data.features?.map(f=>({
+          label:f.properties.label,
+          city:f.properties.city,
+          postcode:f.properties.postcode,
+          citycode:f.properties.citycode, // code INSEE — clé de jointure RNIC
+          housenumber:f.properties.housenumber,
+          street:f.properties.street,
+          lat:f.geometry.coordinates[1],
+          lng:f.geometry.coordinates[0],
+        }))||[];
+        setSugs(results.length?results:[{label:v+", France",city:"",postcode:"",citycode:"",street:v}]);
+      }catch{
+        setSugs([{label:v+", France",city:"",postcode:"",citycode:"",street:v}]);
+      }
+    },400)}else setSugs([])};
 
-  const handleSelect=a=>{setSel(a);setQ(a.label);setSugs([]);setSearching(true);setTimeout(()=>{setSearching(false);setResult(a.copro?"found":"new")},1400)};
+  // ─── RNIC lookup (static JSON hosted on Netlify) ───
+  // Place /rnic-06.json in your Netlify public folder (Alpes-Maritimes extract)
+  // Format: [{ "adresse":"12 RUE DES TILLEULS", "codepostal":"06400", "commune":"CANNES",
+  //            "nb_lots_hab":24, "immat":"AA-0024-RNC", "periode_construction":"1971-1980",
+  //            "type_syndic":"professionnel", "nom_syndic":"Cabinet Urbania" }, ...]
+  const lookupRNIC=async(addr)=>{
+    try{
+      const r=await fetch("/rnic-06.json");
+      if(!r.ok) return null;
+      const db=await r.json();
+      // Normalize: uppercase, remove accents, simplify
+      const norm=s=>(s||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z0-9 ]/g,"").trim();
+      const needle=norm(addr.housenumber+" "+addr.street);
+      const cp=addr.postcode;
+      // Match by street + postcode
+      const match=db.find(c=>norm(c.adresse)===needle && c.codepostal===cp)
+        || db.find(c=>norm(c.adresse).includes(needle) && c.codepostal===cp);
+      return match;
+    }catch{ return null; }
+  };
+
+  const handleSelect=async(a)=>{setSel(a);setQ(a.label);setSugs([]);setSearching(true);
+    const rnic=await lookupRNIC(a);
+    setRnicData(rnic);
+    setSearching(false);
+    setResult(rnic?"found":"new");
+  };
 
   return (
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
@@ -301,42 +340,38 @@ function OnboardingAddress({onFound,onCreate}) {
           <div style={{marginTop:8,borderRadius:14,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",background:"#fff"}}>
             {sugs.map((s,i)=>(
               <button key={i} onClick={()=>handleSelect(s)} style={{width:"100%",padding:"12px 14px",border:"none",borderBottom:i<sugs.length-1?`1px solid ${T.sand}`:"none",background:"transparent",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:SANS}}>
-                <div style={{width:34,height:34,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",background:s.copro?`${T.leafLight}44`:T.sandDark,fontSize:15}}>{s.copro?"🏠":"📍"}</div>
-                <div><div style={{fontSize:13,fontWeight:500,color:T.text}}>{s.label}</div>{s.copro&&<div style={{fontSize:11,color:T.forestLight,fontWeight:600,marginTop:1}}>✦ Copropriété active — {s.members} voisins</div>}</div>
+                <div style={{width:34,height:34,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",background:T.sandDark,fontSize:15}}>📍</div>
+                <div><div style={{fontSize:13,fontWeight:500,color:T.text}}>{s.label}</div>{s.city&&<div style={{fontSize:11,color:T.textMuted,marginTop:1}}>{s.postcode} {s.city}</div>}</div>
               </button>
             ))}
           </div>
         )}
         {searching&&<div style={{marginTop:40,display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:44,height:44,border:`3px solid ${T.sandDark}`,borderTopColor:T.forest,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/><p style={{marginTop:14,fontSize:13,color:T.textLight}}>Recherche de votre copropriété...</p></div>}
 
-        {result==="found"&&sel&&(
+        {result==="found"&&sel&&rnicData&&(
           <Card style={{marginTop:20,border:`2px solid ${T.leafLight}`,boxShadow:`0 4px 24px ${T.forest}15`,animation:"fadeIn 0.5s ease"}}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
               <div style={{width:48,height:48,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,fontSize:22}}>🏡</div>
-              <div><h3 style={{margin:0,fontSize:17,fontFamily:FONT,color:T.forest}}>{sel.name}</h3><p style={{margin:"2px 0 0",fontSize:12,color:T.textLight}}>{sel.label}</p></div>
+              <div><h3 style={{margin:0,fontSize:17,fontFamily:FONT,color:T.forest}}>{rnicData.nom_copro||("Copropriété "+sel.street)}</h3><p style={{margin:"2px 0 0",fontSize:12,color:T.textLight}}>{sel.label}</p></div>
             </div>
             {/* Registre national des copropriétés */}
             <div style={{background:`${T.sky}10`,borderRadius:10,padding:"8px 12px",marginBottom:12,border:`1px solid ${T.sky}22`}}>
               <div style={{fontSize:9,fontWeight:700,color:T.sky,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>📋 Registre national des copropriétés</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 12px",fontSize:11}}>
-                <div><span style={{color:T.textMuted}}>Immatriculation</span><div style={{fontWeight:600,color:T.text}}>{sel.immat}</div></div>
-                <div><span style={{color:T.textMuted}}>Construction</span><div style={{fontWeight:600,color:T.text}}>{sel.year} ({sel.periodeConst})</div></div>
-                <div><span style={{color:T.textMuted}}>Syndic</span><div style={{fontWeight:600,color:T.text}}>{sel.syndic}</div></div>
-                <div><span style={{color:T.textMuted}}>DPE</span><div style={{fontWeight:600,color:T.text}}>Classe {sel.dpe}</div></div>
+                <div><span style={{color:T.textMuted}}>Immatriculation</span><div style={{fontWeight:600,color:T.text}}>{rnicData.immat||"—"}</div></div>
+                <div><span style={{color:T.textMuted}}>Construction</span><div style={{fontWeight:600,color:T.text}}>{rnicData.periode_construction||"—"}</div></div>
+                <div><span style={{color:T.textMuted}}>Syndic</span><div style={{fontWeight:600,color:T.text}}>{rnicData.nom_syndic||rnicData.type_syndic||"—"}</div></div>
+                <div><span style={{color:T.textMuted}}>Logements</span><div style={{fontWeight:600,color:T.text}}>{rnicData.nb_lots_hab||"—"}</div></div>
               </div>
             </div>
             <div style={{background:`${T.leafLight}22`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-around",textAlign:"center"}}>
-                {[{v:sel.members,l:"Voisins actifs"},{v:sel.logements,l:"Logements"},{v:Math.round(sel.members/sel.logements*100)+"%",l:"Connectés"}].map((s,i)=>(
+                {[{v:0,l:"Voisins actifs"},{v:rnicData.nb_lots_hab||"?",l:"Logements"},{v:"0%",l:"Connectés"}].map((s,i)=>(
                   <div key={i}><div style={{fontSize:22,fontWeight:700,color:T.forest}}>{s.v}</div><div style={{fontSize:10,color:T.textLight,fontWeight:500}}>{s.l}</div></div>
                 ))}
               </div>
             </div>
-            <div style={{marginBottom:14}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}><span style={{fontSize:11,fontWeight:600,color:T.forest}}>Progression</span><span style={{fontSize:11,color:T.textMuted}}>{sel.members}/{sel.logements}</span></div>
-              <div style={{height:7,borderRadius:4,background:T.sand}}><div style={{height:"100%",borderRadius:4,width:`${(sel.members/sel.logements)*100}%`,background:`linear-gradient(90deg,${T.forest},${T.leaf})`,transition:"width 1s ease"}}/></div>
-            </div>
-            <Btn full onClick={()=>onFound(sel)}>🎉 Rejoindre mes {sel.members} voisins</Btn>
+            <Btn full onClick={()=>onFound({...sel,name:rnicData.nom_copro||("Copropriété "+sel.street),logements:rnicData.nb_lots_hab||20,members:0,immat:rnicData.immat,syndic:rnicData.nom_syndic||rnicData.type_syndic})}>🚀 Créer ma copropriété</Btn>
           </Card>
         )}
 
@@ -650,6 +685,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [feedCat,setFeedCat]=useState("all");
   const [showComposer,setShowComposer]=useState(false);
   const [draft,setDraft]=useState("");
+  const [draftPhoto,setDraftPhoto]=useState(null);
   const [reforms,setReforms]=useState(null);
   const [reforming,setReforming]=useState(false);
   const [selReform,setSelReform]=useState(null);
@@ -782,7 +818,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
   const EC={ag:T.coral,travaux:T.sunrise,social:T.sky,echeance:T.purple,entretien:T.forest};
   const EL={ag:"AG",travaux:"Travaux",social:"Social",echeance:"Échéance",entretien:"Entretien"};
-  const CC={officiel:T.coral,entraide:T.sky,convivialité:T.sunrise,travaux:T.bark,incidents:"#C0392B",suggestions:T.purple};
+  const CC={officiel:T.coral,entraide:T.sky,convivialité:T.sunrise,annonces:T.forestLight,travaux:T.bark,incidents:"#C0392B",suggestions:T.purple};
 
   const COPROS=[
     {name:copro?.name||"Résidence Les Tilleuls",addr:"12 Rue des Tilleuls, Lyon",members:isNew?1:14,logements:copro?.logements||24,active:true},
@@ -828,8 +864,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
   const handlePublish = () => {
     const text=selReform?reforms[selReform].text:draft;
-    setPosts([{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likedBy:[],role,replies:[]},... posts]);
-    setDraft("");setReforms(null);setSelReform(null);setShowComposer(false);
+    setPosts([{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text,cat:feedCat==="all"?"convivialité":feedCat,likedBy:[],role,replies:[],photo:draftPhoto||null},... posts]);
+    setDraft("");setReforms(null);setSelReform(null);setShowComposer(false);setDraftPhoto(null);
   };
 
   const handleAISend = async () => {
@@ -938,7 +974,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
     {id:"copro",icon:"🏢",label:"Copro",color:T.bark},
   ];
 
-  const CATS=[{id:"all",l:"Tous",i:"📋"},{id:"officiel",l:"Officiel",i:"📢"},{id:"convivialité",l:"Social",i:"🎉"},{id:"entraide",l:"Entraide",i:"🤝"},{id:"travaux",l:"Travaux",i:"🛠"},{id:"incidents",l:"Urgences",i:"⚠️"},{id:"suggestions",l:"Idées",i:"💡"}];
+  const CATS=[{id:"all",l:"Tous",i:"📋"},{id:"officiel",l:"Officiel",i:"📢"},{id:"convivialité",l:"Social",i:"🎉"},{id:"entraide",l:"Entraide",i:"🤝"},{id:"annonces",l:"Annonces",i:"📌"},{id:"travaux",l:"Travaux",i:"🛠"},{id:"incidents",l:"Urgences",i:"⚠️"},{id:"suggestions",l:"Idées",i:"💡"}];
 
   const filteredPosts = feedCat==="all"?posts:posts.filter(p=>p.cat===feedCat);
 
@@ -956,8 +992,9 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             }
           </button>
           <button onClick={()=>setShowCoproInfo(true)} style={{background:"none",border:"none",cursor:"pointer",padding:0,minWidth:0,textAlign:"left"}}>
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.75)",margin:"0 0 1px",fontWeight:600}}>Bonjour {userName.split(" ")[0]} !</p>
             <h1 style={{fontFamily:FONT,fontSize:15,color:"#fff",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:"none"}}>{activeCopro.name}</h1>
-            <p style={{fontSize:10,color:"rgba(255,255,255,0.65)",margin:"1px 0 0"}}>{activeCopro.members} voisin{activeCopro.members>1?"s":""} · {activeCopro.logements} log. · {Math.round(activeCopro.members/activeCopro.logements*100)}%</p>
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.65)",margin:"1px 0 0"}}>{activeCopro.members} voisin{activeCopro.members>1?"s":""} · {activeCopro.logements} logements · {Math.round(activeCopro.members/activeCopro.logements*100)}%</p>
           </button>
           <button onClick={()=>setCoproSelector(!coproSelector)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 6px",flexShrink:0}}>
             <span style={{color:"rgba(255,255,255,0.6)",fontSize:14}}>▼</span>
@@ -996,19 +1033,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               <span style={{fontSize:11,fontWeight:600,color:T.coral}}>Vérifier →</span>
             </div>
           )}
-          {/* Welcome card */}
-          <Card style={{background:`linear-gradient(135deg,${T.forest}08,${T.leafLight}22)`,border:`1px solid ${T.leafLight}44`,padding:20}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-              {profilePhoto
-                ?<img src={profilePhoto} style={{width:44,height:44,borderRadius:14,objectFit:"cover"}} alt=""/>
-                :<div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:17,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
-              }
-              <div><h2 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Bonjour {userName.split(" ")[0]} !</h2><p style={{fontSize:12,color:T.textLight,margin:"2px 0 0"}}>{role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}{isCS?" · Conseil syndical":""} · App. {currentApt}</p></div>
-            </div>
-            {isNew&&
-              <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>Bienvenue sur VoisinSereins ! Vous êtes le premier membre de votre copropriété. Invitez vos voisins pour profiter pleinement de l'app.</p>
-            }
-          </Card>
+          {/* Syndic new-user hint (if isNew, shown inline) */}
+          {isNew&&<div style={{padding:"10px 14px",background:`${T.leafLight}18`,borderRadius:12,marginBottom:12,fontSize:12,color:T.textLight,lineHeight:1.5}}>🌱 Vous êtes le premier membre ! Invitez vos voisins pour profiter pleinement de l'app.</div>}
 
           {/* WhatsApp import banner — shown until imported */}
           {!waImported&&<Card style={{background:"linear-gradient(135deg,#25D36612,#128C7E08)",border:"1.5px solid #25D36630",padding:18,cursor:"pointer"}} onClick={()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)}}>
@@ -1027,17 +1053,21 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             </div>
           </Card>}
 
-          {/* Progress card */}
-          <Card style={{padding:18}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <h3 style={{fontSize:14,fontWeight:700,color:T.forest,margin:0,fontFamily:SANS}}>Couverture de la copropriété</h3>
-              <span style={{fontSize:20,fontWeight:700,color:T.forest}}>{Math.round(activeCopro.members/activeCopro.logements*100)}%</span>
+          {/* Progress card — compact */}
+          <Card style={{padding:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <span style={{fontSize:12,fontWeight:700,color:T.forest,fontFamily:SANS}}>Couverture de la copro</span>
+                  <span style={{fontSize:11,color:T.textMuted}}>{Math.round(activeCopro.members/activeCopro.logements*100)}%</span>
+                </div>
+                <div style={{height:6,borderRadius:3,background:T.sand}}>
+                  <div style={{height:"100%",borderRadius:3,width:`${(activeCopro.members/activeCopro.logements)*100}%`,background:`linear-gradient(90deg,${T.forest},${T.leaf})`,transition:"width 1s"}}/>
+                </div>
+                <div style={{marginTop:4}}><span style={{fontSize:16,fontWeight:800,color:T.text}}>{activeCopro.members}/{activeCopro.logements}</span> <span style={{fontSize:11,color:T.textMuted}}>logements représentés</span></div>
+              </div>
+              <button onClick={()=>setShowInvite(true)} style={{padding:"6px 12px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:SANS,flexShrink:0,whiteSpace:"nowrap"}}>📨 Inviter</button>
             </div>
-            <div style={{height:10,borderRadius:5,background:T.sand,marginBottom:8}}>
-              <div style={{height:"100%",borderRadius:5,width:`${(activeCopro.members/activeCopro.logements)*100}%`,background:`linear-gradient(90deg,${T.forest},${T.leaf})`,transition:"width 1s"}}/>
-            </div>
-            <p style={{fontSize:12,color:T.textMuted,margin:"0 0 12px"}}>{activeCopro.members} logements représentés sur {activeCopro.logements}</p>
-            <Btn full small onClick={()=>setShowInvite(true)} style={{background:`linear-gradient(135deg,${T.sunrise},${T.coral})`}}>📨 Inviter mes voisins</Btn>
           </Card>
 
           {/* Quick access grid */}
@@ -1053,9 +1083,9 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               {icon:"📁",label:"Documents",desc:"Règlement, AG, finances",color:T.bark,tab:"copro_docs"},
               {icon:"👤",label:"Mon profil",desc:userName,color:T.forestLight,tab:"profile"},
             ].map((item,i)=>(
-              <button key={i} onClick={()=>{if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else if(item.tab==="copro_sujets"){setAgendaTab("sujets");setSujetId(null);setTab("copro")}else if(item.tab==="signaler"){setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}else if(item.tab==="profile"){setShowProfile(true)}else if(item.tab==="annuaire"){setShowAnnuaire(true)}else{setTab(item.tab)}}} style={{padding:16,borderRadius:16,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",flexDirection:"column",gap:8,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-                <div style={{width:40,height:40,borderRadius:12,background:`${item.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{item.icon}</div>
-                <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{item.label}</div><div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div></div>
+              <button key={i} onClick={()=>{if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else if(item.tab==="copro_sujets"){setAgendaTab("sujets");setSujetId(null);setTab("copro")}else if(item.tab==="signaler"){setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}else if(item.tab==="profile"){setShowProfile(true)}else if(item.tab==="annuaire"){setShowAnnuaire(true)}else{setTab(item.tab)}}} style={{padding:"10px 12px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",alignItems:"center",gap:10,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+                <div style={{width:36,height:36,borderRadius:10,background:`${item.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{item.icon}</div>
+                <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,fontWeight:600,color:T.text}}>{item.label}</div><div style={{fontSize:10,color:T.textMuted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.desc}</div></div>
               </button>
             ))}
           </div>
@@ -1161,6 +1191,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 </div>
               </div>
               <p style={{fontSize:13.5,color:T.text,lineHeight:1.6,margin:"0 0 8px"}}>{p.text}</p>
+              {p.photo&&<img src={p.photo} style={{width:"100%",borderRadius:12,marginBottom:8,maxHeight:200,objectFit:"cover"}} alt=""/>}
               {/* Poll */}
               {p.poll&&<div style={{marginBottom:10}}>
                 {/* Mode badge */}
@@ -1234,11 +1265,18 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           {/* Compose FAB removed — compose bar at top + Signaler+ FAB replaces */}
 
           {/* Composer */}
-          {showComposer&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={()=>{setShowComposer(false);setReforms(null);setSelReform(null)}}>
+          {showComposer&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:100,display:"flex",alignItems:"flex-end"}} onClick={()=>{setShowComposer(false);setReforms(null);setSelReform(null);setDraftPhoto(null)}}>
             <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 18px 28px",maxHeight:"78vh",overflowY:"auto"}}>
               <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
               <h3 style={{fontFamily:FONT,fontSize:17,color:T.forest,margin:"0 0 10px"}}>Nouveau message</h3>
               <textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Écrivez librement, l'IA vous aidera à reformuler..." rows={3} style={{width:"100%",border:`2px solid ${T.sandDark}`,borderRadius:12,padding:12,fontSize:13,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+                <label style={{padding:"6px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.textLight,display:"flex",alignItems:"center",gap:5}}>
+                  📷 Photo
+                  <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>setDraftPhoto(ev.target.result);r.readAsDataURL(f)}}}/>
+                </label>
+                {draftPhoto&&<div style={{position:"relative",display:"inline-block"}}><img src={draftPhoto} style={{width:40,height:40,borderRadius:8,objectFit:"cover"}} alt=""/><button onClick={()=>setDraftPhoto(null)} style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:8,background:T.coral,color:"#fff",border:"none",fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>×</button></div>}
+              </div>
               <Btn full disabled={reforming||!draft.trim()} onClick={handleReformulate} style={{marginTop:8,background:reforming?T.sandDark:`linear-gradient(135deg,${T.sky},${T.forest})`}} small>{reforming?"✨ Analyse en cours...":"✨ Reformuler avec l'IA"}</Btn>
               {reforms&&<div style={{marginTop:14}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
@@ -2818,37 +2856,20 @@ export default function VoisinSereins() {
   const [userRole,setUserRole]=useState("proprio");
   const [userIsCS,setUserIsCS]=useState(false);
   const [waData,setWaData]=useState(null); // WhatsApp parsed data from onboarding
-  const [viewMode,setViewMode]=useState("mobile");
-  const isMobile = viewMode==="mobile";
 
   return (
-    <div style={{position:"relative",height:"100dvh",background:isMobile?"#e8e8e8":T.warmWhite,overflow:"hidden"}}>
-      <button onClick={()=>setViewMode(v=>v==="mobile"?"web":"mobile")} style={{
-        position:"fixed",top:12,right:12,zIndex:9999,padding:"7px 14px",borderRadius:20,border:"none",
-        background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,color:"#fff",fontSize:12,fontWeight:700,
-        fontFamily:SANS,cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.15)",display:"flex",alignItems:"center",gap:6,
-      }}>
-        <span style={{fontSize:15}}>{isMobile?"🖥":"📱"}</span>
-        {isMobile?"Vue Web":"Vue Mobile"}
-      </button>
-      <div style={{
-        maxWidth:isMobile?420:"100%",width:isMobile?420:"100%",
-        margin:isMobile?"0 auto":"0",height:"100dvh",background:T.warmWhite,
-        position:"relative",overflow:"hidden",
-        ...(isMobile?{boxShadow:"0 0 40px rgba(0,0,0,0.12)",borderLeft:`1px solid ${T.sandDark}`,borderRight:`1px solid ${T.sandDark}`}:{}),
-      }}>
-        {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")} onFacebook={()=>{
-          setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
-          setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
-        }}/>}
-        {screen==="address"&&<OnboardingAddress
-          onFound={c=>{setCopro(c);setIsNew(false);setScreen("role")}}
-          onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
-        />}
-        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
-        {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
-        {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData}/>}
-      </div>
+    <div style={{maxWidth:420,margin:"0 auto",height:"100dvh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
+      {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")} onFacebook={()=>{
+        setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
+        setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
+      }}/>}
+      {screen==="address"&&<OnboardingAddress
+        onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"role":"whatsapp")}}
+        onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
+      />}
+      {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
+      {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
+      {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData}/>}
     </div>
   );
 }

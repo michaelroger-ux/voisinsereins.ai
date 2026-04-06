@@ -1,0 +1,57 @@
+[
+  {
+    "adresse": "12 RUE DES TILLEULS",
+    "codepostal": "06400",
+    "commune": "CANNES",
+    "nom_copro": "Résidence Les Tilleuls",
+    "nb_lots_hab": 24,
+    "immat": "AA-0024-RNC",
+    "periode_construction": "1971-1980",
+    "type_syndic": "professionnel",
+    "nom_syndic": "Cabinet Urbania"
+  },
+  {
+    "adresse": "45 BOULEVARD DE LA CROISETTE",
+    "codepostal": "06400",
+    "commune": "CANNES",
+    "nom_copro": "Résidence La Croisette",
+    "nb_lots_hab": 48,
+    "immat": "AA-0312-RNC",
+    "periode_construction": "1961-1970",
+    "type_syndic": "professionnel",
+    "nom_syndic": "Foncia Riviera"
+  },
+  {
+    "adresse": "8 RUE JEAN JAURES",
+    "codepostal": "06400",
+    "commune": "CANNES",
+    "nom_copro": "Le Jean Jaurès",
+    "nb_lots_hab": 16,
+    "immat": "AA-1087-RNC",
+    "periode_construction": "1981-1990",
+    "type_syndic": "benevole",
+    "nom_syndic": ""
+  },
+  {
+    "adresse": "120 RUE D ANTIBES",
+    "codepostal": "06400",
+    "commune": "CANNES",
+    "nom_copro": "Résidence Antibes Centre",
+    "nb_lots_hab": 32,
+    "immat": "AA-0567-RNC",
+    "periode_construction": "1991-2000",
+    "type_syndic": "professionnel",
+    "nom_syndic": "Citya Immobilier"
+  },
+  {
+    "adresse": "3 AVENUE DU MARECHAL JUIN",
+    "codepostal": "06400",
+    "commune": "CANNES",
+    "nom_copro": "Le Maréchal",
+    "nb_lots_hab": 56,
+    "immat": "AA-0891-RNC",
+    "periode_construction": "1951-1960",
+    "type_syndic": "professionnel",
+    "nom_syndic": "Nexity Lamy"
+  }
+]
