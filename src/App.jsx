@@ -719,6 +719,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [msgView,setMsgView]=useState("list");
   const [activeConv,setActiveConv]=useState(null);
   const [msgDraft,setMsgDraft]=useState("");
+  const [msgPhoto,setMsgPhoto]=useState(null);
   const convos=[
     {id:1,name:"Marie D.",floor:"3B",role:"CS",lastMsg:"D'accord pour mardi !",time:"09:14",unread:2,group:false},
     {id:2,name:"Syndic Urbania",floor:"",role:"syndic",lastMsg:"Votre demande a bien été...",time:"Hier",unread:0,group:false},
@@ -771,6 +772,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [newGroupSel,setNewGroupSel]=useState([]);
   const [showNewTrav,setShowNewTrav]=useState(false);
   const [newTravD,setNewTravD]=useState({title:"",category:"communs",desc:""});
+  const [userDocs,setUserDocs]=useState([]); // {name, data, date} — documents uploaded in profile for AI counsel
   const nowTime=()=>{const d=new Date();return `${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`};
 
   // ─── SIGNALER+ STATE ───
@@ -779,6 +781,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [sigCatSel,setSigCatSel]=useState(null); // selected SIG_CATS category
   const [sigSitSel,setSigSitSel]=useState(null); // selected situation within category
   const [sigComment,setSigComment]=useState("");
+  const [sigPhoto,setSigPhoto]=useState(null);
   const [sigDone,setSigDone]=useState(null); // {type:"new"|"added"|"urgent_called"|"urgent_alerted", title, count}
   const [entTplSel,setEntTplSel]=useState(null);
   const [entFields,setEntFields]=useState({});
@@ -871,7 +874,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const handleAISend = async () => {
     if(!aiQuery.trim())return;const q=aiQuery;setAiQuery("");
     setAiMsgs(p=>[...p,{role:"user",text:q}]);setAiLoading(true);
-    const txt = await callAI(`Tu es un conseiller juridique bienveillant pour copropriétaires. Règlement:\n${REGLEMENT}\nRéponds de façon claire, cite les articles pertinents, oriente vers la médiation. Sois chaleureux mais précis. Termine par: "⚠️ Information à titre indicatif." Réponds en français.`,q);
+    const docsContext=userDocs.length?`\nL'utilisateur a uploadé ${userDocs.length} document(s) personnels: ${userDocs.map(d=>d.name).join(", ")}. Tiens-en compte dans tes réponses si pertinent.`:"";
+    const txt = await callAI(`Tu es un conseiller juridique bienveillant pour copropriétaires. Règlement:\n${REGLEMENT}${docsContext}\nRéponds de façon claire, cite les articles pertinents, oriente vers la médiation. Sois chaleureux mais précis. Termine par: "⚠️ Information à titre indicatif." Réponds en français.`,q);
     setAiMsgs(p=>[...p,{role:"assistant",text:txt||"Désolé, je n'ai pas pu traiter votre demande. Veuillez réessayer."}]);
     setAiLoading(false);
   };
@@ -900,7 +904,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const importWaSujets=()=>{if(!waResult)return;const newS=waResult.themes.filter(t=>!sujets.some(s=>s.title.toLowerCase().includes(t.title.toLowerCase().split("—")[0].trim()))).map((t,i)=>({id:Date.now()+i,title:t.title,category:t.cat,status:t.count>=3?"escalade":"signale",signalCount:t.count,threshold:3,createdAt:waResult.firstDate?.split("/").reverse().join("-")||"2024-01-01",lastSignal:waResult.lastDate?.split("/").reverse().join("-")||"2025-01-01",residents:waResult.leaders.map(l=>l.name).slice(0,3),createdBy:"Import WhatsApp",desc:`Sujet détecté automatiquement dans ${waResult.totalMsgs} messages WhatsApp (${t.count} mentions).`,timeline:[{date:new Date().toISOString().split("T")[0],type:"info",author:"Import WhatsApp",text:`Détecté dans l'historique WhatsApp : ${t.count} messages sur ${waResult.periodMonths} mois.`}],aiSugg:[{type:"consultation",text:`Lancer une consultation sur ce sujet`},{type:"charte",text:`Formaliser une règle dans la Charte`}],consultation:null}));if(newS.length)setSujets(p=>[...newS,...p]);setWaImported(true);setShowWaImport(false);setWaStep(0);setWaResult(null);setAgendaTab("sujets");setTab("copro")};
 
   // ─── SIGNALER+ HANDLERS ───
-  const resetSignaler=()=>{setShowSignaler(false);setSigVoie(null);setSigCatSel(null);setSigSitSel(null);setSigComment("");setSigDone(null);setEntTplSel(null);setEntFields({});setEntDone(false)};
+  const resetSignaler=()=>{setShowSignaler(false);setSigVoie(null);setSigCatSel(null);setSigSitSel(null);setSigComment("");setSigPhoto(null);setSigDone(null);setEntTplSel(null);setEntFields({});setEntDone(false)};
 
   const submitSignal=(cat,sit,comment)=>{
     const title=`${cat.label} — ${sit.label}`;const txt=comment||sit.label;const today=new Date().toISOString().split("T")[0];
@@ -920,10 +924,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const handleUrgentAction=(cat,sit,action)=>{
     // action: "called" | "alerted"
     const today=new Date().toISOString().split("T")[0];const title=`${cat.label} — ${sit.label}`;
+    const extra=sigComment.trim()?" — "+sigComment.trim():"";
     const postText=action==="called"
-      ?`🔴 ${sit.label} signalé(e) par ${userName}. ${sit.fiche.contact} contacté. 📞 ${sit.fiche.tel}`
-      :`🔴 ${sit.label} signalé(e) par ${userName}. Quelqu'un peut-il contacter ${sit.fiche.contact} ? 📞 ${sit.fiche.tel}`;
-    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:postText,cat:"incidents",likedBy:[],role,replies:[]},...p]);
+      ?`🔴 ${sit.label} signalé(e) par ${userName}${extra}. ${sit.fiche.contact} contacté. 📞 ${sit.fiche.tel}`
+      :`🔴 ${sit.label} signalé(e) par ${userName}${extra}. Quelqu'un peut-il contacter ${sit.fiche.contact} ? 📞 ${sit.fiche.tel}`;
+    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:postText,cat:"incidents",likedBy:[],role,replies:[],photo:sigPhoto||null},...p]);
     // Also create/update sujet
     const r=submitSignal(cat,sit,postText);
     setSigDone({type:action==="called"?"urgent_called":"urgent_alerted",title,count:r.count,contact:sit.fiche.contact,tel:sit.fiche.tel});
@@ -934,7 +939,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
     const comment=sigComment.trim()||sit.label;
     const r=submitSignal(cat,sit,comment);
     // Also post to feed
-    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:`🟡 ${cat.icon} ${cat.label} — ${sit.label}${sigComment.trim()?" : "+sigComment.trim():""}`,cat:"incidents",likedBy:[],role,replies:[]},...p]);
+    setPosts(p=>[{id:Date.now(),author:userName,floor:currentApt,time:"À l'instant",text:`🟡 ${cat.icon} ${cat.label} — ${sit.label}${sigComment.trim()?" : "+sigComment.trim():""}`,cat:"incidents",likedBy:[],role,replies:[],photo:sigPhoto||null},...p]);
     setSigDone(r);
   };
 
@@ -974,7 +979,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
     {id:"copro",icon:"🏢",label:"Copro",color:T.bark},
   ];
 
-  const CATS=[{id:"all",l:"Tous",i:"📋"},{id:"officiel",l:"Officiel",i:"📢"},{id:"convivialité",l:"Social",i:"🎉"},{id:"entraide",l:"Entraide",i:"🤝"},{id:"annonces",l:"Annonces",i:"📌"},{id:"travaux",l:"Travaux",i:"🛠"},{id:"incidents",l:"Urgences",i:"⚠️"},{id:"suggestions",l:"Idées",i:"💡"}];
+  const CATS=[{id:"all",l:"Tous",i:"📋"},{id:"officiel",l:"Officiel",i:"📢"},{id:"incidents",l:"Urgences",i:"⚠️"},{id:"convivialité",l:"Social",i:"🎉"},{id:"entraide",l:"Entraide",i:"🤝"},{id:"annonces",l:"Annonces",i:"📌"},{id:"travaux",l:"Travaux",i:"🛠"},{id:"suggestions",l:"Idées",i:"💡"}];
 
   const filteredPosts = feedCat==="all"?posts:posts.filter(p=>p.cat===feedCat);
 
@@ -992,7 +997,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             }
           </button>
           <button onClick={()=>setShowCoproInfo(true)} style={{background:"none",border:"none",cursor:"pointer",padding:0,minWidth:0,textAlign:"left"}}>
-            <p style={{fontSize:10,color:"rgba(255,255,255,0.75)",margin:"0 0 1px",fontWeight:600}}>Bonjour {userName.split(" ")[0]} !</p>
+            <p style={{fontSize:12,color:"#F5D49A",margin:"0 0 1px",fontWeight:700,letterSpacing:0.3}}>Bonjour {userName.split(" ")[0]} !</p>
             <h1 style={{fontFamily:FONT,fontSize:15,color:"#fff",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:"none"}}>{activeCopro.name}</h1>
             <p style={{fontSize:10,color:"rgba(255,255,255,0.65)",margin:"1px 0 0"}}>{activeCopro.members} voisin{activeCopro.members>1?"s":""} · {activeCopro.logements} logements · {Math.round(activeCopro.members/activeCopro.logements*100)}%</p>
           </button>
@@ -1213,6 +1218,9 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                       <span style={{fontSize:12,fontWeight:voted?700:500,color:voted?T.purple:T.text}}>{voted?"✓ ":""}{opt.label}</span>
                       <span style={{fontSize:11,fontWeight:600,color:totalV?T.textLight:T.textMuted}}>{totalV?`${pct}%`:""}</span>
                     </div>
+                    {isOwn&&opt.voters.length>0&&<div style={{position:"relative",marginTop:4,display:"flex",flexWrap:"wrap",gap:3}}>
+                      {opt.voters.map((v,vi)=><span key={vi} style={{fontSize:9,color:T.textMuted,background:T.sand,padding:"1px 6px",borderRadius:4}}>{v}</span>)}
+                    </div>}
                   </button>
                 )})}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:2}}>
@@ -1377,7 +1385,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                   <div style={{maxWidth:"80%"}}>
                     {activeConv?.group&&m.from!=="me"&&<div style={{fontSize:9,fontWeight:600,color:T.purple,marginBottom:2}}>{m.from}</div>}
                     <div style={{padding:"8px 12px",borderRadius:12,background:m.from==="me"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#f5f5f5",color:m.from==="me"?"#fff":T.text,fontSize:12,lineHeight:1.5}}>
-                      {m.text}<div style={{fontSize:8,marginTop:3,opacity:0.6,textAlign:"right"}}>{m.time}</div>
+                      {m.photo&&<img src={m.photo} style={{width:"100%",maxWidth:180,borderRadius:8,marginBottom:4,display:"block"}} alt=""/>}
+                      {m.text&&<span>{m.text}</span>}<div style={{fontSize:8,marginTop:3,opacity:0.6,textAlign:"right"}}>{m.time}</div>
                     </div>
                   </div>
                 </div>
@@ -1392,27 +1401,32 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                   <p style={{fontSize:12,color:T.text,margin:0,lineHeight:1.4}}>{msgModCheck.suggestion}</p>
                 </div>
                 <div style={{display:"flex",gap:6}}>
-                  <button onClick={()=>{setConvMsgs(p=>[...p,{from:"me",text:msgModCheck.suggestion,time:nowTime()}]);setMsgDraft("");setMsgModCheck(null)}} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✨ Envoyer la version améliorée</button>
-                  <button onClick={()=>{setConvMsgs(p=>[...p,{from:"me",text:msgModCheck.original,time:nowTime()}]);setMsgDraft("");setMsgModCheck(null)}} style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:11,fontWeight:500,cursor:"pointer",fontFamily:SANS}}>Envoyer l'original</button>
+                  <button onClick={()=>{setConvMsgs(p=>[...p,{from:"me",text:msgModCheck.suggestion,time:nowTime(),photo:msgPhoto||null}]);setMsgDraft("");setMsgModCheck(null);setMsgPhoto(null)}} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✨ Envoyer la version améliorée</button>
+                  <button onClick={()=>{setConvMsgs(p=>[...p,{from:"me",text:msgModCheck.original,time:nowTime(),photo:msgPhoto||null}]);setMsgDraft("");setMsgModCheck(null);setMsgPhoto(null)}} style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:11,fontWeight:500,cursor:"pointer",fontFamily:SANS}}>Envoyer l'original</button>
                 </div>
               </div>}
+              {msgPhoto&&<div style={{marginBottom:6,position:"relative",display:"inline-block"}}><img src={msgPhoto} style={{width:60,height:60,borderRadius:8,objectFit:"cover"}} alt=""/><button onClick={()=>setMsgPhoto(null)} style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:8,background:T.coral,color:"#fff",border:"none",fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>×</button></div>}
               <div style={{display:"flex",gap:6}}>
-                <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msgDraft.trim()){
+                <label style={{width:36,height:36,borderRadius:10,border:`1.5px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>
+                  📷
+                  <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>setMsgPhoto(ev.target.result);r.readAsDataURL(f)}}}/>
+                </label>
+                <input value={msgDraft} onChange={e=>setMsgDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&(msgDraft.trim()||msgPhoto)){
                   const d=msgDraft.trim().toLowerCase();const flagWords=["marre","ras le bol","insupportable","inadmissible","honteux","scandaleux","dégueulasse","bruit","encore","toujours","jamais","foutez","bordel","putain","merde"];
-                  if(flagWords.some(w=>d.includes(w))){
+                  if(msgDraft.trim()&&flagWords.some(w=>d.includes(w))){
                     const reforms={"direct":"J'aimerais que nous puissions trouver une solution ensemble concernant ce sujet.","diplomatique":"Je souhaite attirer votre attention sur un point qui me préoccupe, et j'espère que nous pourrons en discuter sereinement.","factuel":"Je constate un problème récurrent et souhaite que nous en discutions pour trouver une solution."};
                     const styles=["direct","diplomatique","factuel"];const pick=styles[Math.floor(Math.random()*3)];
                     setMsgModCheck({original:msgDraft,suggestion:reforms[pick],tone:"un peu vif"});
-                  }else{setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:nowTime()}]);setMsgDraft("")}
+                  }else{setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:nowTime(),photo:msgPhoto||null}]);setMsgDraft("");setMsgPhoto(null)}
                 }}} placeholder="Message..." style={{flex:1,padding:"8px 12px",borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
-                <button onClick={()=>{if(msgDraft.trim()){
+                <button onClick={()=>{if(msgDraft.trim()||msgPhoto){
                   const d=msgDraft.trim().toLowerCase();const flagWords=["marre","ras le bol","insupportable","inadmissible","honteux","scandaleux","dégueulasse","bruit","encore","toujours","jamais","foutez","bordel","putain","merde"];
-                  if(flagWords.some(w=>d.includes(w))){
+                  if(msgDraft.trim()&&flagWords.some(w=>d.includes(w))){
                     const reforms={"direct":"J'aimerais que nous puissions trouver une solution ensemble concernant ce sujet.","diplomatique":"Je souhaite attirer votre attention sur un point qui me préoccupe, et j'espère que nous pourrons en discuter sereinement.","factuel":"Je constate un problème récurrent et souhaite que nous en discutions pour trouver une solution."};
                     const styles=["direct","diplomatique","factuel"];const pick=styles[Math.floor(Math.random()*3)];
                     setMsgModCheck({original:msgDraft,suggestion:reforms[pick],tone:"un peu vif"});
-                  }else{setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:nowTime()}]);setMsgDraft("")}
-                }}} style={{width:36,height:36,borderRadius:10,border:"none",background:msgDraft.trim()?T.forest:T.sandDark,color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
+                  }else{setConvMsgs(p=>[...p,{from:"me",text:msgDraft,time:nowTime(),photo:msgPhoto||null}]);setMsgDraft("");setMsgPhoto(null)}
+                }}} style={{width:36,height:36,borderRadius:10,border:"none",background:(msgDraft.trim()||msgPhoto)?T.forest:T.sandDark,color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>↑</button>
               </div>
             </div>
           </div>}
@@ -1485,6 +1499,10 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               {["Mon voisin fait du bruit le dimanche","Règles pour les animaux ?","Comment contester une charge ?","Puis-je installer une clim sur mon balcon ?"].map((q,i)=>(
                 <button key={i} onClick={()=>setAiQuery(q)} style={{padding:"8px 12px",borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",fontSize:12,color:T.text,cursor:"pointer",fontFamily:SANS}}>{q}</button>
               ))}
+              {userDocs.length>0
+                ?<div style={{width:"100%",padding:"6px 10px",borderRadius:8,background:`${T.purple}08`,marginTop:4}}><span style={{fontSize:10,color:T.purple}}>📎 {userDocs.length} document{userDocs.length>1?"s":""} personnel{userDocs.length>1?"s":""} disponible{userDocs.length>1?"s":""} pour l'AI ({userDocs.map(d=>d.name).join(", ")})</span></div>
+                :<div style={{width:"100%",padding:"6px 10px",borderRadius:8,background:`${T.sand}`,marginTop:4}}><span style={{fontSize:10,color:T.textMuted}}>💡 Uploadez vos documents (bail, PV...) dans votre profil pour des réponses personnalisées</span></div>
+              }
             </div>}
           </div>
           <div style={{padding:"10px 14px",background:T.warmWhite,borderTop:`1px solid ${T.sandDark}`,display:"flex",gap:8}}>
@@ -1746,6 +1764,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                   <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:T.sand,color:T.bark}}>Ouvert le {d.createdAt}</span>
                   <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:T.sand,color:T.bark}}>par {d.createdBy}</span>
                 </div>
+                {/* Advance step — CS/syndic only */}
+                {(isCS||role==="syndic")&&stepIdx<TRAV_STEPS.length-1&&<button onClick={()=>{
+                  const nextStep=TRAV_STEPS[stepIdx+1];const today=new Date().toISOString().split("T")[0];
+                  setDossiers(p=>p.map(x=>x.id===d.id?{...x,status:nextStep.id,updatedAt:today,timeline:[...x.timeline,{date:today,type:nextStep.id,author:userName,text:`Étape avancée : ${TRAV_STEPS[stepIdx].l} → ${nextStep.l}`}]}:x));
+                }} style={{width:"100%",marginTop:8,padding:"8px 12px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.purple},${T.sky})`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:SANS,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  {TRAV_STEPS[stepIdx+1].icon} Passer à : {TRAV_STEPS[stepIdx+1].l}
+                </button>}
               </Card>
 
               {/* Detail sub-tabs */}
@@ -1901,6 +1926,23 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                     <span style={{fontSize:10,color:T.forest,fontWeight:600}}>Voir</span>
                   </div>}
                   <button style={{width:"100%",marginTop:6,padding:10,borderRadius:10,border:`1.5px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.forestLight}}>+ Ajouter un document</button>
+                  <label style={{width:"100%",marginTop:4,padding:10,borderRadius:10,border:`1.5px dashed ${T.sunrise}60`,background:`${T.sunrise}06`,cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.sunrise,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    📷 Ajouter une photo
+                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>{const today=new Date().toISOString().split("T")[0];setDossiers(p=>p.map(x=>x.id===d.id?{...x,photos:[...(x.photos||[]),{data:ev.target.result,name:f.name,date:today}],timeline:[...x.timeline,{date:today,type:"info",author:userName,text:`Photo ajoutée : ${f.name}`}]}:x))};r.readAsDataURL(f)}}}/>
+                  </label>
+                  {/* Photo gallery */}
+                  {d.photos&&d.photos.length>0&&<div style={{marginTop:8}}>
+                    <div style={{fontSize:10,fontWeight:700,color:T.textMuted,marginBottom:6,textTransform:"uppercase"}}>Photos ({d.photos.length})</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {d.photos.map((ph,pi)=>(
+                        <div key={pi} style={{position:"relative"}}>
+                          <img src={ph.data} style={{width:70,height:70,borderRadius:8,objectFit:"cover"}} alt={ph.name}/>
+                          <button onClick={()=>setDossiers(p=>p.map(x=>x.id===d.id?{...x,photos:x.photos.filter((_,j)=>j!==pi)}:x))} style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:8,background:T.coral,color:"#fff",border:"none",fontSize:9,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>×</button>
+                          <div style={{fontSize:7,color:T.textMuted,textAlign:"center",marginTop:2}}>{ph.date}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>}
                 </Card>
               </div>}
 
@@ -2180,6 +2222,17 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 </div>}
               </div>
               {/* Action buttons */}
+              {sigCatSel.id==="feu"&&<div style={{marginBottom:8}}>
+                <input value={sigComment} onChange={e=>setSigComment(e.target.value)} placeholder="Lieu précis (étage, appartement, cave...)" style={{width:"100%",padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+              </div>}
+              <textarea value={sigComment} onChange={e=>setSigComment(e.target.value)} placeholder="Détails supplémentaires (optionnel)..." rows={2} style={{width:"100%",border:`1.5px solid ${T.sandDark}`,borderRadius:10,padding:10,fontSize:12,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box",marginBottom:6}}/>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <label style={{padding:"5px 10px",borderRadius:8,border:`1.5px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.textLight,display:"flex",alignItems:"center",gap:4}}>
+                  📷 Photo
+                  <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>setSigPhoto(ev.target.result);r.readAsDataURL(f)}}}/>
+                </label>
+                {sigPhoto&&<div style={{position:"relative",display:"inline-block"}}><img src={sigPhoto} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/><button onClick={()=>setSigPhoto(null)} style={{position:"absolute",top:-4,right:-4,width:14,height:14,borderRadius:7,background:T.coral,color:"#fff",border:"none",fontSize:9,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>×</button></div>}
+              </div>
               <div style={{display:"flex",gap:8}}>
                 <Btn full small onClick={()=>handleUrgentAction(sigCatSel,sigSitSel,"called")} style={{background:`linear-gradient(135deg,${T.forest},${T.forestLight})`}}>📞 J'appelle</Btn>
                 <Btn full small onClick={()=>handleUrgentAction(sigCatSel,sigSitSel,"alerted")} style={{background:`linear-gradient(135deg,${T.coral},${T.sunrise})`}}>📢 Alerter les voisins</Btn>
@@ -2192,7 +2245,14 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 <div style={{width:10,height:10,borderRadius:5,background:T.amber}}/>
                 <span style={{fontSize:12,fontWeight:600,color:T.text}}>{sigCatSel.icon} {sigCatSel.label} — {sigSitSel.label}</span>
               </div>
-              <textarea value={sigComment} onChange={e=>setSigComment(e.target.value)} placeholder="Commentaire optionnel (lieu, heure, détail...)" rows={2} style={{width:"100%",border:`1.5px solid ${T.sandDark}`,borderRadius:10,padding:10,fontSize:12,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box",marginBottom:10}}/>
+              <textarea value={sigComment} onChange={e=>setSigComment(e.target.value)} placeholder="Commentaire optionnel (lieu, heure, détail...)" rows={2} style={{width:"100%",border:`1.5px solid ${T.sandDark}`,borderRadius:10,padding:10,fontSize:12,fontFamily:SANS,resize:"none",outline:"none",background:"#fff",color:T.text,boxSizing:"border-box",marginBottom:8}}/>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <label style={{padding:"5px 10px",borderRadius:8,border:`1.5px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.textLight,display:"flex",alignItems:"center",gap:4}}>
+                  📷 Photo
+                  <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>setSigPhoto(ev.target.result);r.readAsDataURL(f)}}}/>
+                </label>
+                {sigPhoto&&<div style={{position:"relative",display:"inline-block"}}><img src={sigPhoto} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/><button onClick={()=>setSigPhoto(null)} style={{position:"absolute",top:-4,right:-4,width:14,height:14,borderRadius:7,background:T.coral,color:"#fff",border:"none",fontSize:9,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>×</button></div>}
+              </div>
               <Btn full onClick={submitNonUrgent} style={{background:`linear-gradient(135deg,${T.amber},${T.sunrise})`}}>📢 Signaler</Btn>
             </div>}
           </div>
@@ -2609,6 +2669,23 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           </div>}
 
           {/* Settings toggles */}
+          <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Mes documents</h4>
+          <p style={{fontSize:11,color:T.textMuted,margin:"0 0 10px",lineHeight:1.4}}>Uploadez vos documents (bail, PV d'AG, etc.) — le Conseil AI pourra s'en servir pour vous donner des réponses personnalisées.</p>
+          {userDocs.map((doc,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"#fff",borderRadius:10,marginBottom:5,border:`1px solid ${T.sandDark}`}}>
+              <div style={{width:32,height:32,borderRadius:8,background:`${T.purple}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📄</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:600,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{doc.name}</div>
+                <div style={{fontSize:9,color:T.textMuted}}>Ajouté le {doc.date}</div>
+              </div>
+              <button onClick={()=>setUserDocs(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
+            </div>
+          ))}
+          <label style={{width:"100%",padding:10,borderRadius:10,border:`1.5px dashed ${T.purple}40`,background:`${T.purple}06`,cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.purple,display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:20}}>
+            📎 Ajouter un document
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const today=new Date().toISOString().split("T")[0];const r=new FileReader();r.onload=ev=>setUserDocs(p=>[...p,{name:f.name,data:ev.target.result,date:today,type:f.type}]);r.readAsDataURL(f)}}}/>
+          </label>
+
           <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Préférences</h4>
 
           {[
@@ -2855,21 +2932,38 @@ export default function VoisinSereins() {
   const [isNew,setIsNew]=useState(false);
   const [userRole,setUserRole]=useState("proprio");
   const [userIsCS,setUserIsCS]=useState(false);
-  const [waData,setWaData]=useState(null); // WhatsApp parsed data from onboarding
+  const [waData,setWaData]=useState(null);
+  const [viewMode,setViewMode]=useState("mobile");
+  const isMobile=viewMode==="mobile";
 
   return (
-    <div style={{maxWidth:420,margin:"0 auto",height:"100dvh",background:T.warmWhite,position:"relative",overflow:"hidden"}}>
-      {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")} onFacebook={()=>{
-        setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
-        setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
-      }}/>}
-      {screen==="address"&&<OnboardingAddress
-        onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"role":"whatsapp")}}
-        onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
-      />}
-      {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
-      {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
-      {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData}/>}
+    <div style={{position:"relative",height:"100dvh",background:isMobile?"#e8e8e8":T.warmWhite,overflow:"hidden"}}>
+      <button onClick={()=>setViewMode(v=>v==="mobile"?"web":"mobile")} style={{
+        position:"fixed",top:12,right:12,zIndex:9999,padding:"7px 14px",borderRadius:20,border:"none",
+        background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,color:"#fff",fontSize:12,fontWeight:700,
+        fontFamily:SANS,cursor:"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.15)",display:"flex",alignItems:"center",gap:6,
+      }}>
+        <span style={{fontSize:15}}>{isMobile?"🖥":"📱"}</span>
+        {isMobile?"Vue Web":"Vue Mobile"}
+      </button>
+      <div style={{
+        maxWidth:isMobile?420:"100%",width:isMobile?420:"100%",
+        margin:isMobile?"0 auto":"0",height:"100dvh",background:T.warmWhite,
+        position:"relative",overflow:"hidden",
+        ...(isMobile?{boxShadow:"0 0 40px rgba(0,0,0,0.12)",borderLeft:`1px solid ${T.sandDark}`,borderRight:`1px solid ${T.sandDark}`}:{}),
+      }}>
+        {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")} onFacebook={()=>{
+          setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
+          setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
+        }}/>}
+        {screen==="address"&&<OnboardingAddress
+          onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"role":"whatsapp")}}
+          onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
+        />}
+        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
+        {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
+        {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData}/>}
+      </div>
     </div>
   );
 }
