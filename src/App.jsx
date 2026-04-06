@@ -294,32 +294,32 @@ function OnboardingAddress({onFound,onCreate}) {
       }
     },400)}else setSugs([])};
 
-  // ─── RNIC lookup (static JSON hosted on Netlify) ───
-  // Place /rnic-06.json in your Netlify public folder (Alpes-Maritimes extract)
-  // Format: [{ "adresse":"12 RUE DES TILLEULS", "codepostal":"06400", "commune":"CANNES",
-  //            "nb_lots_hab":24, "immat":"AA-0024-RNC", "periode_construction":"1971-1980",
-  //            "type_syndic":"professionnel", "nom_syndic":"Cabinet Urbania" }, ...]
-  const lookupRNIC=async(addr)=>{
-    try{
-      const r=await fetch("/rnic-06.json");
-      if(!r.ok) return null;
-      const db=await r.json();
-      // Normalize: uppercase, remove accents, simplify
-      const norm=s=>(s||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z0-9 ]/g,"").trim();
-      const needle=norm(addr.housenumber+" "+addr.street);
-      const cp=addr.postcode;
-      // Match by street + postcode
-      const match=db.find(c=>norm(c.adresse)===needle && c.codepostal===cp)
-        || db.find(c=>norm(c.adresse).includes(needle) && c.codepostal===cp);
-      return match;
-    }catch{ return null; }
+  // ─── RNIC data (embedded for pilot — replace with fetch for production) ───
+  const RNIC_DB=[
+    {adresse:"12 RUE DES TILLEULS",codepostal:"06400",commune:"CANNES",nom_copro:"Résidence Les Tilleuls",nb_lots_hab:24,immat:"AA-0024-RNC",periode_construction:"1971-1980",type_syndic:"professionnel",nom_syndic:"Cabinet Urbania"},
+    {adresse:"45 BOULEVARD DE LA CROISETTE",codepostal:"06400",commune:"CANNES",nom_copro:"Résidence La Croisette",nb_lots_hab:48,immat:"AA-0312-RNC",periode_construction:"1961-1970",type_syndic:"professionnel",nom_syndic:"Foncia Riviera"},
+    {adresse:"8 RUE JEAN JAURES",codepostal:"06400",commune:"CANNES",nom_copro:"Le Jean Jaurès",nb_lots_hab:16,immat:"AA-1087-RNC",periode_construction:"1981-1990",type_syndic:"benevole",nom_syndic:""},
+    {adresse:"120 RUE D ANTIBES",codepostal:"06400",commune:"CANNES",nom_copro:"Résidence Antibes Centre",nb_lots_hab:32,immat:"AA-0567-RNC",periode_construction:"1991-2000",type_syndic:"professionnel",nom_syndic:"Citya Immobilier"},
+    {adresse:"3 AVENUE DU MARECHAL JUIN",codepostal:"06400",commune:"CANNES",nom_copro:"Le Maréchal",nb_lots_hab:56,immat:"AA-0891-RNC",periode_construction:"1951-1960",type_syndic:"professionnel",nom_syndic:"Nexity Lamy"},
+  ];
+
+  const lookupRNIC=(addr)=>{
+    const norm=s=>(s||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z0-9 ]/g,"").replace(/\s+/g," ").trim();
+    const needle=norm((addr.housenumber||"")+" "+(addr.street||""));
+    const cp=addr.postcode;
+    return RNIC_DB.find(c=>norm(c.adresse)===needle && c.codepostal===cp)
+      || RNIC_DB.find(c=>needle.includes(norm(c.adresse)) && c.codepostal===cp)
+      || RNIC_DB.find(c=>norm(c.adresse).includes(needle) && c.codepostal===cp)
+      || null;
   };
 
-  const handleSelect=async(a)=>{setSel(a);setQ(a.label);setSugs([]);setSearching(true);
-    const rnic=await lookupRNIC(a);
-    setRnicData(rnic);
-    setSearching(false);
-    setResult(rnic?"found":"new");
+  const handleSelect=(a)=>{setSel(a);setQ(a.label);setSugs([]);setSearching(true);
+    setTimeout(()=>{
+      const rnic=lookupRNIC(a);
+      setRnicData(rnic);
+      setSearching(false);
+      setResult(rnic?"found":"new");
+    },800);
   };
 
   return (
