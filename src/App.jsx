@@ -478,6 +478,78 @@ function OnboardingWhatsApp({copro,onImport,onSkip}) {
   );
 }
 
+/* ═══════════════════════════════════════
+   BUILDING PLAN — ONBOARDING STEP
+   ═══════════════════════════════════════ */
+function OnboardingBuilding({copro,onSelect}) {
+  const [show,setShow]=useState(false);
+  const [selFloor,setSelFloor]=useState(null);
+  const [selPos,setSelPos]=useState(null);
+  const floors=copro?.logements?Math.min(Math.ceil(copro.logements/2),7):6;
+  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
+  const OCCUPIED=[
+    {f:6,p:0,name:"Marie P."},{f:5,p:0,name:"Sophie L."},{f:5,p:1,name:"Anne L."},
+    {f:4,p:0,name:"Paul V."},{f:3,p:1,name:"Thomas R."},{f:2,p:0,name:"Marc D."},
+    {f:2,p:1,name:"Lucas M."},{f:1,p:0,name:"Karim B."},{f:0,p:1,name:"Luc M."},
+  ];
+  const posLabel=["Gauche","Droite"];
+  const getOcc=(f,p)=>OCCUPIED.find(o=>o.f===f&&o.p===p);
+  const isSel=(f,p)=>selFloor===f&&selPos===p;
+  return (
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
+      <div style={{padding:"56px 24px 20px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px"}}>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 3 sur 4</p>
+        <h2 style={{fontFamily:FONT,fontSize:22,fontWeight:700,color:"#fff",margin:"0 0 4px",opacity:show?1:0,transition:"all 0.6s 0.2s"}}>Où est votre logement ?</h2>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:0}}>Touchez votre porte dans le plan</p>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 100px"}}>
+        <Card style={{padding:14,opacity:show?1:0,transition:"opacity 0.5s 0.4s"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:600,color:T.forest}}>{copro?.name||"Ma copropriété"}</div>
+            <span style={{fontSize:11,padding:"3px 8px",borderRadius:6,background:`${T.leafLight}33`,color:T.forest,fontWeight:600}}>{copro?.members||0}/{copro?.logements||24}</span>
+          </div>
+          {Array.from({length:floors+1}).map((_,fi)=>{
+            const f=floors-fi;
+            return (
+              <div key={f} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <div style={{width:30,fontSize:11,color:T.textMuted,textAlign:"center",fontWeight:500}}>{f===0?"RDC":f}</div>
+                {[0,1].map(pi=>{
+                  const occ=getOcc(f,pi);const sel=isSel(f,pi);
+                  return (
+                    <button key={pi} onClick={()=>{setSelFloor(f);setSelPos(pi)}} style={{
+                      flex:1,padding:"10px 6px",borderRadius:10,border:sel?`2.5px solid ${T.forest}`:occ?`1.5px solid ${T.leafLight}`:`1.5px solid ${T.sandDark}`,
+                      background:sel?`${T.forest}12`:occ?`${T.leafLight}22`:T.sand+"44",cursor:"pointer",textAlign:"center",transition:"all 0.2s",fontFamily:SANS,
+                    }}>
+                      <div style={{fontSize:11,fontWeight:600,color:sel?T.forest:occ?T.forestLight:T.textMuted}}>{f}{pi===0?"G":"D"}</div>
+                      <div style={{fontSize:9,color:sel?T.forest:occ?T.textLight:T.textMuted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sel?"Vous ✓":occ?occ.name:"vacant"}</div>
+                    </button>);
+                })}
+              </div>);
+          })}
+          <div style={{display:"flex",gap:12,marginTop:10,justifyContent:"center",fontSize:10,color:T.textMuted}}>
+            <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:`${T.leafLight}44`,border:`1px solid ${T.leafLight}`}}/> Occupé</span>
+            <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:`${T.forest}12`,border:`2px solid ${T.forest}`}}/> Vous</span>
+            <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:`${T.sand}44`,border:`1px solid ${T.sandDark}`}}/> Vacant</span>
+          </div>
+        </Card>
+        {selFloor!==null&&(
+          <Card style={{border:`2px solid ${T.leafLight}`,animation:"fadeIn 0.3s ease"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+              <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:16,fontWeight:700}}>{selFloor}{selPos===0?"G":"D"}</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:600,color:T.text}}>{selFloor===0?"RDC":`${selFloor}ème`} — {posLabel[selPos]}</div>
+                <div style={{fontSize:12,color:T.textLight}}>Apt {selFloor}{selPos===0?"G":"D"}</div>
+              </div>
+            </div>
+            <Btn full onClick={()=>onSelect(`${selFloor}${selPos===0?"G":"D"}`)}>✓ C'est mon logement</Btn>
+          </Card>
+        )}
+      </div>
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    </div>
+  );
+}
+
 function OnboardingRole({copro,onContinue}) {
   const [role,setRole]=useState(null);
   const [isCS,setIsCS]=useState(false);
@@ -614,13 +686,15 @@ function InviteKit({copro,userName,onClose}) {
 /* ═══════════════════════════════════════
    MAIN APP
    ═══════════════════════════════════════ */
-function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
+function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   const [tab,setTab]=useState("home");
   const [showInvite,setShowInvite]=useState(false);
+  const [showCadenas,setShowCadenas]=useState(null); // null | "escalade" | "conseil" | "verification" | "mediation"
   const [parrainages,setParrainages]=useState([
-    {id:1,contact:"Sophie Martin",city:"Lyon 3ème",copro:"Résidence du Parc",date:"2026-03-15",actifs:7,seuil:5,status:"actif",paidReward:true},
-    {id:2,contact:"Thomas Durand",city:"Paris 11ème",copro:"Le Voltaire",date:"2026-03-28",actifs:2,seuil:5,status:"en_cours",paidReward:false},
+    {id:1,contact:"Sophie Martin",city:"Lyon 3ème",copro:"Résidence du Parc",logements:32,date:"2026-03-15",actifs:7,seuil:5,status:"actif",paidReward:true},
+    {id:2,contact:"Thomas Durand",city:"Paris 11ème",copro:"Le Voltaire",logements:18,date:"2026-03-28",actifs:2,seuil:5,status:"en_cours",paidReward:false},
   ]);
+  const chequeMontant=(lots)=>lots>50?50:lots>30?35:lots>15?20:10;
   const [showParrainage,setShowParrainage]=useState(false);
   const [parrainageStep,setParrainageStep]=useState(0); // 0=list, 1=new, 2=share, 3=done
   const [newParr,setNewParr]=useState({contact:"",city:"",channel:"whatsapp"});
@@ -690,6 +764,55 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [userLots,setUserLots]=useState("");
   const [extraLogements,setExtraLogements]=useState([]);
 
+  // ─── GOVERNANCE STATE ───
+  const [govView,setGovView]=useState("dashboard");
+  const [govProfile,setGovProfile]=useState("cs_actif"); // "informelle" | "cs_actif" | "syndic_pro"
+  const [govSettings,setGovSettings]=useState({
+    filOfficiel:"cs_syndic", // "cs_syndic" | "tous_verifies" | "syndic_seul"
+    creerSujet:"tous_verifies", // "tous_verifies" | "proprio_seuls" | "cs_seul"
+    lancerConsult:"cs_seul", // "cs_seul" | "tout_proprio_verifie"
+    seuilEscalade:3,
+    docsFinLocataires:false,
+    tantièmesVisibles:false,
+    resultatsPublics:true,
+    acceptAccompagnateur:true,
+  });
+  const [pendingVerifs,setPendingVerifs]=useState([
+    {id:1,name:"Marc Dubois",floor:"2B",status:"proprio",date:"Il y a 2 jours",invitedBy:"Paul V."},
+    {id:2,name:"Isabelle Chen",floor:"5A",status:"locataire",date:"Il y a 5 jours",invitedBy:null},
+    {id:3,name:"Karim Benali",floor:"1C",status:"proprio",date:"Aujourd'hui",invitedBy:null},
+    {id:4,name:"Claire Fontaine",floor:"2C",status:"locataire",date:"Il y a 1 jour",invitedBy:"Sophie L."},
+  ]);
+  const [verifiedResidents,setVerifiedResidents]=useState([
+    {name:"Sophie L.",floor:"3A",role:"proprio",verifiedBy:"Pionnier",date:"5 jan.",badge:"Pionnier"},
+    {name:"Marie D.",floor:"1A",role:"proprio",verifiedBy:"Sophie L.",date:"5 jan.",badge:"CS"},
+    {name:"Paul V.",floor:"4B",role:"proprio",verifiedBy:"Sophie L.",date:"8 jan.",badge:"Référent"},
+    {name:"Thomas R.",floor:"2A",role:"proprio",verifiedBy:"Paul V.",date:"12 jan.",badge:null},
+    {name:"Anna K.",floor:"5A",role:"proprio",verifiedBy:"Paul V.",date:"15 jan.",badge:null},
+    {name:"Lucas M.",floor:"RDC",role:"concierge",verifiedBy:"Marie D.",date:"6 jan.",badge:null},
+    {name:userName,floor:currentApt,role:"proprio",verifiedBy:"Marie D.",date:"10 jan.",badge:null},
+  ]);
+  const [referents,setReferents]=useState([
+    {name:"Paul V.",floor:"4B",since:"8 jan.",verifications:4},
+  ]);
+  const [departures,setDepartures]=useState([
+    {id:1,name:"Thomas R.",floor:"2A",reportedBy:"Sophie L.",date:"2 mars",reason:"a déménagé en février",status:"pending"},
+  ]);
+  const [govConsultations,setGovConsultations]=useState([
+    {id:1,question:"Remplacement de l'interphone collectif ?",mode:"logement",votes:{pour:8,contre:3,abstention:1},total:18,deadline:"15 avril",status:"active"},
+  ]);
+  const [newConsult,setNewConsult]=useState({question:"",mode:"logement",duree:"7"});
+  const [showNewConsult,setShowNewConsult]=useState(false);
+  // Building plan for governance (reuse onboarding concept)
+  const BUILDING_PLAN = Array.from({length:7}).map((_,fi)=>{
+    const f=6-fi;
+    return {floor:f,units:[0,1].map(pi=>{
+      const vr=verifiedResidents.find(r=>r.floor===`${f}${pi===0?"G":"D"}` || r.floor===`${f}ème ${pi===0?"Gauche":"Droite"}`);
+      const pv=pendingVerifs.find(r=>r.floor===`${f}${pi===0?"G":"D"}`);
+      return {pos:pi,label:`${f}${pi===0?"G":"D"}`,resident:vr?vr.name:pv?pv.name:null,verified:!!vr,pending:!!pv};
+    })};
+  });
+
   // ─── FEED STATE ───
   const [feedCat,setFeedCat]=useState("all");
   const [showComposer,setShowComposer]=useState(false);
@@ -753,6 +876,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   const [medStep,setMedStep]=useState(0);
   const [medDesc,setMedDesc]=useState("");
   const [medReform,setMedReform]=useState(null);
+  const [medCount,setMedCount]=useState(0); // 0=never used, 1+=cadenas after
+
+  // ─── AI QUESTION COUNTER ───
+  const [aiQuestionCount,setAiQuestionCount]=useState(0);
+  const AI_FREE_LIMIT=5;
 
   // ─── AGENDA STATE ───
   const [agendaTab,setAgendaTab]=useState("docs");
@@ -881,10 +1009,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
   };
 
   const handleAISend = async () => {
-    if(!aiQuery.trim())return;const q=aiQuery;setAiQuery("");
+    if(!aiQuery.trim())return;
+    if(aiQuestionCount>=AI_FREE_LIMIT){setShowCadenas("conseil");return;}
+    const q=aiQuery;setAiQuery("");setAiQuestionCount(c=>c+1);
     setAiMsgs(p=>[...p,{role:"user",text:q}]);setAiLoading(true);
     const docsContext=userDocs.length?`\nL'utilisateur a uploadé ${userDocs.length} document(s) personnels: ${userDocs.map(d=>d.name).join(", ")}. Tiens-en compte dans tes réponses si pertinent.`:"";
-    const txt = await callAI(`Tu es un conseiller juridique bienveillant pour copropriétaires. Règlement:\n${REGLEMENT}${docsContext}\nRéponds de façon claire, cite les articles pertinents, oriente vers la médiation. Sois chaleureux mais précis. Termine par: "⚠️ Information à titre indicatif." Réponds en français.`,q);
+    const txt = await callAI(`Tu es un conseiller juridique bienveillant pour copropriétaires. Règlement:\n${REGLEMENT}${docsContext}\nRéponds de façon claire, cite les articles pertinents, oriente vers la médiation. Sois chaleureux mais précis. IMPORTANT: Mentionne que tu te bases sur la loi générale et que tu ne connais pas encore le règlement spécifique de cette copropriété — avec le plan Essentiel, tu pourrais accéder au règlement de LEUR copro. Termine par: "⚠️ Information à titre indicatif." Réponds en français.`,q);
     setAiMsgs(p=>[...p,{role:"assistant",text:txt||"Désolé, je n'ai pas pu traiter votre demande. Veuillez réessayer."}]);
     setAiLoading(false);
   };
@@ -1086,13 +1216,45 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             </div>
           </Card>
 
+          {/* ═══ CADENAS BANNERS (Gouvernance) ═══ */}
+          {!isNew&&activeCopro.members>=5&&(
+            <div onClick={()=>setShowCadenas("verification")} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`linear-gradient(135deg,${T.sunrise}08,${T.coral}08)`,borderRadius:14,marginBottom:10,cursor:"pointer",border:`1.5px solid ${T.sunrise}33`}}>
+              <span style={{fontSize:18}}>🔒</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:600,color:T.bark}}>{activeCopro.members} voisins attendent votre confirmation</div>
+                <div style={{fontSize:10,color:T.textMuted}}>Débloquez la vérification avec Essentiel</div>
+              </div>
+              <span style={{fontSize:10,fontWeight:700,color:T.sunrise}}>Découvrir →</span>
+            </div>
+          )}
+          {sujets.filter(s=>s.status==="escalade").length>0&&(
+            <div onClick={()=>{setAgendaTab("sujets");setSujetId(null);setTab("copro")}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`linear-gradient(135deg,${T.amber}08,${T.sunriseLight}08)`,borderRadius:14,marginBottom:10,cursor:"pointer",border:`1.5px solid ${T.amber}22`}}>
+              <span style={{fontSize:18}}>⚡</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:600,color:T.bark}}>{sujets.filter(s=>s.status==="escalade").length} sujet{sujets.filter(s=>s.status==="escalade").length>1?"s":""} en escalade</div>
+                <div style={{fontSize:10,color:T.textMuted}}>Actions AI disponibles — voir les détails</div>
+              </div>
+              <span style={{fontSize:10,fontWeight:700,color:T.amber}}>Voir →</span>
+            </div>
+          )}
+          {aiQuestionCount>=AI_FREE_LIMIT&&(
+            <div onClick={()=>setShowCadenas("conseil")} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`${T.forest}08`,borderRadius:14,marginBottom:10,cursor:"pointer",border:`1.5px solid ${T.forest}22`}}>
+              <span style={{fontSize:18}}>⚖️</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:600,color:T.forest}}>Conseil AI — limite atteinte</div>
+                <div style={{fontSize:10,color:T.textMuted}}>{AI_FREE_LIMIT}/{AI_FREE_LIMIT} questions ce mois</div>
+              </div>
+              <span style={{fontSize:10,fontWeight:700,color:T.forest}}>Essentiel →</span>
+            </div>
+          )}
+
           {/* Parrainage widget — Animateurs & Piliers */}
           {canParrain&&<Card style={{background:`linear-gradient(135deg,${T.purple}08,${T.sky}08)`,border:`1.5px solid ${T.purple}25`,padding:14,cursor:"pointer"}} onClick={()=>{setShowParrainage(true);setParrainageStep(0)}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${T.purple},${T.sky})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🚀</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.purple}}>Ambassadeur VoisinSereins</div>
-                <div style={{fontSize:11,color:T.textLight,lineHeight:1.3}}>Parrainez une copro — Pass Perso + chèque cadeau 20€</div>
+                <div style={{fontSize:11,color:T.textLight,lineHeight:1.3}}>Parrainez une copro — Pass Perso + chèque cadeau 10 à 50€</div>
               </div>
               <span style={{fontSize:14,color:T.purple}}>→</span>
             </div>
@@ -1515,7 +1677,30 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
         {/* ═══ CONSEIL AI TAB ═══ */}
         {tab==="ai"&&<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
+          {/* AI Question counter */}
+          <div style={{padding:"8px 14px",background:aiQuestionCount>=AI_FREE_LIMIT?`${T.sunrise}12`:T.warmWhite,borderBottom:`1px solid ${T.sandDark}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontSize:11,color:aiQuestionCount>=AI_FREE_LIMIT?T.bark:T.textMuted}}>
+              {aiQuestionCount>=AI_FREE_LIMIT?"Limite atteinte — plan Gratuit":"Conseil AI — plan Gratuit"}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <div style={{display:"flex",gap:2}}>
+                {Array.from({length:AI_FREE_LIMIT}).map((_,i)=>(
+                  <div key={i} style={{width:8,height:8,borderRadius:4,background:i<aiQuestionCount?T.forest:T.sandDark,transition:"background 0.3s"}}/>
+                ))}
+              </div>
+              <span style={{fontSize:11,fontWeight:600,color:aiQuestionCount>=AI_FREE_LIMIT?T.sunrise:T.forest}}>{aiQuestionCount}/{AI_FREE_LIMIT}</span>
+            </div>
+          </div>
           <div style={{flex:1,overflowY:"auto",padding:14}}>
+            {/* Cadenas when limit reached */}
+            {aiQuestionCount>=AI_FREE_LIMIT&&(
+              <div onClick={()=>setShowCadenas("conseil")} style={{padding:"14px 16px",borderRadius:14,background:`${T.sunrise}10`,border:`1.5px solid ${T.sunrise}30`,cursor:"pointer",marginBottom:14,textAlign:"center"}}>
+                <span style={{fontSize:28,display:"block",marginBottom:6}}>🔒</span>
+                <div style={{fontSize:14,fontWeight:600,color:T.bark,marginBottom:4}}>Vous avez posé vos {AI_FREE_LIMIT} questions gratuites</div>
+                <div style={{fontSize:12,color:T.textLight,lineHeight:1.5,marginBottom:8}}>Avec Essentiel, le Conseil AI est illimité et connaît le règlement de VOTRE copropriété.</div>
+                <div style={{fontSize:12,fontWeight:700,color:T.sunrise}}>Découvrir Essentiel →</div>
+              </div>
+            )}
             {aiMsgs.map((m,i)=>(
               <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:10}}>
                 <div style={{maxWidth:"85%",padding:"11px 14px",borderRadius:14,background:m.role==="user"?`linear-gradient(135deg,${T.forest},${T.forestLight})`:"#fff",color:m.role==="user"?"#fff":T.text,fontSize:13,lineHeight:1.6,boxShadow:"0 1px 6px rgba(0,0,0,0.05)",whiteSpace:"pre-wrap"}}>{m.text}</div>
@@ -1538,11 +1723,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
           </div>
         </div>}
 
-        {/* ═══ COPRO TAB (Docs + Sujets + Travaux) ═══ */}
+        {/* ═══ COPRO TAB (Docs + Sujets + Travaux + Gouvernance) ═══ */}
         {tab==="copro"&&<div style={{padding:14}}>
           <div style={{display:"flex",gap:6,background:"#E0DDD5",borderRadius:12,padding:4,marginBottom:14}}>
-            {[{id:"docs",l:"📁 Docs"},{id:"sujets",l:"📋 Sujets"},{id:"travaux",l:"🔨 Travaux"}].map(t=>(
-              <button key={t.id} onClick={()=>{setAgendaTab(t.id);if(t.id==="sujets"){setSujetId(null)}if(t.id==="travaux"){setDossierId(null);setTravTab("detail")}}} style={{flex:1,padding:"10px 8px",borderRadius:10,border:"none",background:agendaTab===t.id?"#2C3E6B":"transparent",color:agendaTab===t.id?"#fff":"#888780",fontSize:12,fontWeight:agendaTab===t.id?700:500,cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>{t.l}</button>
+            {[{id:"docs",l:"📁 Docs"},{id:"sujets",l:"📋 Sujets"},{id:"travaux",l:"🔨 Travaux"},{id:"gouv",l:"🏛 Gouvernance"}].map(t=>(
+              <button key={t.id} onClick={()=>{setAgendaTab(t.id);if(t.id==="sujets"){setSujetId(null)}if(t.id==="travaux"){setDossierId(null);setTravTab("detail")}if(t.id==="gouv"){setGovView("dashboard")}}} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"none",background:agendaTab===t.id?"#2C3E6B":"transparent",color:agendaTab===t.id?"#fff":"#888780",fontSize:10,fontWeight:agendaTab===t.id?700:500,cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>{t.l}</button>
             ))}
           </div>
 
@@ -1723,6 +1908,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                   <p style={{fontSize:10,color:T.textLight,lineHeight:1.3,margin:"0 0 6px",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{s.desc}</p>
                   <div style={{display:"flex",alignItems:"center",gap:8,fontSize:9,color:T.textMuted}}><span>📢 {s.signalCount}</span><span>👥 {s.residents.length}</span><div style={{flex:1}}/><span>{s.status==="resolu"?`Résolu ${s.resolvedAt}`:s.lastSignal}</span></div>
                   {s.status!=="resolu"&&<div style={{marginTop:4}}><div style={{height:3,borderRadius:2,background:T.sand}}><div style={{height:"100%",borderRadius:2,width:`${Math.min(100,(s.signalCount/s.threshold)*100)}%`,background:s.signalCount>=s.threshold?`linear-gradient(90deg,${T.amber},${T.red})`:`linear-gradient(90deg,${T.sky},${T.forestLight})`}}/></div><div style={{fontSize:7,color:T.textMuted,marginTop:1}}>{s.signalCount>=s.threshold?"Seuil dépassé":`${s.signalCount}/${s.threshold}`}</div></div>}
+                  {s.status==="escalade"&&s.aiSugg&&s.aiSugg.length>0&&<div style={{marginTop:5,padding:"5px 8px",borderRadius:8,background:`${T.sunrise}08`,border:`1px solid ${T.sunrise}20`,display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11}}>🤖</span>
+                    <span style={{fontSize:9,color:T.bark,fontWeight:500}}>{s.aiSugg.length} action{s.aiSugg.length>1?"s":""} AI suggérée{s.aiSugg.length>1?"s":""}</span>
+                    <span style={{fontSize:9,color:T.sunrise,fontWeight:600,marginLeft:"auto"}}>Voir →</span>
+                  </div>}
                 </div>)})}
               <button onClick={()=>setShowNewSujet(true)} style={{width:"100%",padding:10,borderRadius:12,border:`2px dashed ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight,marginTop:3}}>+ Signaler un sujet</button>
             </div>}
@@ -1975,18 +2165,281 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
 
             </div>)})()}
           </div>}
+
+          {/* ═══ GOUVERNANCE SUB-TAB ═══ */}
+          {agendaTab==="gouv"&&<div>
+            {/* Nav pills */}
+            <div style={{display:"flex",gap:3,overflowX:"auto",paddingBottom:3,marginBottom:10}}>
+              {[{id:"dashboard",l:"📊 Tableau de bord"},{id:"verification",l:"✓ Vérification"},{id:"referents",l:"👥 Référents"},{id:"settings",l:"⚙️ Paramètres"},{id:"departures",l:"🚪 Départs"},{id:"consultations",l:"🗳 Consultations"},{id:"plan",l:"🏢 Plan"}].map(v=>(
+                <button key={v.id} onClick={()=>setGovView(v.id)} style={{padding:"5px 9px",borderRadius:16,border:"none",whiteSpace:"nowrap",background:govView===v.id?T.forest:"#fff",color:govView===v.id?"#fff":T.textLight,fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:SANS,boxShadow:govView===v.id?"none":"0 1px 3px rgba(0,0,0,0.06)"}}>{v.l}</button>
+              ))}
+            </div>
+
+            {/* ── DASHBOARD ── */}
+            {govView==="dashboard"&&<div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
+                <div style={{background:"#fff",borderRadius:10,padding:"8px 10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                  <div style={{fontSize:18,fontWeight:700,color:T.forest}}>{verifiedResidents.length+pendingVerifs.length}</div>
+                  <div style={{fontSize:8,color:T.textMuted,fontWeight:600}}>Résidents inscrits</div>
+                </div>
+                <div style={{background:"#fff",borderRadius:10,padding:"8px 10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                  <div style={{fontSize:18,fontWeight:700,color:T.forest}}>{verifiedResidents.length>0?Math.round(verifiedResidents.length/(verifiedResidents.length+pendingVerifs.length)*100):0}%</div>
+                  <div style={{fontSize:8,color:T.textMuted,fontWeight:600}}>Taux de vérification</div>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
+                {[{v:pendingVerifs.length,l:"N1 (en attente)",c:T.sunrise},{v:verifiedResidents.length,l:"N2 (vérifiés)",c:T.sky},{v:0,l:"N3 (certifiés)",c:T.purple}].map((m,i)=>(
+                  <div key={i} style={{background:"#fff",borderRadius:10,padding:"6px 4px",textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                    <div style={{fontSize:16,fontWeight:700,color:m.c}}>{m.v}</div>
+                    <div style={{fontSize:7,color:T.textMuted,fontWeight:600}}>{m.l}</div>
+                  </div>
+                ))}
+              </div>
+              <Card style={{padding:12}}>
+                <h4 style={{margin:"0 0 8px",fontSize:12,fontWeight:700,color:T.text}}>Actions en attente</h4>
+                {pendingVerifs.length>0&&<div onClick={()=>setGovView("verification")} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${T.sand}`,cursor:"pointer"}}>
+                  <span style={{fontSize:12,color:T.text}}>{pendingVerifs.length} vérification{pendingVerifs.length>1?"s":""} en attente</span>
+                  <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.sunrise}18`,color:T.sunrise}}>{pendingVerifs.length}</span>
+                </div>}
+                {departures.filter(d=>d.status==="pending").length>0&&<div onClick={()=>setGovView("departures")} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",cursor:"pointer"}}>
+                  <span style={{fontSize:12,color:T.text}}>{departures.filter(d=>d.status==="pending").length} signalement de départ</span>
+                  <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.coral}18`,color:T.coral}}>1</span>
+                </div>}
+                {govConsultations.filter(c=>c.status==="active").length>0&&<div onClick={()=>setGovView("consultations")} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",cursor:"pointer"}}>
+                  <span style={{fontSize:12,color:T.text}}>{govConsultations.filter(c=>c.status==="active").length} consultation en cours</span>
+                  <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.purple}18`,color:T.purple}}>1</span>
+                </div>}
+              </Card>
+              <Card style={{padding:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <h4 style={{margin:0,fontSize:12,fontWeight:700,color:T.text}}>Référents actifs</h4>
+                  <button onClick={()=>setGovView("referents")} style={{fontSize:10,color:T.forest,fontWeight:600,background:"none",border:"none",cursor:"pointer",fontFamily:SANS}}>Gérer →</button>
+                </div>
+                {referents.map((r,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0"}}>
+                  <Av name={r.name} size={24}/><span style={{fontSize:11,color:T.text}}>{r.name} — {r.floor}</span><span style={{fontSize:9,color:T.textMuted,marginLeft:"auto"}}>{r.verifications} vérif.</span>
+                </div>)}
+              </Card>
+              <Card style={{padding:12}}>
+                <h4 style={{margin:"0 0 8px",fontSize:12,fontWeight:700,color:T.text}}>Profil de gouvernance</h4>
+                <div style={{display:"flex",gap:4}}>
+                  {[{id:"informelle",l:"Copro informelle"},{id:"cs_actif",l:"CS actif"},{id:"syndic_pro",l:"Syndic pro"}].map(pr=>(
+                    <button key={pr.id} onClick={()=>setGovProfile(pr.id)} style={{flex:1,padding:"6px 4px",borderRadius:8,border:govProfile===pr.id?`2px solid ${T.forest}`:`1px solid ${T.sandDark}`,background:govProfile===pr.id?`${T.forest}08`:"#fff",fontSize:9,fontWeight:600,color:govProfile===pr.id?T.forest:T.textMuted,cursor:"pointer",fontFamily:SANS}}>{pr.l}</button>
+                  ))}
+                </div>
+              </Card>
+            </div>}
+
+            {/* ── VERIFICATION QUEUE ── */}
+            {govView==="verification"&&<div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5,marginBottom:10}}>
+                {[{v:pendingVerifs.length,l:"En attente",c:T.sunrise},{v:verifiedResidents.length,l:"Vérifiés",c:T.forest},{v:0,l:"Refusés",c:T.textMuted}].map((m,i)=>(
+                  <div key={i} style={{background:"#fff",borderRadius:8,padding:"6px",textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                    <div style={{fontSize:16,fontWeight:700,color:m.c}}>{m.v}</div><div style={{fontSize:7,color:T.textMuted,fontWeight:600}}>{m.l}</div>
+                  </div>
+                ))}
+              </div>
+              {pendingVerifs.map(pv=>(
+                <Card key={pv.id} style={{padding:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                    <Av name={pv.name} size={36} bg={T.sunrise}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:T.text}}>{pv.name}</div>
+                      <div style={{fontSize:10,color:T.textMuted}}>Se déclare {pv.status==="proprio"?"copropriétaire":"locataire"} — Apt {pv.floor}</div>
+                      <div style={{fontSize:9,color:T.textMuted}}>{pv.date}{pv.invitedBy?` · Invité par ${pv.invitedBy}`:` · Inscription directe`}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>{setVerifiedResidents(p=>[...p,{name:pv.name,floor:pv.floor,role:pv.status,verifiedBy:userName,date:"Auj.",badge:null}]);setPendingVerifs(p=>p.filter(v=>v.id!==pv.id))}} style={{flex:1,padding:"8px",borderRadius:10,border:"none",background:T.leafLight,color:T.forestDark,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>✓ Je confirme, c'est mon voisin</button>
+                    <button onClick={()=>setPendingVerifs(p=>p.filter(v=>v.id!==pv.id))} style={{padding:"8px 12px",borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:11,fontWeight:500,cursor:"pointer",fontFamily:SANS}}>Je ne le connais pas</button>
+                  </div>
+                </Card>
+              ))}
+              {pendingVerifs.length===0&&<Card style={{textAlign:"center",padding:24}}><div style={{fontSize:36,marginBottom:6}}>✅</div><p style={{fontSize:13,color:T.textLight}}>Toutes les vérifications sont à jour !</p></Card>}
+              <div style={{padding:"8px 12px",background:`${T.sky}10`,borderRadius:10,marginTop:8}}><p style={{fontSize:10,color:T.sky,margin:0}}>Le bouton « Je ne le connais pas » ne bloque pas le résident. Il reste en N1 et conserve l'accès aux fonctions gratuites.</p></div>
+            </div>}
+
+            {/* ── REFERENTS ── */}
+            {govView==="referents"&&<div>
+              <div style={{padding:"8px 12px",background:`${T.sky}10`,borderRadius:10,marginBottom:10}}><p style={{fontSize:10,color:T.sky,margin:0}}>Un référent peut vérifier l'identité des résidents mais ne peut pas modifier les paramètres de gouvernance ni nommer d'autres référents.</p></div>
+              <Card style={{padding:12}}>
+                <h4 style={{margin:"0 0 8px",fontSize:12,fontWeight:700,color:T.text}}>Référents actifs</h4>
+                {referents.map((r,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:i<referents.length-1?`1px solid ${T.sand}`:"none"}}>
+                    <Av name={r.name} size={30}/>
+                    <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.text}}>{r.name} — {r.floor}</div><div style={{fontSize:10,color:T.textMuted}}>Nommé le {r.since} · {r.verifications} vérif.</div></div>
+                    <button onClick={()=>setReferents(p=>p.filter((_,j)=>j!==i))} style={{padding:"4px 10px",fontSize:10,borderRadius:6,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,cursor:"pointer",fontFamily:SANS}}>Retirer</button>
+                  </div>
+                ))}
+              </Card>
+              <Card style={{padding:12}}>
+                <h4 style={{margin:"0 0 8px",fontSize:12,fontWeight:700,color:T.text}}>Nommer un nouveau référent</h4>
+                <p style={{fontSize:10,color:T.textMuted,margin:"0 0 8px"}}>Seuls les résidents vérifiés (N2) peuvent devenir référents.</p>
+                {verifiedResidents.filter(r=>!referents.find(ref=>ref.name===r.name)&&r.badge!=="Pionnier"&&r.badge!=="CS"&&r.name!==userName).map((r,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px",marginBottom:4,border:`1px solid ${T.sandDark}`,borderRadius:10,background:"#fff"}}>
+                    <Av name={r.name} size={28}/>
+                    <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500,color:T.text}}>{r.name} — {r.floor}</div></div>
+                    <button onClick={()=>setReferents(p=>[...p,{name:r.name,floor:r.floor,since:"Auj.",verifications:0}])} style={{padding:"5px 12px",fontSize:10,borderRadius:8,border:"none",background:T.leafLight,color:T.forestDark,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>Nommer</button>
+                  </div>
+                ))}
+              </Card>
+            </div>}
+
+            {/* ── SETTINGS ── */}
+            {govView==="settings"&&<div>
+              <Card style={{padding:12}}>
+                <h4 style={{margin:"0 0 10px",fontSize:12,fontWeight:700,color:T.text}}>Qui peut faire quoi ?</h4>
+                {[
+                  {key:"filOfficiel",l:"Publier dans le fil officiel",opts:[{v:"cs_syndic",l:"CS + Syndic"},{v:"tous_verifies",l:"Tous vérifiés"},{v:"syndic_seul",l:"Syndic seul"}]},
+                  {key:"creerSujet",l:"Créer un sujet structuré",opts:[{v:"tous_verifies",l:"Tous vérifiés"},{v:"proprio_seuls",l:"Copropriétaires"},{v:"cs_seul",l:"CS seul"}]},
+                  {key:"lancerConsult",l:"Lancer une consultation",opts:[{v:"cs_seul",l:"CS seul"},{v:"tout_proprio_verifie",l:"Tout copropriétaire"}]},
+                ].map(s=>(
+                  <div key={s.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${T.sand}`}}>
+                    <span style={{fontSize:11,color:T.text,flex:1}}>{s.l}</span>
+                    <select value={govSettings[s.key]} onChange={e=>setGovSettings(p=>({...p,[s.key]:e.target.value}))} style={{fontSize:10,padding:"4px 6px",borderRadius:6,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.text,fontFamily:SANS}}>
+                      {s.opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+                    </select>
+                  </div>
+                ))}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0"}}>
+                  <span style={{fontSize:11,color:T.text}}>Seuil d'escalade</span>
+                  <select value={govSettings.seuilEscalade} onChange={e=>setGovSettings(p=>({...p,seuilEscalade:parseInt(e.target.value)}))} style={{fontSize:10,padding:"4px 6px",borderRadius:6,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.text,fontFamily:SANS}}>
+                    {[3,5,10].map(n=><option key={n} value={n}>{n} signalements</option>)}
+                  </select>
+                </div>
+              </Card>
+              <Card style={{padding:12}}>
+                <h4 style={{margin:"0 0 10px",fontSize:12,fontWeight:700,color:T.text}}>Visibilité des données</h4>
+                {[
+                  {key:"docsFinLocataires",l:"Docs financiers pour locataires"},
+                  {key:"tantièmesVisibles",l:"Tantièmes visibles dans annuaire"},
+                  {key:"resultatsPublics",l:"Résultats de consultation publics"},
+                  {key:"acceptAccompagnateur",l:"Accepter un Accompagnateur VoisinSereins"},
+                ].map(tog=>(
+                  <div key={tog.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${T.sand}`}}>
+                    <span style={{fontSize:11,color:T.text,flex:1,paddingRight:8}}>{tog.l}</span>
+                    <button onClick={()=>setGovSettings(p=>({...p,[tog.key]:!p[tog.key]}))} style={{width:38,height:20,borderRadius:10,border:"none",background:govSettings[tog.key]?T.forest:T.sandDark,position:"relative",cursor:"pointer",flexShrink:0,transition:"background 0.2s"}}>
+                      <div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:govSettings[tog.key]?20:2,transition:"left 0.2s"}}/>
+                    </button>
+                  </div>
+                ))}
+              </Card>
+            </div>}
+
+            {/* ── DEPARTURES ── */}
+            {govView==="departures"&&<div>
+              {departures.filter(d=>d.status==="pending").map(d=>(
+                <Card key={d.id} style={{padding:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                    <Av name={d.name} size={34} bg={T.coral}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:T.text}}>{d.name} — Apt {d.floor}</div>
+                      <div style={{fontSize:10,color:T.textMuted}}>Signalé par {d.reportedBy} le {d.date}</div>
+                      <div style={{fontSize:10,color:T.textLight,fontStyle:"italic",marginTop:2}}>« {d.reason} »</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:5}}>
+                    <button onClick={()=>setDepartures(p=>p.map(x=>x.id===d.id?{...x,status:"confirmed"}:x))} style={{flex:1,padding:"7px",borderRadius:8,border:"none",background:`${T.coral}15`,color:T.coral,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>Confirmer le départ</button>
+                    <button onClick={()=>setDepartures(p=>p.map(x=>x.id===d.id?{...x,status:"rejected"}:x))} style={{padding:"7px 12px",borderRadius:8,border:`1px solid ${T.sandDark}`,background:"#fff",color:T.textMuted,fontSize:10,cursor:"pointer",fontFamily:SANS}}>Rejeter</button>
+                  </div>
+                </Card>
+              ))}
+              {departures.filter(d=>d.status==="pending").length===0&&<Card style={{textAlign:"center",padding:20}}><div style={{fontSize:32,marginBottom:6}}>✅</div><p style={{fontSize:12,color:T.textMuted}}>Aucun signalement en attente</p></Card>}
+              <div style={{padding:"8px 12px",background:`${T.sky}10`,borderRadius:10,marginTop:8}}><p style={{fontSize:10,color:T.sky,margin:0}}>Le résident signalé reçoit une notification et dispose de 14 jours pour contester.</p></div>
+            </div>}
+
+            {/* ── CONSULTATIONS ── */}
+            {govView==="consultations"&&<div>
+              {govConsultations.map(c=>(
+                <Card key={c.id} style={{padding:12,border:`1.5px solid ${T.purple}25`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                    <span style={{fontSize:14}}>🗳</span>
+                    <span style={{padding:"2px 8px",borderRadius:6,fontSize:9,fontWeight:700,background:c.status==="active"?`${T.purple}15`:`${T.green}15`,color:c.status==="active"?T.purple:T.green}}>{c.status==="active"?"En cours":"Terminée"}</span>
+                    <span style={{fontSize:9,color:T.textMuted,marginLeft:"auto"}}>Clôture : {c.deadline}</span>
+                  </div>
+                  <p style={{fontSize:12,fontWeight:600,color:T.text,margin:"0 0 8px"}}>« {c.question} »</p>
+                  <div style={{fontSize:10,color:T.textMuted,marginBottom:6}}>Mode : {c.mode==="logement"?"1 voix/logement":c.mode==="personne"?"1 voix/personne":"Aux tantièmes"}</div>
+                  {["pour","contre","abstention"].map(k=>{const colors={pour:T.green,contre:T.coral,abstention:T.textMuted};return(
+                    <div key={k} style={{marginBottom:3}}><div style={{display:"flex",justifyContent:"space-between",fontSize:9,marginBottom:1}}><span style={{fontWeight:600,color:colors[k],textTransform:"capitalize"}}>{k}</span><span style={{color:T.textMuted}}>{c.votes[k]}/{c.total}</span></div>
+                    <div style={{height:4,borderRadius:2,background:T.sand}}><div style={{height:"100%",borderRadius:2,width:`${(c.votes[k]/c.total)*100}%`,background:colors[k]}}/></div></div>
+                  )})}
+                </Card>
+              ))}
+              {!showNewConsult?<button onClick={()=>setShowNewConsult(true)} style={{width:"100%",padding:10,borderRadius:12,border:`2px dashed ${T.purple}40`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.purple,marginTop:4}}>+ Lancer une consultation</button>
+              :<Card style={{padding:12,border:`2px solid ${T.purple}30`}}>
+                <h4 style={{margin:"0 0 8px",fontSize:12,fontWeight:700,color:T.purple}}>Nouvelle consultation</h4>
+                <input value={newConsult.question} onChange={e=>setNewConsult(p=>({...p,question:e.target.value}))} placeholder="Question posée aux copropriétaires" style={{width:"100%",padding:10,borderRadius:10,border:`1.5px solid ${T.sandDark}`,fontSize:12,fontFamily:SANS,outline:"none",marginBottom:8,boxSizing:"border-box",background:"#fff"}}/>
+                <div style={{display:"flex",gap:4,marginBottom:8}}>{[{v:"personne",l:"1 voix/pers."},{v:"logement",l:"1 voix/lgt"},{v:"tantiemes",l:"Tantièmes"}].map(m=>(
+                  <button key={m.v} onClick={()=>setNewConsult(p=>({...p,mode:m.v}))} style={{flex:1,padding:"6px 4px",borderRadius:8,border:newConsult.mode===m.v?`2px solid ${T.purple}`:`1px solid ${T.sandDark}`,background:newConsult.mode===m.v?`${T.purple}08`:"#fff",fontSize:9,fontWeight:600,color:newConsult.mode===m.v?T.purple:T.textMuted,cursor:"pointer",fontFamily:SANS}}>{m.l}</button>
+                ))}</div>
+                <div style={{display:"flex",gap:4,marginBottom:10}}>{["7","14","30"].map(d=>(
+                  <button key={d} onClick={()=>setNewConsult(p=>({...p,duree:d}))} style={{flex:1,padding:"6px",borderRadius:8,border:newConsult.duree===d?`2px solid ${T.purple}`:`1px solid ${T.sandDark}`,background:newConsult.duree===d?`${T.purple}08`:"#fff",fontSize:9,fontWeight:600,color:newConsult.duree===d?T.purple:T.textMuted,cursor:"pointer",fontFamily:SANS}}>{d}j</button>
+                ))}</div>
+                {newConsult.mode==="tantiemes"&&<div style={{padding:"6px 10px",borderRadius:8,background:`${T.sunrise}10`,marginBottom:8}}><p style={{fontSize:9,color:T.bark,margin:0}}>⚠️ Vote aux tantièmes = Premium + import syndic (N3)</p></div>}
+                <div style={{padding:"6px 10px",borderRadius:8,background:`${T.sunrise}10`,marginBottom:10}}><p style={{fontSize:9,color:T.bark,margin:0}}>⚠️ Consultation indicative — pas un vote d'AG</p></div>
+                <div style={{display:"flex",gap:6}}>
+                  <Btn full small onClick={()=>{setGovConsultations(p=>[...p,{id:Date.now(),question:newConsult.question,mode:newConsult.mode,votes:{pour:0,contre:0,abstention:0},total:activeCopro.members,deadline:new Date(Date.now()+parseInt(newConsult.duree)*86400000).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}),status:"active"}]);setShowNewConsult(false);setNewConsult({question:"",mode:"logement",duree:"7"})}} disabled={!newConsult.question.trim()} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>🗳 Lancer</Btn>
+                  <Btn small primary={false} onClick={()=>setShowNewConsult(false)}>Annuler</Btn>
+                </div>
+              </Card>}
+            </div>}
+
+            {/* ── PLAN VISUEL ── */}
+            {govView==="plan"&&<div>
+              <Card style={{padding:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <span style={{fontSize:13,fontWeight:600,color:T.forest}}>{activeCopro.name||"Ma copropriété"}</span>
+                  <span style={{fontSize:10,padding:"3px 8px",borderRadius:6,background:`${T.leafLight}33`,color:T.forest,fontWeight:600}}>{verifiedResidents.length+pendingVerifs.length}/{activeCopro.logements}</span>
+                </div>
+                {BUILDING_PLAN.map((fl,fi)=>(
+                  <div key={fi} style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                    <div style={{width:26,fontSize:10,color:T.textMuted,textAlign:"center",fontWeight:500}}>{fl.floor===0?"RDC":fl.floor}</div>
+                    {fl.units.map((u,ui)=>(
+                      <div key={ui} style={{flex:1,padding:"7px 4px",borderRadius:8,textAlign:"center",fontFamily:SANS,
+                        border:u.verified?`1.5px solid ${T.leafLight}`:u.pending?`1.5px solid ${T.sunrise}`:`1px solid ${T.sandDark}`,
+                        background:u.verified?`${T.leafLight}22`:u.pending?`${T.sunrise}10`:`${T.sand}44`,
+                      }}>
+                        <div style={{fontSize:10,fontWeight:600,color:u.verified?T.forest:u.pending?T.sunrise:T.textMuted}}>{u.label}</div>
+                        <div style={{fontSize:8,color:u.verified?T.forestLight:u.pending?T.bark:T.textMuted,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.resident||"vacant"}</div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                <div style={{display:"flex",gap:10,marginTop:8,justifyContent:"center",fontSize:9,color:T.textMuted}}>
+                  <span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:2,background:`${T.leafLight}44`,border:`1px solid ${T.leafLight}`}}/> Vérifié</span>
+                  <span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:2,background:`${T.sunrise}10`,border:`1px solid ${T.sunrise}`}}/> En attente</span>
+                  <span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:2,background:`${T.sand}44`,border:`1px solid ${T.sandDark}`}}/> Vacant</span>
+                </div>
+              </Card>
+            </div>}
+          </div>}
         </div>}
         {tab==="mediation"&&<div style={{padding:14}}>
           <button onClick={()=>{setTab("msg");setMsgView("list")}} style={{background:"none",border:"none",fontSize:14,cursor:"pointer",color:T.forest,fontFamily:SANS,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>← Retour aux messages</button>
 
           {medStep===0&&<div>
-            <Card style={{textAlign:"center",padding:28}}>
-              <div style={{fontSize:48,marginBottom:12}}>🕊</div>
-              <h2 style={{fontFamily:FONT,fontSize:22,color:T.forest,margin:"0 0 8px"}}>Médiation assistée par AI</h2>
-              <p style={{fontSize:14,color:T.textLight,lineHeight:1.6,margin:"0 0 20px"}}>Décrivez votre différend. L'AI vous aidera à formuler une demande respectueuse et à trouver un compromis.</p>
-              <p style={{fontSize:11,color:T.textMuted,margin:"0 0 20px"}}>L'AI est neutre, confidentielle, et ne prend jamais parti. Ce n'est pas une médiation juridique — c'est une aide à la désescalade.</p>
-              <Btn full onClick={()=>setMedStep(1)}>Commencer une médiation</Btn>
-            </Card>
+            {medCount>=1?(
+              <Card style={{textAlign:"center",padding:28}}>
+                <div style={{fontSize:48,marginBottom:12}}>🔒</div>
+                <h2 style={{fontFamily:FONT,fontSize:20,color:T.bark,margin:"0 0 8px"}}>Votre 1ère médiation était offerte</h2>
+                <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:"0 0 6px"}}>La médiation a aidé à résoudre votre différend. Pour continuer, passez au plan Essentiel.</p>
+                <div style={{background:`${T.sunrise}10`,borderRadius:12,padding:"10px 14px",marginBottom:16}}>
+                  <p style={{fontSize:12,color:T.bark,margin:0}}>Avec Essentiel : médiations illimitées, accords formalisés, historique complet.</p>
+                </div>
+                <Btn full onClick={()=>setShowCadenas("mediation")}>Découvrir Essentiel</Btn>
+                <button onClick={()=>{setTab("msg");setMsgView("list")}} style={{width:"100%",padding:10,background:"transparent",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:13,color:T.textMuted,marginTop:6}}>Retour aux messages</button>
+              </Card>
+            ):(
+              <Card style={{textAlign:"center",padding:28}}>
+                <div style={{fontSize:48,marginBottom:12}}>🕊</div>
+                <h2 style={{fontFamily:FONT,fontSize:22,color:T.forest,margin:"0 0 8px"}}>Médiation assistée par AI</h2>
+                <p style={{fontSize:14,color:T.textLight,lineHeight:1.6,margin:"0 0 12px"}}>Décrivez votre différend. L'AI vous aidera à formuler une demande respectueuse et à trouver un compromis.</p>
+                <div style={{background:`${T.leafLight}18`,borderRadius:10,padding:"8px 12px",marginBottom:16}}>
+                  <p style={{fontSize:11,color:T.forest,margin:0,fontWeight:500}}>🎁 Votre 1ère médiation est offerte</p>
+                </div>
+                <p style={{fontSize:11,color:T.textMuted,margin:"0 0 20px"}}>L'AI est neutre, confidentielle, et ne prend jamais parti.</p>
+                <Btn full onClick={()=>setMedStep(1)}>Commencer une médiation</Btn>
+              </Card>
+            )}
           </div>}
 
           {medStep===1&&<div>
@@ -2019,7 +2472,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               ))}
 
               <div style={{display:"flex",gap:8,marginTop:16}}>
-                <Btn full onClick={()=>{setMedStep(0);setMedDesc("");setMedReform(null)}}>Envoyer au voisin</Btn>
+                <Btn full onClick={()=>{setMedCount(c=>c+1);setMedStep(0);setMedDesc("");setMedReform(null)}}>Envoyer au voisin</Btn>
                 <Btn full primary={false} onClick={()=>setMedStep(1)}>Modifier</Btn>
               </div>
             </Card>
@@ -2053,7 +2506,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             </div>
             {/* Stats */}
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              {[{v:parrainages.length,l:"Parrainées",c:T.purple},{v:parrRewards,l:"Mois offerts",c:T.forest},{v:parrainages.filter(p=>p.paidReward).length,l:"Chèques 20€",c:T.sunrise}].map((s,i)=>(
+              {[{v:parrainages.length,l:"Parrainées",c:T.purple},{v:parrRewards,l:"Mois offerts",c:T.forest},{v:parrainages.filter(p=>p.paidReward).reduce((s,p)=>s+chequeMontant(p.logements||20),0)+"€",l:"Chèques gagnés",c:T.sunrise}].map((s,i)=>(
                 <div key={i} style={{flex:1,textAlign:"center",padding:"10px 6px",background:`${s.c}08`,borderRadius:12,border:`1px solid ${s.c}20`}}>
                   <div style={{fontSize:22,fontWeight:700,color:s.c}}>{s.v}</div>
                   <div style={{fontSize:9,color:T.textMuted}}>{s.l}</div>
@@ -2067,7 +2520,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 "Vous connaissez quelqu'un dans une copro (ami, famille, collègue)",
                 "Vous lui envoyez un lien — il reçoit 3 mois de Pass Perso offerts",
                 "Quand sa copro atteint 5 actifs → vous gagnez 1 mois de Pass Perso",
-                "Quand sa copro passe en payant → vous recevez un chèque cadeau de 20€"
+                "Quand sa copro passe en payant → chèque cadeau proportionnel (10€ à 50€ selon la taille)"
               ].map((t,i)=>(
                 <div key={i} style={{display:"flex",gap:8,marginBottom:4,alignItems:"flex-start"}}>
                   <div style={{width:18,height:18,borderRadius:9,background:T.purple,color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</div>
@@ -2075,6 +2528,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 </div>
               ))}
             </Card>
+            {/* Barème */}
+            <div style={{display:"flex",gap:4,marginBottom:12}}>
+              {[{lots:"< 15",montant:"10€"},{lots:"15-30",montant:"20€"},{lots:"31-50",montant:"35€"},{lots:"50+",montant:"50€"}].map((b,i)=>(
+                <div key={i} style={{flex:1,textAlign:"center",padding:"8px 4px",background:`${T.sunrise}08`,borderRadius:10,border:`1px solid ${T.sunrise}15`}}>
+                  <div style={{fontSize:14,fontWeight:700,color:T.sunrise}}>{b.montant}</div>
+                  <div style={{fontSize:8,color:T.textMuted}}>{b.lots} lots</div>
+                </div>
+              ))}
+            </div>
             {/* List */}
             {parrainages.length>0&&<div style={{marginBottom:12}}>
               <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,margin:"0 0 8px",textTransform:"uppercase"}}>Mes copros parrainées</h4>
@@ -2090,7 +2552,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                     </div>
                   </div>
                   {p.actifs>=p.seuil&&<span style={{fontSize:9,fontWeight:700,color:T.forest,background:`${T.forest}12`,padding:"3px 6px",borderRadius:6}}>🎁 Pass Perso</span>}
-                  {p.paidReward&&<span style={{fontSize:9,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"3px 6px",borderRadius:6}}>🎁 20€</span>}
+                  {p.paidReward&&<span style={{fontSize:9,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"3px 6px",borderRadius:6}}>🎁 {chequeMontant(p.logements||20)}€</span>}
                 </div>
               ))}
             </div>}
@@ -2160,7 +2622,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               </div>
               <div style={{flex:1,padding:"8px 6px",borderRadius:10,background:`${T.forest}08`,textAlign:"center"}}>
                 <div style={{fontSize:12,fontWeight:700,color:T.forest}}>🎁 Vous</div>
-                <div style={{fontSize:9,color:T.textMuted}}>Pass Perso + chèque 20€</div>
+                <div style={{fontSize:9,color:T.textMuted}}>Pass Perso + chèque 10-50€</div>
               </div>
             </div>
 
@@ -2194,7 +2656,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                 {icon:"🎁",text:`${newParr.contact} profite de 3 mois de Pass Perso offerts immédiatement`},
                 {icon:"👥",text:`${newParr.contact} invite ses voisins — vous suivez la progression ici`},
                 {icon:"✅",text:"5 résidents actifs atteints → vous gagnez 1 mois de Pass Perso"},
-                {icon:"💰",text:"La copro passe en payant → vous recevez un chèque cadeau de 20€"},
+                {icon:"💰",text:"La copro passe en payant → chèque cadeau proportionnel à la taille (10€ à 50€)"},
               ].map((s,i)=>(
                 <div key={i} style={{display:"flex",gap:8,marginBottom:6,alignItems:"flex-start"}}>
                   <span style={{fontSize:14,flexShrink:0}}>{s.icon}</span>
@@ -2297,6 +2759,39 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             </div>
             <button onClick={()=>{setShowWaImport(false);setWaStep(0)}} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,color:T.textMuted,textAlign:"center"}}>Fermer sans importer</button>
           </div>}
+        </div>
+      </div>}
+
+      {/* ═══ CADENAS OVERLAY ═══ */}
+      {showCadenas&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1100,display:"flex",alignItems:"center",justifyContent:"center",animation:"fadeIn 0.3s",padding:20}} onClick={()=>setShowCadenas(null)}>
+        <div onClick={e=>e.stopPropagation()} style={{background:T.warmWhite,borderRadius:22,padding:"28px 24px",maxWidth:340,width:"100%",boxShadow:"0 16px 48px rgba(0,0,0,0.2)",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{width:56,height:56,borderRadius:16,background:`linear-gradient(135deg,${T.sunrise}20,${T.coral}20)`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",fontSize:28}}>
+              {showCadenas==="escalade"?"⚡":showCadenas==="conseil"?"⚖️":showCadenas==="verification"?"👥":showCadenas==="mediation"?"🕊":"🔒"}
+            </div>
+            <h3 style={{fontFamily:FONT,fontSize:20,color:T.forest,margin:"0 0 6px"}}>
+              {showCadenas==="escalade"?"Actions AI bloquées":showCadenas==="conseil"?"Conseil AI — Limite atteinte":showCadenas==="verification"?"Vérification d'identité":showCadenas==="mediation"?"Médiation AI":"Fonction Essentiel"}
+            </h3>
+            <p style={{fontSize:13,color:T.textLight,lineHeight:1.6,margin:0}}>
+              {showCadenas==="escalade"?"Ce sujet a atteint le seuil d'escalade. L'AI a identifié 3 actions concrètes : lettre au syndic, article de charte, plan d'action. Débloquez-les avec le plan Essentiel."
+              :showCadenas==="conseil"?`Vous avez posé vos ${AI_FREE_LIMIT} questions gratuites ce mois. Le Conseil AI a répondu sur la base de la loi générale. Avec Essentiel, il connaît VOTRE règlement, analyse VOS documents, et répond de manière illimitée.`
+              :showCadenas==="verification"?"Vos voisins se sont inscrits mais leur identité n'est pas encore confirmée. Avec Essentiel, vous pouvez vérifier qui habite où et créer un annuaire de confiance."
+              :showCadenas==="mediation"?"Votre première médiation était offerte. Pour continuer à bénéficier de la médiation AI et résoudre les différends entre voisins, passez à Essentiel."
+              :"Cette fonction est disponible avec le plan Essentiel."}
+            </p>
+          </div>
+          <div style={{background:`${T.forest}08`,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontSize:14,fontWeight:700,color:T.forest}}>Plan Essentiel</span>
+              <span style={{fontSize:14,fontWeight:700,color:T.forest}}>3,50€<span style={{fontSize:11,fontWeight:400,color:T.textMuted}}>/logement/mois</span></span>
+            </div>
+            <p style={{fontSize:11,color:T.textLight,margin:0,lineHeight:1.5}}>Pour une copro de {activeCopro.logements} logements : {Math.round(activeCopro.logements*3.5)}€/mois soit {Math.round(3.5*12)}€/an par logement — moins qu'un plombier d'urgence.</p>
+          </div>
+          <div style={{marginBottom:18}}>
+            {["✓ Vérification d'identité des résidents","✓ Conseil AI illimité + contextualisé","✓ Actions AI sur les sujets en escalade","✓ Médiation AI illimitée","✓ Consultations 1 voix/logement","✓ Documents AG et financiers"].map((f,i)=><div key={i} style={{fontSize:12,color:T.forestLight,padding:"3px 0",fontWeight:500}}>{f}</div>)}
+          </div>
+          <Btn full onClick={()=>setShowCadenas(null)}>Découvrir le plan Essentiel</Btn>
+          <button onClick={()=>setShowCadenas(null)} style={{width:"100%",padding:10,background:"transparent",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:13,color:T.textMuted,marginTop:6}}>Pas maintenant</button>
         </div>
       </div>}
 
@@ -2581,33 +3076,48 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
             <h3 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Annuaire de la copropriété</h3>
           </div>
 
-          {/* Residents */}
+          {/* Residents — enriched with verification & governance */}
           {(()=>{
             const residents=[
-              {name:"Marie D.",floor:"3B",role:"proprio",cs:true,verified:true,visible:true},
-              {name:"Thomas R.",floor:"1A",role:"proprio",cs:false,verified:true,visible:true},
-              {name:"Sophie L.",floor:"4C",role:"locataire",cs:false,verified:false,visible:true},
-              {name:"Anna K.",floor:"5A",role:"proprio",cs:false,verified:true,visible:true},
-              {name:"Paul V.",floor:"1C",role:"proprio",cs:false,verified:false,visible:true},
-              {name:"Lucas M.",floor:"RDC",role:"concierge",cs:false,verified:true,visible:true},
-              {name:userName,floor:currentApt,role,cs:isCS,verified:true,visible:annuaireVisible},
+              {name:"Sophie L.",floor:"3A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:"Pionnier",verifiedBy:null},
+              {name:"Marie D.",floor:"1A",role:"proprio",cs:true,verified:true,visible:true,level:"N2",badge:"CS",verifiedBy:"Sophie L."},
+              {name:"Thomas R.",floor:"2A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Paul V."},
+              {name:"Sophie L.",floor:"4C",role:"locataire",cs:false,verified:false,visible:true,level:"N1",badge:null,verifiedBy:null},
+              {name:"Anna K.",floor:"5A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Paul V."},
+              {name:"Paul V.",floor:"4B",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:"Référent",verifiedBy:"Sophie L."},
+              {name:"Lucas M.",floor:"RDC",role:"concierge",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Marie D."},
+              {name:userName,floor:currentApt,role,cs:isCS,verified:true,visible:annuaireVisible,level:"N2",badge:null,verifiedBy:"Marie D."},
             ].filter(r=>r.visible);
             const filtered=annuaireSearch?residents.filter(r=>r.name.toLowerCase().includes(annuaireSearch.toLowerCase())||r.floor.toLowerCase().includes(annuaireSearch.toLowerCase())):residents;
+            const lvlColors={N1:T.sunrise,N2:T.forest,N3:T.purple};
+            const badgeColors={Pionnier:T.sunrise,CS:T.sky,Référent:T.forestLight,Accompagnateur:"#993C1D"};
             return(<div>
-              <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:"0 0 8px"}}>👥 Résidents ({residents.length})</h4>
-              {residents.length>15&&<div style={{background:"#fff",borderRadius:10,padding:"3px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:6,border:`1px solid ${T.sandDark}`}}>
+              <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:"0 0 4px"}}>👥 Résidents ({residents.length})</h4>
+              <div style={{display:"flex",gap:4,marginBottom:8,fontSize:9,color:T.textMuted}}>
+                <span style={{padding:"2px 6px",borderRadius:4,background:`${T.forest}12`,color:T.forest,fontWeight:600}}>{residents.filter(r=>r.level==="N2").length} vérifiés</span>
+                <span style={{padding:"2px 6px",borderRadius:4,background:`${T.sunrise}12`,color:T.sunrise,fontWeight:600}}>{residents.filter(r=>r.level==="N1").length} en attente</span>
+              </div>
+              <div style={{background:"#fff",borderRadius:10,padding:"3px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:6,border:`1px solid ${T.sandDark}`}}>
                 <span style={{fontSize:12}}>🔍</span><input value={annuaireSearch} onChange={e=>setAnnuaireSearch(e.target.value)} placeholder="Rechercher un résident..." style={{flex:1,border:"none",outline:"none",padding:"8px 0",fontSize:12,fontFamily:SANS,background:"transparent"}}/>
-              </div>}
+              </div>
               {filtered.map((r,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
-                  <Av name={r.name} size={34}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{r.name}{r.verified?" ✓":""}</div>
-                    <div style={{display:"flex",gap:4,marginTop:1}}>
-                      <span style={{fontSize:11,color:T.bark}}>App. {r.floor}</span>
-                      <span style={{fontSize:11,color:T.bark}}>· {r.role==="proprio"?"Copropriétaire":r.role==="locataire"?"Locataire":r.role==="concierge"?"Concierge":"Syndic"}</span>
-                      {r.cs&&<span style={{padding:"0 5px",borderRadius:3,fontSize:9,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>CS</span>}
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",borderLeft:`3px solid ${lvlColors[r.level]||T.sandDark}`}}>
+                  <div style={{position:"relative"}}>
+                    <Av name={r.name} size={34}/>
+                    {r.level==="N2"&&<div style={{position:"absolute",bottom:-2,right:-2,width:14,height:14,borderRadius:7,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,color:"#fff",fontWeight:700}}>✓</div>}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{fontSize:13,fontWeight:600,color:T.text}}>{r.name}</span>
+                      <span style={{padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,background:`${lvlColors[r.level]}15`,color:lvlColors[r.level]}}>{r.level}</span>
+                      {r.badge&&<span style={{padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,background:`${badgeColors[r.badge]||T.forest}15`,color:badgeColors[r.badge]||T.forest}}>{r.badge}</span>}
                     </div>
+                    <div style={{display:"flex",gap:4,marginTop:1,flexWrap:"wrap"}}>
+                      <span style={{fontSize:10,color:T.bark}}>App. {r.floor}</span>
+                      <span style={{fontSize:10,color:T.bark}}>· {r.role==="proprio"?"Copropriétaire":r.role==="locataire"?"Locataire":r.role==="concierge"?"Concierge":"Syndic"}</span>
+                      {r.cs&&<span style={{padding:"0 5px",borderRadius:3,fontSize:8,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>Conseil syndical</span>}
+                    </div>
+                    {r.verifiedBy&&<div style={{fontSize:8,color:T.textMuted,marginTop:1}}>Vérifié par {r.verifiedBy}</div>}
                   </div>
                   {r.name!==userName&&<button onClick={()=>{setShowAnnuaire(false);setAnnuaireSearch("");setActiveConv({id:Date.now(),name:r.name,floor:r.floor});setConvMsgs([]);setMsgView("conv");setTab("msg")}} style={{padding:"5px 10px",borderRadius:6,border:"none",background:`${T.forest}10`,cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>✉️</button>}
                 </div>
@@ -2870,7 +3380,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
               <div style={{display:"flex",justifyContent:"space-around",textAlign:"center",marginBottom:10}}>
                 <div><div style={{fontSize:20,fontWeight:700,color:T.purple}}>{parrainages.length}</div><div style={{fontSize:9,color:T.textMuted}}>Copros parrainées</div></div>
                 <div><div style={{fontSize:20,fontWeight:700,color:T.forest}}>{parrRewards}</div><div style={{fontSize:9,color:T.textMuted}}>Mois Pass Perso</div></div>
-                <div><div style={{fontSize:20,fontWeight:700,color:T.sunrise}}>{parrainages.filter(p=>p.paidReward).length}</div><div style={{fontSize:9,color:T.textMuted}}>Chèques 20€</div></div>
+                <div><div style={{fontSize:20,fontWeight:700,color:T.sunrise}}>{parrainages.filter(p=>p.paidReward).reduce((s,p)=>s+chequeMontant(p.logements||20),0)}€</div><div style={{fontSize:9,color:T.textMuted}}>Chèques gagnés</div></div>
               </div>
               {parrainages.map(p=>(
                 <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,border:`1px solid ${p.actifs>=p.seuil?T.forest:T.sandDark}30`}}>
@@ -2880,7 +3390,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData}) {
                     <div style={{fontSize:9,color:T.textMuted}}>Filleul : {p.contact} · {p.actifs}/{p.seuil} actifs</div>
                   </div>
                   {p.actifs>=p.seuil&&<span style={{fontSize:8,fontWeight:700,color:T.forest,background:`${T.forest}12`,padding:"2px 6px",borderRadius:4}}>🎁 Pass Perso</span>}
-                  {p.paidReward&&<span style={{fontSize:8,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"2px 6px",borderRadius:4}}>🎁 20€</span>}
+                  {p.paidReward&&<span style={{fontSize:8,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"2px 6px",borderRadius:4}}>🎁 {chequeMontant(p.logements||20)}€</span>}
                 </div>
               ))}
             </div>
@@ -3152,6 +3662,7 @@ export default function VoisinSereins() {
   const [userRole,setUserRole]=useState("proprio");
   const [userIsCS,setUserIsCS]=useState(false);
   const [waData,setWaData]=useState(null);
+  const [userApt,setUserApt]=useState("3G");
   const [viewMode,setViewMode]=useState("mobile");
   const isMobile=viewMode==="mobile";
 
@@ -3176,12 +3687,13 @@ export default function VoisinSereins() {
           setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
         }}/>}
         {screen==="address"&&<OnboardingAddress
-          onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"role":"whatsapp")}}
+          onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"building":"whatsapp")}}
           onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
         />}
-        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
+        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("building")}} onSkip={()=>setScreen("building")}/>}
+        {screen==="building"&&<OnboardingBuilding copro={copro} onSelect={apt=>{setUserApt(apt);setScreen("role")}}/>}
         {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
-        {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData}/>}
+        {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData} userApt={userApt}/>}
       </div>
     </div>
   );
