@@ -235,25 +235,60 @@ const Dots = () => <div style={{display:"flex",gap:4,padding:16}}>{[0,1,2].map(i
    ═══════════════════════════════════════ */
 function OnboardingWelcome({onNext,onFacebook}) {
   const [show,setShow]=useState(false);
+  const [simMode,setSimMode]=useState(null); // null | "invitation" | "qr_generic" | "qr_copro"
   useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
   return (
-    <div style={{height:"100%",display:"flex",flexDirection:"column",background:`linear-gradient(170deg,${T.warmWhite} 0%,${T.sand} 40%,${T.leafLight}33 100%)`,fontFamily:SANS,overflow:"hidden",position:"relative"}}>
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:`linear-gradient(170deg,${T.warmWhite} 0%,${T.sand} 40%,${T.leafLight}33 100%)`,fontFamily:SANS,overflow:"auto",position:"relative"}}>
       <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",background:T.sunriseLight,opacity:0.18}}/>
       <div style={{position:"absolute",bottom:100,left:-60,width:200,height:200,borderRadius:"50%",background:T.leafLight,opacity:0.12}}/>
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 28px",position:"relative",zIndex:1,opacity:show?1:0,transform:show?"none":"translateY(20px)",transition:"all 0.8s cubic-bezier(0.16,1,0.3,1)"}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"30px 28px 20px",position:"relative",zIndex:1,opacity:show?1:0,transform:show?"none":"translateY(20px)",transition:"all 0.8s cubic-bezier(0.16,1,0.3,1)"}}>
         <div style={{width:88,height:88,borderRadius:24,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:28,boxShadow:`0 8px 32px ${T.forest}33`}}>
           <span style={{fontSize:40}}>🏡</span>
         </div>
         <h1 style={{fontFamily:FONT,fontSize:30,fontWeight:700,color:T.forest,margin:"0 0 4px",letterSpacing:"-0.5px"}}>VoisinSereins<span style={{color:T.sunrise}}>.ai</span></h1>
         <p style={{fontSize:12,color:T.barkLight,fontWeight:600,letterSpacing:"2px",textTransform:"uppercase",margin:"0 0 24px"}}>L'app de votre copropriété</p>
-        <p style={{fontSize:16,color:T.textLight,textAlign:"center",lineHeight:1.6,maxWidth:280,margin:"0 0 40px"}}>Échangez sereinement avec vos voisins, consultez vos documents et obtenez des conseils juridiques instantanés.</p>
-        <div style={{width:"100%",maxWidth:300,display:"flex",flexDirection:"column",gap:11}}>
-          {[{l:"Continuer avec Google",i:"G",bg:"#fff",c:T.text,b:`1px solid ${T.sandDark}`,action:onNext},{l:"Continuer avec Apple",i:"",bg:"#000",c:"#fff",b:"none",action:onNext},{l:"Continuer avec Facebook",i:"f",bg:"#1877F2",c:"#fff",b:"none",action:onFacebook||onNext}].map((btn,i)=>(
-            <button key={i} onClick={btn.action} style={{width:"100%",padding:"13px 20px",borderRadius:12,border:btn.b,background:btn.bg,color:btn.c,fontSize:14,fontWeight:600,fontFamily:SANS,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",opacity:show?1:0,transform:show?"none":"translateY(12px)",transition:`all 0.5s ${0.3+i*0.1}s cubic-bezier(0.16,1,0.3,1)`}}>
-              <span style={{fontSize:16,fontWeight:700,width:20,textAlign:"center"}}>{btn.i}</span>{btn.l}
+        <p style={{fontSize:16,color:T.textLight,textAlign:"center",lineHeight:1.6,maxWidth:280,margin:"0 0 24px"}}>Échangez sereinement avec vos voisins, consultez vos documents et obtenez des conseils juridiques instantanés.</p>
+
+        {/* ─── SIMULATION MODE SELECTOR ─── */}
+        <div style={{width:"100%",maxWidth:300,marginBottom:16,padding:12,borderRadius:14,background:`${T.purple}08`,border:`1.5px solid ${T.purple}25`}}>
+          <div style={{fontSize:10,fontWeight:700,color:T.purple,textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
+            <span style={{fontSize:12}}>🧪</span> Simuler un scénario d'entrée
+          </div>
+          {[
+            {id:"invitation",icon:"📨",label:"A — Invitation d'un résident",desc:"Lien copro inclus, profil à créer"},
+            {id:"qr_generic",icon:"📷",label:"B.1 — QR code générique",desc:"Sans info copro, adresse à saisir"},
+            {id:"qr_copro",icon:"🏷",label:"B.2 — QR code copropriété",desc:"Copro identifiée, profil à créer"},
+          ].map(m=>(
+            <button key={m.id} onClick={()=>setSimMode(m.id)} style={{
+              width:"100%",padding:"8px 10px",borderRadius:10,border:simMode===m.id?`2px solid ${T.purple}`:`1.5px solid ${T.sandDark}`,
+              background:simMode===m.id?`${T.purple}10`:"#fff",marginBottom:5,cursor:"pointer",textAlign:"left",
+              display:"flex",alignItems:"center",gap:8,fontFamily:SANS,transition:"all 0.2s",
+            }}>
+              <span style={{fontSize:16}}>{m.icon}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,fontWeight:600,color:simMode===m.id?T.purple:T.text}}>{m.label}</div>
+                <div style={{fontSize:9,color:T.textMuted}}>{m.desc}</div>
+              </div>
+              {simMode===m.id&&<span style={{color:T.purple,fontSize:14,fontWeight:700}}>✓</span>}
             </button>
           ))}
         </div>
+
+        {simMode?
+          <div style={{width:"100%",maxWidth:300}}>
+            <Btn full onClick={()=>onNext(simMode)} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>
+              🚀 Lancer le scénario {simMode==="invitation"?"A":simMode==="qr_generic"?"B.1":"B.2"}
+            </Btn>
+          </div>
+        :
+          <div style={{width:"100%",maxWidth:300,display:"flex",flexDirection:"column",gap:11}}>
+            {[{l:"Continuer avec Google",i:"G",bg:"#fff",c:T.text,b:`1px solid ${T.sandDark}`,action:()=>onNext("qr_generic")},{l:"Continuer avec Apple",i:"",bg:"#000",c:"#fff",b:"none",action:()=>onNext("qr_generic")},{l:"Continuer avec Facebook",i:"f",bg:"#1877F2",c:"#fff",b:"none",action:onFacebook||(() =>onNext("qr_generic"))}].map((btn,i)=>(
+              <button key={i} onClick={btn.action} style={{width:"100%",padding:"13px 20px",borderRadius:12,border:btn.b,background:btn.bg,color:btn.c,fontSize:14,fontWeight:600,fontFamily:SANS,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",opacity:show?1:0,transform:show?"none":"translateY(12px)",transition:`all 0.5s ${0.3+i*0.1}s cubic-bezier(0.16,1,0.3,1)`}}>
+                <span style={{fontSize:16,fontWeight:700,width:20,textAlign:"center"}}>{btn.i}</span>{btn.l}
+              </button>
+            ))}
+          </div>
+        }
         <p style={{fontSize:11,color:T.textMuted,textAlign:"center",marginTop:20,lineHeight:1.5,maxWidth:260}}>En continuant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité.</p>
       </div>
     </div>
@@ -326,7 +361,7 @@ function OnboardingAddress({onFound,onCreate}) {
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 24px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.07)"}}/>
-        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 1 sur 3</p>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 1 sur 2</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px",opacity:show?1:0,transform:show?"none":"translateY(10px)",transition:"all 0.6s 0.2s cubic-bezier(0.16,1,0.3,1)"}}>Où habitez-vous ?</h2>
         <p style={{color:"rgba(255,255,255,0.7)",fontSize:14,margin:0,lineHeight:1.5,opacity:show?1:0,transition:"opacity 0.6s 0.3s"}}>Entrez l'adresse de votre copropriété</p>
       </div>
@@ -481,76 +516,9 @@ function OnboardingWhatsApp({copro,onImport,onSkip}) {
 /* ═══════════════════════════════════════
    BUILDING PLAN — ONBOARDING STEP
    ═══════════════════════════════════════ */
-function OnboardingBuilding({copro,onSelect}) {
-  const [show,setShow]=useState(false);
-  const [selFloor,setSelFloor]=useState(null);
-  const [selPos,setSelPos]=useState(null);
-  const floors=copro?.logements?Math.min(Math.ceil(copro.logements/2),7):6;
-  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
-  const OCCUPIED=[
-    {f:6,p:0,name:"Marie P."},{f:5,p:0,name:"Sophie L."},{f:5,p:1,name:"Anne L."},
-    {f:4,p:0,name:"Paul V."},{f:3,p:1,name:"Thomas R."},{f:2,p:0,name:"Marc D."},
-    {f:2,p:1,name:"Lucas M."},{f:1,p:0,name:"Karim B."},{f:0,p:1,name:"Luc M."},
-  ];
-  const posLabel=["Gauche","Droite"];
-  const getOcc=(f,p)=>OCCUPIED.find(o=>o.f===f&&o.p===p);
-  const isSel=(f,p)=>selFloor===f&&selPos===p;
-  return (
-    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
-      <div style={{padding:"56px 24px 20px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px"}}>
-        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 2 sur 3</p>
-        <h2 style={{fontFamily:FONT,fontSize:22,fontWeight:700,color:"#fff",margin:"0 0 4px",opacity:show?1:0,transition:"all 0.6s 0.2s"}}>Où est votre logement ?</h2>
-        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:0}}>Touchez votre porte dans le plan</p>
-      </div>
-      <div style={{flex:1,overflowY:"auto",padding:"16px 16px 100px"}}>
-        <Card style={{padding:14,opacity:show?1:0,transition:"opacity 0.5s 0.4s"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <div style={{fontSize:13,fontWeight:600,color:T.forest}}>{copro?.name||"Ma copropriété"}</div>
-            <span style={{fontSize:11,padding:"3px 8px",borderRadius:6,background:`${T.leafLight}33`,color:T.forest,fontWeight:600}}>{copro?.members||0}/{copro?.logements||24}</span>
-          </div>
-          {Array.from({length:floors+1}).map((_,fi)=>{
-            const f=floors-fi;
-            return (
-              <div key={f} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <div style={{width:30,fontSize:11,color:T.textMuted,textAlign:"center",fontWeight:500}}>{f===0?"RDC":f}</div>
-                {[0,1].map(pi=>{
-                  const occ=getOcc(f,pi);const sel=isSel(f,pi);
-                  return (
-                    <button key={pi} onClick={()=>{setSelFloor(f);setSelPos(pi)}} style={{
-                      flex:1,padding:"10px 6px",borderRadius:10,border:sel?`2.5px solid ${T.forest}`:occ?`1.5px solid ${T.leafLight}`:`1.5px solid ${T.sandDark}`,
-                      background:sel?`${T.forest}12`:occ?`${T.leafLight}22`:T.sand+"44",cursor:"pointer",textAlign:"center",transition:"all 0.2s",fontFamily:SANS,
-                    }}>
-                      <div style={{fontSize:11,fontWeight:600,color:sel?T.forest:occ?T.forestLight:T.textMuted}}>{f}{pi===0?"G":"D"}</div>
-                      <div style={{fontSize:9,color:sel?T.forest:occ?T.textLight:T.textMuted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sel?"Vous ✓":occ?occ.name:"vacant"}</div>
-                    </button>);
-                })}
-              </div>);
-          })}
-          <div style={{display:"flex",gap:12,marginTop:10,justifyContent:"center",fontSize:10,color:T.textMuted}}>
-            <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:`${T.leafLight}44`,border:`1px solid ${T.leafLight}`}}/> Occupé</span>
-            <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:`${T.forest}12`,border:`2px solid ${T.forest}`}}/> Vous</span>
-            <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:`${T.sand}44`,border:`1px solid ${T.sandDark}`}}/> Vacant</span>
-          </div>
-        </Card>
-        {selFloor!==null&&(
-          <Card style={{border:`2px solid ${T.leafLight}`,animation:"fadeIn 0.3s ease"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-              <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:16,fontWeight:700}}>{selFloor}{selPos===0?"G":"D"}</div>
-              <div>
-                <div style={{fontSize:15,fontWeight:600,color:T.text}}>{selFloor===0?"RDC":`${selFloor}ème`} — {posLabel[selPos]}</div>
-                <div style={{fontSize:12,color:T.textLight}}>Apt {selFloor}{selPos===0?"G":"D"}</div>
-              </div>
-            </div>
-            <Btn full onClick={()=>onSelect(`${selFloor}${selPos===0?"G":"D"}`)}>✓ C'est mon logement</Btn>
-          </Card>
-        )}
-      </div>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-    </div>
-  );
-}
+/* OnboardingBuilding removed — plan visuel supprimé (trop de cas de figures) */
 
-function OnboardingRole({copro,onContinue}) {
+function OnboardingRole({copro,onContinue,entryMode}) {
   const [role,setRole]=useState(null);
   const [isCS,setIsCS]=useState(false);
   const [show,setShow]=useState(false);
@@ -561,15 +529,26 @@ function OnboardingRole({copro,onContinue}) {
     {id:"concierge",icon:"🛎",label:"Concierge / Gardien",desc:"Fil, annonces, messagerie avec syndic, conseil AI"},
     {id:"syndic",icon:"🏛",label:"Syndic professionnel",desc:"Dashboard de gestion, diffusion officielle, analytics"},
   ];
+  const stepLabel = entryMode==="invitation"?"Étape 2 sur 2":entryMode==="qr_copro"?"Étape 2 sur 2":"Étape 2 sur 2";
   return (
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 18px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",flexShrink:0}}>
-        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Étape 3 sur 3</p>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>{stepLabel}</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Quel est votre rôle ?</h2>
         <p style={{color:"rgba(255,255,255,0.85)",fontSize:14,margin:0,fontWeight:600}}>{copro?.name || "Ma Copropriété"}</p>
         <p style={{color:"rgba(255,255,255,0.55)",fontSize:12,margin:"2px 0 0"}}>{copro?.city||"—"} · {copro?.logements||"?"} logements</p>
       </div>
       <div style={{padding:"16px 16px 0",flex:1,overflowY:"auto",minHeight:0}}>
+        {/* Entry mode context banner */}
+        {entryMode==="invitation"&&<div style={{padding:"10px 14px",borderRadius:12,background:`${T.sky}10`,border:`1.5px solid ${T.sky}30`,marginBottom:12,display:"flex",alignItems:"center",gap:10,animation:"fadeIn 0.5s ease"}}>
+          <span style={{fontSize:20}}>📨</span>
+          <div><div style={{fontSize:12,fontWeight:600,color:T.sky}}>Invitation reçue</div><div style={{fontSize:10,color:T.textMuted}}>Un voisin vous a invité à rejoindre <strong>{copro?.name}</strong>. {copro?.members||0} résidents déjà actifs.</div></div>
+        </div>}
+        {entryMode==="qr_copro"&&<div style={{padding:"10px 14px",borderRadius:12,background:`${T.forest}08`,border:`1.5px solid ${T.forest}25`,marginBottom:12,display:"flex",alignItems:"center",gap:10,animation:"fadeIn 0.5s ease"}}>
+          <span style={{fontSize:20}}>🏷</span>
+          <div><div style={{fontSize:12,fontWeight:600,color:T.forest}}>QR code copropriété</div><div style={{fontSize:10,color:T.textMuted}}>Copropriété identifiée : <strong>{copro?.name}</strong>. Choisissez votre rôle pour continuer.</div></div>
+        </div>}
+
         {roles.map((r,i)=>(
           <button key={r.id} onClick={()=>{setRole(r.id);if(r.id!=="proprio")setIsCS(false)}} style={{
             width:"100%",padding:14,borderRadius:16,border:role===r.id?`2px solid ${T.forest}`:`2px solid ${T.sandDark}`,
@@ -611,6 +590,125 @@ function OnboardingRole({copro,onContinue}) {
         <Btn full disabled={!role} onClick={()=>onContinue({role,isCS})}>{role==="syndic"?"Accéder au dashboard →":"Découvrir l'application →"}</Btn>
       </div>
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════
+   RESIDENCE CONFIRMATION — for invitation / QR copro entries
+   ═══════════════════════════════════════ */
+function OnboardingConfirmResidence({copro,onConfirm,onWrong}) {
+  const [show,setShow]=useState(false);
+  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
+  return (
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
+      <div style={{padding:"56px 24px 20px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",flexShrink:0}}>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Confirmation</p>
+        <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Est-ce votre résidence ?</h2>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:0}}>Vérifiez que vous habitez bien à cette adresse</p>
+      </div>
+      <div style={{padding:"24px 16px",flex:1,opacity:show?1:0,transition:"opacity 0.5s 0.3s"}}>
+        <Card style={{padding:20,border:`2px solid ${T.leafLight}`,boxShadow:`0 4px 24px ${T.forest}15`}}>
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+            <div style={{width:56,height:56,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(135deg,${T.forest},${T.forestLight})`,fontSize:26}}>🏡</div>
+            <div>
+              <h3 style={{margin:0,fontSize:18,fontFamily:FONT,color:T.forest}}>{copro?.name||"Résidence"}</h3>
+              <p style={{margin:"3px 0 0",fontSize:12,color:T.textLight}}>{copro?.label||copro?.city||""}</p>
+            </div>
+          </div>
+          <div style={{background:`${T.sky}08`,borderRadius:10,padding:"10px 14px",marginBottom:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 14px",fontSize:11}}>
+              {copro?.logements&&<div><span style={{color:T.textMuted}}>Logements</span><div style={{fontWeight:600,color:T.text}}>{copro.logements}</div></div>}
+              {copro?.members!==undefined&&<div><span style={{color:T.textMuted}}>Voisins actifs</span><div style={{fontWeight:600,color:T.text}}>{copro.members}</div></div>}
+              {copro?.syndic&&<div><span style={{color:T.textMuted}}>Syndic</span><div style={{fontWeight:600,color:T.text}}>{copro.syndic}</div></div>}
+              {copro?.immat&&<div><span style={{color:T.textMuted}}>Immatriculation</span><div style={{fontWeight:600,color:T.text}}>{copro.immat}</div></div>}
+            </div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
+            <Btn full onClick={onConfirm}>✓ Oui, c'est ma résidence</Btn>
+            <button onClick={onWrong} style={{width:"100%",padding:12,borderRadius:12,border:`1.5px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:14,fontWeight:600,color:T.textLight,textAlign:"center"}}>✕ Non, ce n'est pas ici</button>
+          </div>
+        </Card>
+        <div style={{marginTop:16,padding:"10px 14px",background:`${T.sunriseLight}15`,borderRadius:10}}>
+          <p style={{fontSize:11,color:T.bark,margin:0,lineHeight:1.5}}>⚠️ Rejoindre une copropriété qui n'est pas la vôtre est contraire aux conditions d'utilisation. Votre identité sera vérifiée par un voisin.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════
+   PROFILE CREATION — First-time users
+   ═══════════════════════════════════════ */
+function OnboardingProfileCreation({copro,role,isCS,onComplete}) {
+  const [show,setShow]=useState(false);
+  const [name,setName]=useState("");
+  const [building,setBuilding]=useState("");
+  const [etage,setEtage]=useState("");
+  const [door,setDoor]=useState("");
+  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
+  const canContinue=name.trim().length>=2;
+  return (
+    <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
+      <div style={{padding:"56px 24px 18px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",flexShrink:0}}>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Dernière étape</p>
+        <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Créez votre profil</h2>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:0}}>{copro?.name||"Ma Copropriété"}</p>
+      </div>
+      <div style={{padding:"20px 16px",flex:1,overflowY:"auto",opacity:show?1:0,transition:"opacity 0.5s 0.3s"}}>
+        <Card style={{padding:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+            <div style={{width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:20,fontFamily:SANS}}>{name?name.split(" ").map(n=>n[0]).join("").slice(0,2):"?"}</div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${T.forest}15`,color:T.forest}}>
+                  {role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}
+                </span>
+                {isCS&&<span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>CS</span>}
+                <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:`${T.sunrise}15`,color:T.sunrise}}>N1 — Non vérifié</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{marginBottom:14}}>
+            <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Nom complet *</label>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Prénom Nom" autoFocus style={{width:"100%",padding:"12px 14px",borderRadius:10,border:`2px solid ${name.trim().length>=2?T.forest:T.sandDark}`,fontSize:15,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box",transition:"border-color 0.3s"}}/>
+          </div>
+
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <div style={{flex:2}}>
+              <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Bâtiment</label>
+              <input value={building} onChange={e=>setBuilding(e.target.value)} placeholder="A, Mimosa..." style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Étage</label>
+              <input type="number" value={etage} onChange={e=>setEtage(e.target.value)} placeholder="3" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            </div>
+            <div style={{flex:1.5}}>
+              <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Porte</label>
+              <input value={door} onChange={e=>setDoor(e.target.value)} placeholder="Gauche" maxLength={8} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            </div>
+          </div>
+
+          <div style={{background:`${T.leafLight}15`,borderRadius:10,padding:12,marginTop:12}}>
+            <div style={{fontSize:11,color:T.textLight,lineHeight:1.5}}>
+              <strong style={{color:T.forest}}>🔒 Niveau 1</strong> — Votre profil sera visible dans l'annuaire mais non vérifié. Un voisin déjà vérifié (N2) pourra confirmer votre identité.
+            </div>
+          </div>
+        </Card>
+
+        <div style={{background:`${T.sky}08`,borderRadius:12,padding:12,marginTop:8,border:`1px solid ${T.sky}20`}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:16}}>💡</span>
+            <div style={{fontSize:11,color:T.textLight,lineHeight:1.5}}>
+              Vous pourrez compléter votre profil plus tard : photo, numéros de lots, documents personnels pour le conseiller AI.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={{padding:"12px 16px calc(12px + env(safe-area-inset-bottom, 8px))",background:T.warmWhite,borderTop:`1px solid ${T.sand}`,flexShrink:0}}>
+        <Btn full disabled={!canContinue} onClick={()=>onComplete({name,building,etage,door})}>✓ Créer mon profil et entrer</Btn>
+      </div>
     </div>
   );
 }
@@ -686,7 +784,7 @@ function InviteKit({copro,userName,onClose}) {
 /* ═══════════════════════════════════════
    MAIN APP
    ═══════════════════════════════════════ */
-function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
+function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt,profileData}) {
   const [tab,setTab]=useState("home");
   const [showInvite,setShowInvite]=useState(false);
   const [showCadenas,setShowCadenas]=useState(null); // null | "escalade" | "conseil" | "verification" | "mediation"
@@ -724,11 +822,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   };
 
   // ─── USER PROFILE ───
-  const [userName,setUserName]=useState("Jean Dupont");
+  const [userName,setUserName]=useState(profileData?.name||"Jean Dupont");
   const [userEmail]=useState("jean.dupont@gmail.com");
-  const [userBuilding,setUserBuilding]=useState("Mimosa");
-  const [userEtage,setUserEtage]=useState("3");
-  const [userDoor,setUserDoor]=useState("Gauche");
+  const [userBuilding,setUserBuilding]=useState(profileData?.building||"Mimosa");
+  const [userEtage,setUserEtage]=useState(profileData?.etage||"3");
+  const [userDoor,setUserDoor]=useState(profileData?.door||"Gauche");
   const autoApt = `${userEtage?userEtage+"ème ":""}${userDoor}${userBuilding?" - "+userBuilding:""}`;
   const [userFloor,setUserFloor]=useState("3ème Gauche - Mimosa");
   const [userFloorEdited,setUserFloorEdited]=useState(false);
@@ -763,6 +861,11 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   const [editInfoVal,setEditInfoVal]=useState(""); // null | {original, suggestion, tone}
   const [userLots,setUserLots]=useState("");
   const [extraLogements,setExtraLogements]=useState([]);
+  // ─── DEV CONTROLS ───
+  const [devNiveau,setDevNiveau]=useState("1"); // "1" | "2" | "3"
+  const [devPlan,setDevPlan]=useState("gratuit"); // "gratuit" | "essentiel" | "premium"
+  const [devMaturite,setDevMaturite]=useState("nouveau"); // "nouveau" | "debutant" | "confirme"
+  const [devReferent,setDevReferent]=useState("non"); // "oui" | "non"
 
   // ─── GOVERNANCE STATE ───
   const [govView,setGovView]=useState("dashboard");
@@ -1140,6 +1243,23 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   const userTier=(activeCopro.members/activeCopro.logements>=0.4)?"pilier":(activeCopro.members/activeCopro.logements>=0.2)?"animateur":"fondateur";
   const canParrain=userTier==="animateur"||userTier==="pilier";
 
+  // ─── ADAPTIVE PROFILE HELPERS (driven by dev controls) ───
+  const isNouveau = devMaturite==="nouveau";
+  const isDebutant = devMaturite==="debutant";
+  const isConfirme = devMaturite==="confirme";
+  const isN1 = devNiveau==="1"; // non vérifié
+  const isN2 = devNiveau==="2"; // vérifié par voisin
+  const isN3 = devNiveau==="3"; // vérifié par syndic
+  const isGratuit = devPlan==="gratuit";
+  const isEssentiel = devPlan==="essentiel";
+  const isPremium = devPlan==="premium";
+  const isRef = devReferent==="oui";
+  const canSeeVerifRequests = (isN2||isN3) && !isNouveau; // only verified users can verify others
+  const canSeeEscalades = !isNouveau; // new users shouldn't be overwhelmed
+  const canSeeParrainage = canParrain && isConfirme && (isN2||isN3);
+  const showProfileCompletion = isNouveau && isN1;
+  const showGetVerified = isN1 && !isNouveau;
+
   return (
     <div style={{height:"100%",background:T.sand,fontFamily:SANS,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
       {/* ─── HEADER ─── */}
@@ -1154,7 +1274,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
           <button onClick={()=>setShowCoproInfo(true)} style={{background:"none",border:"none",cursor:"pointer",padding:0,minWidth:0,textAlign:"left"}}>
             <p style={{fontSize:12,color:"#F5D49A",margin:"0 0 1px",fontWeight:700,letterSpacing:0.3}}>Bonjour {userName.split(" ")[0]} !</p>
             <h1 style={{fontFamily:FONT,fontSize:15,color:"#fff",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:"none"}}>{activeCopro.name}</h1>
-            <p style={{fontSize:10,color:"rgba(255,255,255,0.65)",margin:"1px 0 0"}}>{activeCopro.members} voisin{activeCopro.members>1?"s":""} · {activeCopro.logements} logements · {Math.round(activeCopro.members/activeCopro.logements*100)}%</p>
+            <p style={{fontSize:10,color:"rgba(255,255,255,0.65)",margin:"1px 0 0"}}>{activeCopro.members} voisin{activeCopro.members>1?"s":""} · {activeCopro.logements} logements · {Math.round(activeCopro.members/activeCopro.logements*100)}%{isRef?" · ⭐ Référent":""}</p>
           </button>
           <button onClick={()=>setCoproSelector(!coproSelector)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 6px",flexShrink:0}}>
             <span style={{color:"rgba(255,255,255,0.6)",fontSize:14}}>▼</span>
@@ -1183,8 +1303,21 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
       {/* ─── TAB CONTENT ─── */}
       <div style={{flex:1,overflowY:"auto",minHeight:0}}>
 
-        {/* ═══ HOME TAB ═══ */}
+        {/* ═══ HOME TAB — ADAPTIVE to devNiveau/devPlan/devMaturite/devReferent ═══ */}
         {tab==="home"&&<div style={{padding:14}}>
+
+          {/* DEV STATE INDICATOR — compact bar showing current simulation state */}
+          <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>
+            {[
+              {l:`N${devNiveau}`,c:devNiveau==="1"?T.sunrise:devNiveau==="2"?T.forest:T.purple},
+              {l:devPlan.charAt(0).toUpperCase()+devPlan.slice(1),c:isGratuit?T.textMuted:isEssentiel?T.sky:T.purple},
+              {l:devMaturite.charAt(0).toUpperCase()+devMaturite.slice(1),c:isNouveau?T.sunrise:isDebutant?T.sky:T.forest},
+              ...(isRef?[{l:"Référent",c:T.forestLight}]:[]),
+            ].map((b,i)=>(
+              <span key={i} style={{padding:"2px 8px",borderRadius:6,fontSize:9,fontWeight:700,background:`${b.c}15`,color:b.c,border:`1px solid ${b.c}25`}}>{b.l}</span>
+            ))}
+          </div>
+
           {/* Syndic demo banner */}
           {role==="syndic"&&!verifiedSyndic&&(
             <div onClick={()=>setShowVerifyGate("syndic")} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:`${T.coral}10`,borderRadius:14,marginBottom:12,cursor:"pointer",border:`1.5px solid ${T.coral}30`}}>
@@ -1193,8 +1326,54 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
               <span style={{fontSize:11,fontWeight:600,color:T.coral}}>Vérifier →</span>
             </div>
           )}
-          {/* Syndic new-user hint (if isNew, shown inline) */}
+
+          {/* ─── NOUVEAU USER: Welcome + profile completion ─── */}
+          {showProfileCompletion&&(
+            <Card style={{padding:16,background:`linear-gradient(135deg,${T.leafLight}15,${T.sky}08)`,border:`1.5px solid ${T.leafLight}44`,marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                <span style={{fontSize:28}}>👋</span>
+                <div>
+                  <div style={{fontSize:15,fontWeight:700,color:T.forest}}>Bienvenue {userName.split(" ")[0]} !</div>
+                  <div style={{fontSize:11,color:T.textMuted}}>Votre profil est créé. Voici vos premières étapes :</div>
+                </div>
+              </div>
+              {[
+                {icon:"📷",text:"Ajoutez une photo de profil",done:!!profilePhoto},
+                {icon:"🔒",text:"Faites vérifier votre identité par un voisin N2",done:false},
+                {icon:"📨",text:"Invitez un voisin à rejoindre l'app",done:false},
+                {icon:"⚖️",text:"Posez votre première question au Conseil AI",done:false},
+              ].map((s,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:i<3?`1px solid ${T.sand}`:"none"}}>
+                  <span style={{fontSize:13}}>{s.done?"✅":s.icon}</span>
+                  <span style={{fontSize:12,color:s.done?T.textMuted:T.text,textDecoration:s.done?"line-through":"none"}}>{s.text}</span>
+                </div>
+              ))}
+            </Card>
+          )}
+
+          {/* ─── GET VERIFIED prompt — for N1 non-nouveau users ─── */}
+          {showGetVerified&&(
+            <div onClick={()=>setShowVerifyGate("proprio")} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:`${T.sunrise}08`,borderRadius:14,marginBottom:12,cursor:"pointer",border:`1.5px solid ${T.sunrise}30`}}>
+              <span style={{fontSize:18}}>🔓</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600,color:T.bark}}>Faites vérifier votre identité</div>
+                <div style={{fontSize:11,color:T.textMuted}}>Demandez à un voisin vérifié (N2+) de confirmer qui vous êtes</div>
+              </div>
+              <span style={{fontSize:11,fontWeight:600,color:T.sunrise}}>Vérifier →</span>
+            </div>
+          )}
+
+          {/* Pioneer first member hint */}
           {isNew&&<div style={{padding:"10px 14px",background:`${T.leafLight}18`,borderRadius:12,marginBottom:12,fontSize:12,color:T.textLight,lineHeight:1.5}}>🌱 Vous êtes le premier membre ! Invitez vos voisins pour profiter pleinement de l'app.</div>}
+
+          {/* Referent badge */}
+          {isRef&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:`${T.forestLight}08`,borderRadius:14,marginBottom:12,border:`1.5px solid ${T.forestLight}25`}}>
+            <span style={{fontSize:18}}>⭐</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:T.forestLight}}>Vous êtes Référent de la copropriété</div>
+              <div style={{fontSize:11,color:T.textMuted}}>Modération, vérification, accompagnement des nouveaux</div>
+            </div>
+          </div>}
 
           {/* Progress card — compact */}
           <Card style={{padding:14}}>
@@ -1209,22 +1388,22 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
                 </div>
                 <div style={{marginTop:4}}><span style={{fontSize:16,fontWeight:800,color:T.text}}>{activeCopro.members}/{activeCopro.logements}</span> <span style={{fontSize:11,color:T.textMuted}}>logements représentés</span></div>
               </div>
-              <button onClick={()=>setShowInvite(true)} style={{padding:"6px 12px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:SANS,flexShrink:0,whiteSpace:"nowrap"}}>📨 Inviter</button>
+              {!isNouveau&&<button onClick={()=>setShowInvite(true)} style={{padding:"6px 12px",borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:SANS,flexShrink:0,whiteSpace:"nowrap"}}>📨 Inviter</button>}
             </div>
           </Card>
 
-          {/* ═══ CADENAS BANNERS (Gouvernance) ═══ */}
-          {!isNew&&activeCopro.members>=5&&(
+          {/* ═══ CADENAS BANNERS — only for verified non-nouveau users ═══ */}
+          {canSeeVerifRequests&&!isNew&&activeCopro.members>=5&&(
             <div onClick={()=>setShowCadenas("verification")} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`linear-gradient(135deg,${T.sunrise}08,${T.coral}08)`,borderRadius:14,marginBottom:10,cursor:"pointer",border:`1.5px solid ${T.sunrise}33`}}>
               <span style={{fontSize:18}}>🔒</span>
               <div style={{flex:1}}>
-                <div style={{fontSize:12,fontWeight:600,color:T.bark}}>{activeCopro.members} voisins attendent votre confirmation</div>
-                <div style={{fontSize:10,color:T.textMuted}}>Débloquez la vérification avec Essentiel</div>
+                <div style={{fontSize:12,fontWeight:600,color:T.bark}}>Voisins en attente de vérification</div>
+                <div style={{fontSize:10,color:T.textMuted}}>{isGratuit?"Débloquez la vérification avec Essentiel":"Vérifiez leurs profils"}</div>
               </div>
-              <span style={{fontSize:10,fontWeight:700,color:T.sunrise}}>Découvrir →</span>
+              <span style={{fontSize:10,fontWeight:700,color:T.sunrise}}>{isGratuit?"Découvrir →":"Vérifier →"}</span>
             </div>
           )}
-          {sujets.filter(s=>s.status==="escalade").length>0&&(
+          {canSeeEscalades&&sujets.filter(s=>s.status==="escalade").length>0&&(
             <div onClick={()=>{setAgendaTab("sujets");setSujetId(null);setTab("copro")}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`linear-gradient(135deg,${T.amber}08,${T.sunriseLight}08)`,borderRadius:14,marginBottom:10,cursor:"pointer",border:`1.5px solid ${T.amber}22`}}>
               <span style={{fontSize:18}}>⚡</span>
               <div style={{flex:1}}>
@@ -1245,8 +1424,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             </div>
           )}
 
-          {/* Parrainage widget — Animateurs & Piliers */}
-          {canParrain&&<Card style={{background:`linear-gradient(135deg,${T.purple}08,${T.sky}08)`,border:`1.5px solid ${T.purple}25`,padding:14,cursor:"pointer"}} onClick={()=>{setShowParrainage(true);setParrainageStep(0)}}>
+          {/* Parrainage widget — only for confirmed + verified users */}
+          {canSeeParrainage&&<Card style={{background:`linear-gradient(135deg,${T.purple}08,${T.sky}08)`,border:`1.5px solid ${T.purple}25`,padding:14,cursor:"pointer"}} onClick={()=>{setShowParrainage(true);setParrainageStep(0)}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${T.purple},${T.sky})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🚀</div>
               <div style={{flex:1}}>
@@ -1261,19 +1440,19 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             </div>}
           </Card>}
 
-          {/* Quick access grid */}
+          {/* Quick access grid — adaptive to profile */}
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"18px 0 10px"}}>Accès rapide</h3>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
             {[
-              {icon:"⚠️",label:"Signaler +",desc:"Problème ou entraide",color:T.coral,tab:"signaler"},
-              {icon:"📒",label:"Annuaire",desc:"Résidents & contacts",color:T.forestLight,tab:"annuaire"},
-              {icon:"⚖️",label:"Conseiller juridique",desc:"Posez vos questions",color:T.purple,tab:"ai"},
-              {icon:"📅",label:"Agenda",desc:`${events.length} événements`,color:T.sunrise,tab:"agenda"},
-              {icon:"💬",label:"Fil d'actualité",desc:isNew?"En attente de voisins":`${posts.filter(p=>!p.welcome).length} messages`,color:T.sky,tab:"feed"},
-              {icon:"📋",label:"Sujets",desc:`${sujetStats.nonResolu} non résolu${sujetStats.nonResolu>1?"s":""}`,color:T.amber,tab:"copro_sujets"},
-              {icon:"📁",label:"Documents",desc:"Règlement, AG, finances",color:T.bark,tab:"copro_docs"},
-              {icon:"👤",label:"Mon profil",desc:userName,color:T.forestLight,tab:"profile"},
-            ].map((item,i)=>(
+              {icon:"⚠️",label:"Signaler +",desc:"Problème ou entraide",color:T.coral,tab:"signaler",show:true},
+              {icon:"📒",label:"Annuaire",desc:"Résidents & contacts",color:T.forestLight,tab:"annuaire",show:true},
+              {icon:"⚖️",label:"Conseiller juridique",desc:isNouveau?"Posez votre 1ère question":"Posez vos questions",color:T.purple,tab:"ai",show:true},
+              {icon:"📅",label:"Agenda",desc:`${events.length} événements`,color:T.sunrise,tab:"agenda",show:!isNouveau||events.length>0},
+              {icon:"💬",label:"Fil d'actualité",desc:isNouveau?"Pas encore de messages":isNew?"En attente de voisins":`${posts.filter(p=>!p.welcome).length} messages`,color:T.sky,tab:"feed",show:true},
+              {icon:"📋",label:"Sujets",desc:isNouveau?"Découvrir les sujets":`${sujetStats.nonResolu} non résolu${sujetStats.nonResolu>1?"s":""}`,color:T.amber,tab:"copro_sujets",show:!isNouveau},
+              {icon:"📁",label:"Documents",desc:isN1?"Accès limité (N1)":"Règlement, AG, finances",color:T.bark,tab:"copro_docs",show:true},
+              {icon:"👤",label:"Mon profil",desc:userName,color:T.forestLight,tab:"profile",show:true},
+            ].filter(item=>item.show).map((item,i)=>(
               <button key={i} onClick={()=>{if(item.tab==="copro_docs"){setAgendaTab("docs");setTab("copro")}else if(item.tab==="copro_sujets"){setAgendaTab("sujets");setSujetId(null);setTab("copro")}else if(item.tab==="signaler"){setShowSignaler(true);setSigVoie(null);setSigDone(null);setEntDone(false)}else if(item.tab==="profile"){setShowProfile(true)}else if(item.tab==="annuaire"){setShowAnnuaire(true)}else{setTab(item.tab)}}} style={{padding:"10px 12px",borderRadius:14,border:"none",background:"#fff",cursor:"pointer",textAlign:"left",fontFamily:SANS,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",display:"flex",alignItems:"center",gap:10,transition:"transform 0.15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
                 <div style={{width:36,height:36,borderRadius:10,background:`${item.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{item.icon}</div>
                 <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,fontWeight:600,color:T.text}}>{item.label}</div><div style={{fontSize:10,color:T.textMuted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.desc}</div></div>
@@ -1281,9 +1460,9 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             ))}
           </div>
 
-          {/* Upcoming events */}
+          {/* Upcoming events — always shown */}
           <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>Prochains événements</h3>
-          {events.sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,3).map(e=>(
+          {events.sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,isNouveau?2:3).map(e=>(
             <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#fff",borderRadius:14,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",cursor:"pointer"}} onClick={()=>setTab("agenda")}>
               <div style={{width:42,height:42,borderRadius:12,background:`${EC[e.type]}15`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <span style={{fontSize:12,fontWeight:700,color:EC[e.type]}}>{new Date(e.date).getDate()}</span>
@@ -1298,18 +1477,34 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
           ))}
           <button onClick={()=>setTab("agenda")} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight}}>Voir tout l'agenda →</button>
 
-          {/* Recent activity */}
-          <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"16px 0 10px"}}>Dernière activité</h3>
-          {posts.slice(0,2).map(p=>(
-            <div key={p.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 14px",background:"#fff",borderRadius:14,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",cursor:"pointer"}} onClick={()=>setTab("feed")}>
-              <Av name={p.author} size={32}/>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,color:T.textMuted}}><strong style={{color:T.text}}>{p.author}</strong> · {p.time}</div>
-                <p style={{fontSize:13,color:T.text,lineHeight:1.5,margin:"3px 0 0",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{p.text}</p>
+          {/* Recent activity — hidden for nouveau users */}
+          {!isNouveau&&<>
+            <h3 style={{fontSize:13,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"16px 0 10px"}}>Dernière activité</h3>
+            {posts.slice(0,2).map(p=>(
+              <div key={p.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 14px",background:"#fff",borderRadius:14,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.03)",cursor:"pointer"}} onClick={()=>setTab("feed")}>
+                <Av name={p.author} size={32}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,color:T.textMuted}}><strong style={{color:T.text}}>{p.author}</strong> · {p.time}</div>
+                  <p style={{fontSize:13,color:T.text,lineHeight:1.5,margin:"3px 0 0",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{p.text}</p>
+                </div>
               </div>
-            </div>
-          ))}
-          <button onClick={()=>setTab("feed")} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight}}>Voir tout le fil →</button>
+            ))}
+            <button onClick={()=>setTab("feed")} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:"transparent",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.forestLight}}>Voir tout le fil →</button>
+          </>}
+
+          {/* Nouveau user: encourage first action instead of activity */}
+          {isNouveau&&(
+            <Card style={{marginTop:10,padding:16,background:`${T.sky}06`,border:`1px solid ${T.sky}20`}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:24}}>⚖️</span>
+                <div>
+                  <div style={{fontSize:14,fontWeight:600,color:T.text}}>Posez votre première question</div>
+                  <div style={{fontSize:11,color:T.textMuted,lineHeight:1.4}}>Le Conseil AI peut vous renseigner sur vos droits, le règlement, les charges...</div>
+                </div>
+              </div>
+              <button onClick={()=>setTab("ai")} style={{width:"100%",marginTop:10,padding:10,borderRadius:10,border:"none",background:`linear-gradient(135deg,${T.purple},${T.sky})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:SANS}}>💡 Essayer le Conseil AI</button>
+            </Card>
+          )}
 
           {/* Copro info quick card */}
           <Card style={{marginTop:10,background:`${T.sunriseLight}12`,border:`1px solid ${T.sunriseLight}44`,padding:16}}>
@@ -2239,9 +2434,28 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
 
           {/* ═══ GOUVERNANCE SUB-TAB ═══ */}
           {agendaTab==="gouv"&&<div>
+            {/* Plan/profile restriction banners */}
+            {isN1&&<div style={{padding:"10px 14px",background:`${T.sunrise}08`,borderRadius:12,marginBottom:10,display:"flex",alignItems:"center",gap:8,border:`1.5px solid ${T.sunrise}25`}}>
+              <span style={{fontSize:16}}>🔒</span>
+              <div><div style={{fontSize:12,fontWeight:600,color:T.bark}}>Profil non vérifié (N1)</div><div style={{fontSize:10,color:T.textMuted}}>La plupart des outils de gouvernance nécessitent un statut vérifié (N2+).</div></div>
+            </div>}
+            {isGratuit&&!isN1&&<div style={{padding:"10px 14px",background:`${T.purple}06`,borderRadius:12,marginBottom:10,display:"flex",alignItems:"center",gap:8,border:`1.5px solid ${T.purple}20`}}>
+              <span style={{fontSize:16}}>✨</span>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.purple}}>Plan Gratuit</div><div style={{fontSize:10,color:T.textMuted}}>Paramètres avancés et consultations disponibles avec Essentiel.</div></div>
+              <span style={{fontSize:10,fontWeight:700,color:T.purple}}>Découvrir →</span>
+            </div>}
+
             {/* Nav pills */}
             <div style={{display:"flex",gap:3,overflowX:"auto",paddingBottom:3,marginBottom:10}}>
-              {[{id:"dashboard",l:"📊 Tableau de bord"},{id:"verification",l:"✓ Vérification"},{id:"referents",l:"👥 Référents"},{id:"settings",l:"⚙️ Paramètres"},{id:"departures",l:"🚪 Départs"},{id:"consultations",l:"🗳 Consultations"},{id:"plan",l:"🏢 Plan"}].map(v=>(
+              {[{id:"dashboard",l:"📊 Tableau de bord"},{id:"verification",l:"✓ Vérification"},{id:"referents",l:"👥 Référents"},{id:"settings",l:"⚙️ Paramètres"},{id:"departures",l:"🚪 Départs"},{id:"consultations",l:"🗳 Consultations"}].filter(v=>{
+                // Adapt nav items to profile
+                if(v.id==="verification"&&isN1) return false; // N1 can't verify
+                if(v.id==="referents"&&isN1) return false;
+                if(v.id==="settings"&&(isN1||isNouveau)) return false;
+                if(v.id==="departures"&&isNouveau) return false;
+                if(v.id==="consultations"&&isNouveau) return false;
+                return true;
+              }).map(v=>(
                 <button key={v.id} onClick={()=>setGovView(v.id)} style={{padding:"5px 9px",borderRadius:16,border:"none",whiteSpace:"nowrap",background:govView===v.id?T.forest:"#fff",color:govView===v.id?"#fff":T.textLight,fontSize:9,fontWeight:600,cursor:"pointer",fontFamily:SANS,boxShadow:govView===v.id?"none":"0 1px 3px rgba(0,0,0,0.06)"}}>{v.l}</button>
               ))}
             </div>
@@ -2357,6 +2571,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
 
             {/* ── SETTINGS ── */}
             {govView==="settings"&&<div>
+              {isGratuit&&<div style={{padding:"12px 16px",background:`${T.purple}08`,borderRadius:12,marginBottom:10,textAlign:"center",border:`1.5px dashed ${T.purple}30`}}>
+                <span style={{fontSize:24}}>🔒</span>
+                <div style={{fontSize:13,fontWeight:600,color:T.purple,marginTop:4}}>Paramètres avancés — Plan Essentiel</div>
+                <div style={{fontSize:11,color:T.textMuted,marginTop:2}}>Personnalisez les règles de gouvernance de votre copropriété.</div>
+                <button onClick={()=>setShowCadenas("conseil")} style={{marginTop:8,padding:"7px 18px",borderRadius:8,border:"none",background:`linear-gradient(135deg,${T.purple},${T.sky})`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:SANS}}>Découvrir Essentiel</button>
+              </div>}
+              <div style={{opacity:isGratuit?0.4:1,pointerEvents:isGratuit?"none":"auto"}}>
               <Card style={{padding:12}}>
                 <h4 style={{margin:"0 0 10px",fontSize:12,fontWeight:700,color:T.text}}>Qui peut faire quoi ?</h4>
                 {[
@@ -2394,6 +2615,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
                   </div>
                 ))}
               </Card>
+              </div>{/* end opacity wrapper */}
             </div>}
 
             {/* ── DEPARTURES ── */}
@@ -2455,33 +2677,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             </div>}
 
             {/* ── PLAN VISUEL ── */}
-            {govView==="plan"&&<div>
-              <Card style={{padding:12}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                  <span style={{fontSize:13,fontWeight:600,color:T.forest}}>{activeCopro.name||"Ma copropriété"}</span>
-                  <span style={{fontSize:10,padding:"3px 8px",borderRadius:6,background:`${T.leafLight}33`,color:T.forest,fontWeight:600}}>{verifiedResidents.length+pendingVerifs.length}/{activeCopro.logements}</span>
-                </div>
-                {BUILDING_PLAN.map((fl,fi)=>(
-                  <div key={fi} style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
-                    <div style={{width:26,fontSize:10,color:T.textMuted,textAlign:"center",fontWeight:500}}>{fl.floor===0?"RDC":fl.floor}</div>
-                    {fl.units.map((u,ui)=>(
-                      <div key={ui} style={{flex:1,padding:"7px 4px",borderRadius:8,textAlign:"center",fontFamily:SANS,
-                        border:u.verified?`1.5px solid ${T.leafLight}`:u.pending?`1.5px solid ${T.sunrise}`:`1px solid ${T.sandDark}`,
-                        background:u.verified?`${T.leafLight}22`:u.pending?`${T.sunrise}10`:`${T.sand}44`,
-                      }}>
-                        <div style={{fontSize:10,fontWeight:600,color:u.verified?T.forest:u.pending?T.sunrise:T.textMuted}}>{u.label}</div>
-                        <div style={{fontSize:8,color:u.verified?T.forestLight:u.pending?T.bark:T.textMuted,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.resident||"vacant"}</div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-                <div style={{display:"flex",gap:10,marginTop:8,justifyContent:"center",fontSize:9,color:T.textMuted}}>
-                  <span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:2,background:`${T.leafLight}44`,border:`1px solid ${T.leafLight}`}}/> Vérifié</span>
-                  <span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:2,background:`${T.sunrise}10`,border:`1px solid ${T.sunrise}`}}/> En attente</span>
-                  <span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:2,background:`${T.sand}44`,border:`1px solid ${T.sandDark}`}}/> Vacant</span>
-                </div>
-              </Card>
-            </div>}
+            {/* Plan visuel supprimé — trop de cas de figures */}
           </div>}
         </div>}
         {tab==="mediation"&&<div style={{padding:14}}>
@@ -3154,57 +3350,8 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             <span style={{fontSize:10,color:"#128C7E",fontWeight:600,marginLeft:"auto"}}>→</span>
           </div>}
 
-          {/* Residents — enriched with verification & governance */}
-          {(()=>{
-            const residents=[
-              {name:"Sophie L.",floor:"3A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:"Pionnier",verifiedBy:null},
-              {name:"Marie D.",floor:"1A",role:"proprio",cs:true,verified:true,visible:true,level:"N2",badge:"CS",verifiedBy:"Sophie L."},
-              {name:"Thomas R.",floor:"2A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Paul V."},
-              {name:"Sophie L.",floor:"4C",role:"locataire",cs:false,verified:false,visible:true,level:"N1",badge:null,verifiedBy:null},
-              {name:"Anna K.",floor:"5A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Paul V."},
-              {name:"Paul V.",floor:"4B",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:"Référent",verifiedBy:"Sophie L."},
-              {name:"Lucas M.",floor:"RDC",role:"concierge",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Marie D."},
-              {name:userName,floor:currentApt,role,cs:isCS,verified:true,visible:annuaireVisible,level:"N2",badge:null,verifiedBy:"Marie D."},
-            ].filter(r=>r.visible);
-            const filtered=annuaireSearch?residents.filter(r=>r.name.toLowerCase().includes(annuaireSearch.toLowerCase())||r.floor.toLowerCase().includes(annuaireSearch.toLowerCase())):residents;
-            const lvlColors={N1:T.sunrise,N2:T.forest,N3:T.purple};
-            const badgeColors={Pionnier:T.sunrise,CS:T.sky,Référent:T.forestLight,Accompagnateur:"#993C1D"};
-            return(<div>
-              <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:"0 0 4px"}}>👥 Résidents ({residents.length})</h4>
-              <div style={{display:"flex",gap:4,marginBottom:8,fontSize:9,color:T.textMuted}}>
-                <span style={{padding:"2px 6px",borderRadius:4,background:`${T.forest}12`,color:T.forest,fontWeight:600}}>{residents.filter(r=>r.level==="N2").length} vérifiés</span>
-                <span style={{padding:"2px 6px",borderRadius:4,background:`${T.sunrise}12`,color:T.sunrise,fontWeight:600}}>{residents.filter(r=>r.level==="N1").length} en attente</span>
-              </div>
-              <div style={{background:"#fff",borderRadius:10,padding:"3px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:6,border:`1px solid ${T.sandDark}`}}>
-                <span style={{fontSize:12}}>🔍</span><input value={annuaireSearch} onChange={e=>setAnnuaireSearch(e.target.value)} placeholder="Rechercher un résident..." style={{flex:1,border:"none",outline:"none",padding:"8px 0",fontSize:12,fontFamily:SANS,background:"transparent"}}/>
-              </div>
-              {filtered.map((r,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",borderLeft:`3px solid ${lvlColors[r.level]||T.sandDark}`}}>
-                  <div style={{position:"relative"}}>
-                    <Av name={r.name} size={34}/>
-                    {r.level==="N2"&&<div style={{position:"absolute",bottom:-2,right:-2,width:14,height:14,borderRadius:7,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,color:"#fff",fontWeight:700}}>✓</div>}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:4}}>
-                      <span style={{fontSize:13,fontWeight:600,color:T.text}}>{r.name}</span>
-                      <span style={{padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,background:`${lvlColors[r.level]}15`,color:lvlColors[r.level]}}>{r.level}</span>
-                      {r.badge&&<span style={{padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,background:`${badgeColors[r.badge]||T.forest}15`,color:badgeColors[r.badge]||T.forest}}>{r.badge}</span>}
-                    </div>
-                    <div style={{display:"flex",gap:4,marginTop:1,flexWrap:"wrap"}}>
-                      <span style={{fontSize:10,color:T.bark}}>App. {r.floor}</span>
-                      <span style={{fontSize:10,color:T.bark}}>· {r.role==="proprio"?"Copropriétaire":r.role==="locataire"?"Locataire":r.role==="concierge"?"Concierge":"Syndic"}</span>
-                      {r.cs&&<span style={{padding:"0 5px",borderRadius:3,fontSize:8,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>Conseil syndical</span>}
-                    </div>
-                    {r.verifiedBy&&<div style={{fontSize:8,color:T.textMuted,marginTop:1}}>Vérifié par {r.verifiedBy}</div>}
-                  </div>
-                  {r.name!==userName&&<button onClick={()=>{setShowAnnuaire(false);setAnnuaireSearch("");setActiveConv({id:Date.now(),name:r.name,floor:r.floor});setConvMsgs([]);setMsgView("conv");setTab("msg")}} style={{padding:"5px 10px",borderRadius:6,border:"none",background:`${T.forest}10`,cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>✉️</button>}
-                </div>
-              ))}
-            </div>)
-          })()}
-
           {/* Prestataires */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"14px 0 8px"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"4px 0 8px"}}>
             <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:0}}>🔧 Prestataires & contacts</h4>
             {(isCS||role==="syndic")&&!showAddPrest&&<button onClick={()=>{setShowAddPrest(true);setAddPrestForm({name:"",type:"",tel:""})}} style={{background:"none",border:"none",cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>+ Ajouter</button>}
           </div>
@@ -3295,6 +3442,55 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
               </div>
             ))}
           </Card>
+
+          {/* Residents — moved to bottom of annuaire */}
+          {(()=>{
+            const residents=[
+              {name:"Sophie L.",floor:"3A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:"Pionnier",verifiedBy:null},
+              {name:"Marie D.",floor:"1A",role:"proprio",cs:true,verified:true,visible:true,level:"N2",badge:"CS",verifiedBy:"Sophie L."},
+              {name:"Thomas R.",floor:"2A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Paul V."},
+              {name:"Sophie L.",floor:"4C",role:"locataire",cs:false,verified:false,visible:true,level:"N1",badge:null,verifiedBy:null},
+              {name:"Anna K.",floor:"5A",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Paul V."},
+              {name:"Paul V.",floor:"4B",role:"proprio",cs:false,verified:true,visible:true,level:"N2",badge:"Référent",verifiedBy:"Sophie L."},
+              {name:"Lucas M.",floor:"RDC",role:"concierge",cs:false,verified:true,visible:true,level:"N2",badge:null,verifiedBy:"Marie D."},
+              {name:userName,floor:currentApt,role,cs:isCS,verified:true,visible:annuaireVisible,level:"N2",badge:null,verifiedBy:"Marie D."},
+            ].filter(r=>r.visible);
+            const filtered=annuaireSearch?residents.filter(r=>r.name.toLowerCase().includes(annuaireSearch.toLowerCase())||r.floor.toLowerCase().includes(annuaireSearch.toLowerCase())):residents;
+            const lvlColors={N1:T.sunrise,N2:T.forest,N3:T.purple};
+            const badgeColors={Pionnier:T.sunrise,CS:T.sky,Référent:T.forestLight,Accompagnateur:"#993C1D"};
+            return(<div style={{marginTop:14}}>
+              <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:"0 0 4px"}}>👥 Résidents ({residents.length})</h4>
+              <div style={{display:"flex",gap:4,marginBottom:8,fontSize:9,color:T.textMuted}}>
+                <span style={{padding:"2px 6px",borderRadius:4,background:`${T.forest}12`,color:T.forest,fontWeight:600}}>{residents.filter(r=>r.level==="N2").length} vérifiés</span>
+                <span style={{padding:"2px 6px",borderRadius:4,background:`${T.sunrise}12`,color:T.sunrise,fontWeight:600}}>{residents.filter(r=>r.level==="N1").length} en attente</span>
+              </div>
+              <div style={{background:"#fff",borderRadius:10,padding:"3px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:6,border:`1px solid ${T.sandDark}`}}>
+                <span style={{fontSize:12}}>🔍</span><input value={annuaireSearch} onChange={e=>setAnnuaireSearch(e.target.value)} placeholder="Rechercher un résident..." style={{flex:1,border:"none",outline:"none",padding:"8px 0",fontSize:12,fontFamily:SANS,background:"transparent"}}/>
+              </div>
+              {filtered.map((r,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",background:"#fff",borderRadius:10,marginBottom:4,boxShadow:"0 1px 3px rgba(0,0,0,0.03)",borderLeft:`3px solid ${lvlColors[r.level]||T.sandDark}`}}>
+                  <div style={{position:"relative"}}>
+                    <Av name={r.name} size={34}/>
+                    {r.level==="N2"&&<div style={{position:"absolute",bottom:-2,right:-2,width:14,height:14,borderRadius:7,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,color:"#fff",fontWeight:700}}>✓</div>}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{fontSize:13,fontWeight:600,color:T.text}}>{r.name}</span>
+                      <span style={{padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,background:`${lvlColors[r.level]}15`,color:lvlColors[r.level]}}>{r.level}</span>
+                      {r.badge&&<span style={{padding:"1px 5px",borderRadius:4,fontSize:8,fontWeight:700,background:`${badgeColors[r.badge]||T.forest}15`,color:badgeColors[r.badge]||T.forest}}>{r.badge}</span>}
+                    </div>
+                    <div style={{display:"flex",gap:4,marginTop:1,flexWrap:"wrap"}}>
+                      <span style={{fontSize:10,color:T.bark}}>App. {r.floor}</span>
+                      <span style={{fontSize:10,color:T.bark}}>· {r.role==="proprio"?"Copropriétaire":r.role==="locataire"?"Locataire":r.role==="concierge"?"Concierge":"Syndic"}</span>
+                      {r.cs&&<span style={{padding:"0 5px",borderRadius:3,fontSize:8,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>Conseil syndical</span>}
+                    </div>
+                    {r.verifiedBy&&<div style={{fontSize:8,color:T.textMuted,marginTop:1}}>Vérifié par {r.verifiedBy}</div>}
+                  </div>
+                  {r.name!==userName&&<button onClick={()=>{setShowAnnuaire(false);setAnnuaireSearch("");setActiveConv({id:Date.now(),name:r.name,floor:r.floor});setConvMsgs([]);setMsgView("conv");setTab("msg")}} style={{padding:"5px 10px",borderRadius:6,border:"none",background:`${T.forest}10`,cursor:"pointer",fontSize:10,fontWeight:600,color:T.forest,fontFamily:SANS}}>✉️</button>}
+                </div>
+              ))}
+            </div>)
+          })()}
         </div>
       </div>}
 
@@ -3328,7 +3524,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
       {/* ═══ PROFILE MODAL — 4 TABS ═══ */}
       {showProfile&&(()=>{
         // Viral opportunity active = Étendre by default, else Profil
-        const hasViralOpp = canParrain && activeCopro.members >= 8 && Math.round(activeCopro.members/activeCopro.logements*100) >= 30;
+        const hasViralOpp = canSeeParrainage && activeCopro.members >= 8 && Math.round(activeCopro.members/activeCopro.logements*100) >= 30;
         const [profTab,setProfTab] = [showProfile===true?(hasViralOpp?"etendre":"profil"):showProfile, (v)=>setShowProfile(v)];
         const ptColor={etendre:T.purple,profil:T.forest,activite:T.sky,reglages:T.bark};
 
@@ -3358,6 +3554,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
                   {((role==="proprio"&&verifiedProprio)||(role==="syndic"&&verifiedSyndic))&&" ✓"}
                 </span>
                 {isCS&&<span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>CS{verifiedCS?" ✓":""}</span>}
+                {isRef&&<span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${T.forestLight}20`,color:T.forestLight}}>⭐ Référent</span>}
                 <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:T.sand,color:T.bark}}>App. {currentApt}</span>
               </div>
             </div>
@@ -3388,7 +3585,7 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
           {/* ─── TAB BAR ─── */}
           <div style={{display:"flex",gap:0,background:"#E0DDD5",borderRadius:10,padding:3,marginBottom:14}}>
             {[
-              {id:"etendre",l:"🚀 Étendre",show:canParrain},
+              {id:"etendre",l:"🚀 Étendre",show:canSeeParrainage},
               {id:"profil",l:"👤 Profil",show:true},
               {id:"activite",l:"📊 Activité",show:true},
               {id:"reglages",l:"⚙️ Réglages",show:true},
@@ -3531,6 +3728,29 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
               }
             </div>
             <button onClick={()=>setShowRoleSwitch(true)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:500,color:T.forest,textAlign:"left",display:"flex",alignItems:"center",gap:8}}>🔄 Changer de rôle</button>
+
+            {/* ─── DEV CONTROLS ─── */}
+            <div style={{marginTop:16,padding:14,borderRadius:14,background:`${T.purple}06`,border:`1.5px dashed ${T.purple}30`}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.purple,textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:5}}>
+                <span style={{fontSize:12}}>🧪</span> Contrôles développeur
+              </div>
+              {[
+                {label:"Niveau de vérification",value:devNiveau,set:setDevNiveau,options:[{v:"1",l:"Niveau 1 — Non vérifié"},{v:"2",l:"Niveau 2 — Vérifié par un voisin"},{v:"3",l:"Niveau 3 — Vérifié par le syndic"}]},
+                {label:"Plan de la résidence",value:devPlan,set:setDevPlan,options:[{v:"gratuit",l:"Gratuit"},{v:"essentiel",l:"Essentiel"},{v:"premium",l:"Premium"}]},
+                {label:"Maturité du profil",value:devMaturite,set:setDevMaturite,options:[{v:"nouveau",l:"Nouveau — aucun post, aucune invitation"},{v:"debutant",l:"Débutant — quelques interactions"},{v:"confirme",l:"Confirmé — plusieurs posts et invitations"}]},
+                {label:"Référent",value:devReferent,set:setDevReferent,options:[{v:"non",l:"Non"},{v:"oui",l:"Oui — Référent de la copropriété"}]},
+              ].map((ctrl,i)=>(
+                <div key={i} style={{marginBottom:i<2?10:0}}>
+                  <label style={{fontSize:9,fontWeight:600,color:T.purple,display:"block",marginBottom:3}}>{ctrl.label}</label>
+                  <select value={ctrl.value} onChange={e=>ctrl.set(e.target.value)} style={{width:"100%",padding:"8px 10px",borderRadius:8,border:`1.5px solid ${T.purple}30`,fontSize:11,fontFamily:SANS,color:T.text,background:"#fff",cursor:"pointer",outline:"none"}}>
+                    {ctrl.options.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+                  </select>
+                </div>
+              ))}
+              <div style={{marginTop:8,padding:"6px 10px",borderRadius:8,background:`${T.purple}10`,fontSize:9,color:T.purple,lineHeight:1.5}}>
+                ℹ️ Ces contrôles permettent de simuler différents états utilisateur pour tester l'interface.
+              </div>
+            </div>
           </div>}
 
           {/* ════════════════════════════════════
@@ -3832,7 +4052,12 @@ export default function VoisinSereins() {
   const [waData,setWaData]=useState(null);
   const [userApt,setUserApt]=useState("3G");
   const [viewMode,setViewMode]=useState("mobile");
+  const [entryMode,setEntryMode]=useState(null); // null | "invitation" | "qr_generic" | "qr_copro"
+  const [profileData,setProfileData]=useState(null); // {name,building,etage,door} from creation screen
   const isMobile=viewMode==="mobile";
+
+  // Pre-filled copro for invitation & QR copro-specific scenarios
+  const INVITE_COPRO={label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:6,logements:24,immat:"AA-0024-RNC",syndic:"Cabinet Urbania"};
 
   return (
     <div style={{position:"relative",height:"100dvh",background:isMobile?"#e8e8e8":T.warmWhite,overflow:"hidden"}}>
@@ -3850,18 +4075,31 @@ export default function VoisinSereins() {
         position:"relative",overflow:"hidden",
         ...(isMobile?{boxShadow:"0 0 40px rgba(0,0,0,0.12)",borderLeft:`1px solid ${T.sandDark}`,borderRight:`1px solid ${T.sandDark}`}:{}),
       }}>
-        {screen==="welcome"&&<OnboardingWelcome onNext={()=>setScreen("address")} onFacebook={()=>{
-          setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
-          setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
-        }}/>}
+        {screen==="welcome"&&<OnboardingWelcome
+          onNext={(mode)=>{
+            setEntryMode(mode||null);
+            if(mode==="invitation"){
+              setCopro(INVITE_COPRO);setIsNew(false);setScreen("confirm_residence");
+            } else if(mode==="qr_copro"){
+              setCopro(INVITE_COPRO);setIsNew(false);setScreen("confirm_residence");
+            } else {
+              setScreen("address");
+            }
+          }}
+          onFacebook={()=>{
+            setCopro({label:"12 Rue des Tilleuls, 06400 Cannes",name:"Résidence Les Tilleuls",city:"Cannes",members:14,logements:24});
+            setUserRole("proprio");setUserIsCS(true);setIsNew(false);setScreen("app");
+          }}
+        />}
         {screen==="address"&&<OnboardingAddress
-          onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"building":"whatsapp")}}
+          onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"whatsapp":"whatsapp")}}
           onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
         />}
-        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen(isNew?"role":"building")}} onSkip={()=>setScreen(isNew?"role":"building")}/>}
-        {screen==="building"&&<OnboardingBuilding copro={copro} onSelect={apt=>{setUserApt(apt);setScreen("role")}}/>}
-        {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
-        {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData} userApt={userApt}/>}
+        {screen==="confirm_residence"&&<OnboardingConfirmResidence copro={copro} onConfirm={()=>setScreen("role")} onWrong={()=>{setCopro(null);setEntryMode("qr_generic");setScreen("address")}}/>}
+        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("role")}} onSkip={()=>setScreen("role")}/>}
+        {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("profile_create")}} entryMode={entryMode}/>}
+        {screen==="profile_create"&&<OnboardingProfileCreation copro={copro} role={userRole} isCS={userIsCS} onComplete={(pd)=>{setProfileData(pd);setScreen("app")}}/>}
+        {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData} userApt={userApt} profileData={profileData}/>}
       </div>
     </div>
   );
