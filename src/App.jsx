@@ -326,7 +326,7 @@ function OnboardingAddress({onFound,onCreate}) {
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 24px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.07)"}}/>
-        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 1 sur 2</p>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 1 sur 3</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px",opacity:show?1:0,transform:show?"none":"translateY(10px)",transition:"all 0.6s 0.2s cubic-bezier(0.16,1,0.3,1)"}}>Où habitez-vous ?</h2>
         <p style={{color:"rgba(255,255,255,0.7)",fontSize:14,margin:0,lineHeight:1.5,opacity:show?1:0,transition:"opacity 0.6s 0.3s"}}>Entrez l'adresse de votre copropriété</p>
       </div>
@@ -498,7 +498,7 @@ function OnboardingBuilding({copro,onSelect}) {
   return (
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 20px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px"}}>
-        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 3 sur 4</p>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px",opacity:show?1:0,transition:"opacity 0.5s 0.1s"}}>Étape 2 sur 3</p>
         <h2 style={{fontFamily:FONT,fontSize:22,fontWeight:700,color:"#fff",margin:"0 0 4px",opacity:show?1:0,transition:"all 0.6s 0.2s"}}>Où est votre logement ?</h2>
         <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:0}}>Touchez votre porte dans le plan</p>
       </div>
@@ -564,7 +564,7 @@ function OnboardingRole({copro,onContinue}) {
   return (
     <div style={{height:"100%",display:"flex",flexDirection:"column",background:T.warmWhite,fontFamily:SANS}}>
       <div style={{padding:"56px 24px 18px",background:`linear-gradient(170deg,${T.forest},${T.forestLight})`,borderRadius:"0 0 28px 28px",flexShrink:0}}>
-        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Étape 2 sur 2</p>
+        <p style={{color:T.leafLight,fontSize:12,fontWeight:600,letterSpacing:"1.5px",textTransform:"uppercase",margin:"0 0 6px"}}>Étape 3 sur 3</p>
         <h2 style={{fontFamily:FONT,fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 6px"}}>Quel est votre rôle ?</h2>
         <p style={{color:"rgba(255,255,255,0.85)",fontSize:14,margin:0,fontWeight:600}}>{copro?.name || "Ma Copropriété"}</p>
         <p style={{color:"rgba(255,255,255,0.55)",fontSize:12,margin:"2px 0 0"}}>{copro?.city||"—"} · {copro?.logements||"?"} logements</p>
@@ -803,6 +803,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   ]);
   const [newConsult,setNewConsult]=useState({question:"",mode:"logement",duree:"7"});
   const [showNewConsult,setShowNewConsult]=useState(false);
+  // ─── AG PROPOSALS ───
+  const [agProposals,setAgProposals]=useState([
+    {id:1,title:"Remplacement de l'interphone collectif",motif:"L'interphone est en panne depuis 3 mois. 6 résidents ont signalé le problème. Consultation favorable à 73%.",majorite:"Article 24",cout:"~4 500€",soutiens:["Marie D.","Paul V.","Thomas R.","Anna K.","Sophie L.","Lucas M."],author:"Marie D.",date:"28 mars",sujetId:4,status:"accepted"},
+  ]);
+  const [showNewAgProp,setShowNewAgProp]=useState(false);
+  const [newAgProp,setNewAgProp]=useState("");
   // Building plan for governance (reuse onboarding concept)
   const BUILDING_PLAN = Array.from({length:7}).map((_,fi)=>{
     const f=6-fi;
@@ -822,15 +828,15 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   const [reforming,setReforming]=useState(false);
   const [selReform,setSelReform]=useState(null);
   const [posts,setPosts]=useState([
-    {id:1,author:"Marie D.",floor:"3B",time:"Auj. 09:14",text:"Bonjour à tous ! Petit rappel : la prochaine AG est prévue le 15 avril. N'hésitez pas à me transmettre vos points à l'ordre du jour.",cat:"officiel",likedBy:["Sophie L.","Thomas R.","Paul V.","Anna K.","Lucas M."],role:"CS",replies:[]},
-    {id:10,welcome:true,author:"Pierre B.",floor:"5B",time:"Auj. 08:30",cat:"officiel",text:"",likedBy:[],role:"",replies:[]},
-    {id:2,author:"Thomas R.",floor:"1A",time:"Hier 18:30",text:"Quelqu'un saurait recommander un bon serrurier dans le quartier ? Ma serrure a un souci depuis ce matin.",cat:"entraide",likedBy:["Marie D.","Sophie L.","Anna K."],role:"proprio",replies:[{author:"Paul V.",text:"J'ai utilisé SerruPlus le mois dernier, très pro !",time:"Hier 19:02"}]},
-    {id:11,welcome:true,author:"Claire F.",floor:"2C",time:"Hier 10:00",cat:"officiel",text:"",likedBy:[],role:"",replies:[]},
-    {id:3,author:"Sophie L.",floor:"4C",time:"Hier 14:22",text:"Je propose un apéro entre voisins dimanche prochain dans le jardin commun, vers 17h. Qui est partant ? 🥂",cat:"convivialité",likedBy:["Marie D.","Thomas R.","Paul V.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F."],role:"locataire",replies:[]},
-    {id:4,author:"Lucas M.",floor:"2B",time:"Mar. 10:45",text:"Les travaux de ravalement débutent lundi. L'échafaudage sera monté côté rue. Merci de ne pas garer devant l'entrée.",cat:"travaux",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K."],role:"syndic",replies:[]},
-    {id:12,welcome:true,author:"Marc T.",floor:"1B",time:"Mar. 09:30",cat:"officiel",text:"",likedBy:[],role:"",replies:[]},
-    {id:5,author:"Anna K.",floor:"5A",time:"Mar. 09:00",text:"L'ascenseur est en panne depuis hier soir. J'ai signalé au syndic. Intervention prévue demain matin.",cat:"incidents",likedBy:["Marie D.","Sophie L.","Thomas R.","Paul V.","Lucas M.","Jean Dupont"],role:"proprio",replies:[{author:"Lucas M.",text:"Intervention confirmée pour demain 8h.",time:"Mar. 10:00"}]},
-    {id:6,author:"Paul V.",floor:"1C",time:"Lun. 16:30",text:"Et si on installait un compost collectif dans le jardin ? J'ai trouvé un modèle à 150€. Ça pourrait être voté à la prochaine AG.",cat:"suggestions",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F.","Marc T."],role:"proprio",replies:[]},
+    {id:1,author:"Marie D.",floor:"3B",time:"Auj. 09:14",text:"Bonjour à tous ! Petit rappel : la prochaine AG est prévue le 15 avril. N'hésitez pas à me transmettre vos points à l'ordre du jour.",cat:"officiel",likedBy:["Sophie L.","Thomas R.","Paul V.","Anna K.","Lucas M."],role:"CS",replies:[],building:null},
+    {id:10,welcome:true,author:"Pierre B.",floor:"5B",time:"Auj. 08:30",cat:"officiel",text:"",likedBy:[],role:"",replies:[],building:"Lilas"},
+    {id:2,author:"Thomas R.",floor:"1A",time:"Hier 18:30",text:"Quelqu'un saurait recommander un bon serrurier dans le quartier ? Ma serrure a un souci depuis ce matin.",cat:"entraide",likedBy:["Marie D.","Sophie L.","Anna K."],role:"proprio",replies:[{author:"Paul V.",text:"J'ai utilisé SerruPlus le mois dernier, très pro !",time:"Hier 19:02"}],building:"Mimosa"},
+    {id:11,welcome:true,author:"Claire F.",floor:"2C",time:"Hier 10:00",cat:"officiel",text:"",likedBy:[],role:"",replies:[],building:"Lilas"},
+    {id:3,author:"Sophie L.",floor:"4C",time:"Hier 14:22",text:"Je propose un apéro entre voisins dimanche prochain dans le jardin commun, vers 17h. Qui est partant ? 🥂",cat:"convivialité",likedBy:["Marie D.","Thomas R.","Paul V.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F."],role:"locataire",replies:[],building:"Mimosa"},
+    {id:4,author:"Lucas M.",floor:"2B",time:"Mar. 10:45",text:"Les travaux de ravalement débutent lundi. L'échafaudage sera monté côté rue. Merci de ne pas garer devant l'entrée.",cat:"travaux",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K."],role:"syndic",replies:[],building:null},
+    {id:12,welcome:true,author:"Marc T.",floor:"1B",time:"Mar. 09:30",cat:"officiel",text:"",likedBy:[],role:"",replies:[],building:"Lilas"},
+    {id:5,author:"Anna K.",floor:"5A",time:"Mar. 09:00",text:"L'ascenseur est en panne depuis hier soir. J'ai signalé au syndic. Intervention prévue demain matin.",cat:"incidents",likedBy:["Marie D.","Sophie L.","Thomas R.","Paul V.","Lucas M.","Jean Dupont"],role:"proprio",replies:[{author:"Lucas M.",text:"Intervention confirmée pour demain 8h.",time:"Mar. 10:00"}],building:"Lilas"},
+    {id:6,author:"Paul V.",floor:"1C",time:"Lun. 16:30",text:"Et si on installait un compost collectif dans le jardin ? J'ai trouvé un modèle à 150€. Ça pourrait être voté à la prochaine AG.",cat:"suggestions",likedBy:["Marie D.","Sophie L.","Thomas R.","Anna K.","Lucas M.","Jean Dupont","Pierre B.","Claire F.","Marc T."],role:"proprio",replies:[],building:"Mimosa"},
   ]);
   const [replyingTo,setReplyingTo]=useState(null);
   const [replyDraft,setReplyDraft]=useState("");
@@ -961,9 +967,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
   const CC={officiel:T.coral,entraide:T.sky,convivialité:T.sunrise,annonces:T.forestLight,travaux:T.bark,incidents:"#C0392B",suggestions:T.purple};
 
   const COPROS=[
-    {name:copro?.name||"Résidence Les Tilleuls",addr:"12 Rue des Tilleuls, Lyon",members:isNew?1:14,logements:copro?.logements||24,active:true},
-    {name:"Le Clos des Vignes",addr:"8 Impasse des Vignes, Lyon",members:5,logements:12,active:false},
+    {name:copro?.name||"Résidence Les Tilleuls",addr:"12 Rue des Tilleuls, Lyon",members:isNew?1:14,logements:copro?.logements||24,active:true,buildings:["Mimosa","Lilas"]},
+    {name:"Le Clos des Vignes",addr:"8 Impasse des Vignes, Lyon",members:5,logements:12,active:false,buildings:null},
   ];
+
+  // ─── BUILDING FILTER ───
+  const [feedBuilding,setFeedBuilding]=useState("all"); // "all" | building name
 
   // ─── AI CALLS ───
   const callAI = async (system,prompt) => {
@@ -1120,7 +1129,12 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
 
   const CATS=[{id:"all",l:"Tous",i:"📋"},{id:"officiel",l:"Officiel",i:"📢"},{id:"incidents",l:"Urgences",i:"⚠️"},{id:"convivialité",l:"Social",i:"🎉"},{id:"entraide",l:"Entraide",i:"🤝"},{id:"annonces",l:"Annonces",i:"📌"},{id:"travaux",l:"Travaux",i:"🛠"},{id:"suggestions",l:"Idées",i:"💡"}];
 
-  const filteredPosts = feedCat==="all"?posts:posts.filter(p=>p.cat===feedCat);
+  const filteredPosts = (feedCat==="all"?posts:posts.filter(p=>p.cat===feedCat)).filter(p=>{
+    if(feedBuilding==="all") return true;
+    // Official/urgent posts always visible regardless of building filter
+    if(p.cat==="officiel"||p.cat==="incidents"||p.role==="CS"||p.role==="syndic") return true;
+    return p.building===feedBuilding;
+  });
 
   const activeCopro = COPROS[0];
   const userTier=(activeCopro.members/activeCopro.logements>=0.4)?"pilier":(activeCopro.members/activeCopro.logements>=0.2)?"animateur":"fondateur";
@@ -1181,23 +1195,6 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
           )}
           {/* Syndic new-user hint (if isNew, shown inline) */}
           {isNew&&<div style={{padding:"10px 14px",background:`${T.leafLight}18`,borderRadius:12,marginBottom:12,fontSize:12,color:T.textLight,lineHeight:1.5}}>🌱 Vous êtes le premier membre ! Invitez vos voisins pour profiter pleinement de l'app.</div>}
-
-          {/* WhatsApp import banner — shown until imported */}
-          {!waImported&&<Card style={{background:"linear-gradient(135deg,#25D36612,#128C7E08)",border:"1.5px solid #25D36630",padding:18,cursor:"pointer"}} onClick={()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)}}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:48,height:48,borderRadius:14,background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>💬</div>
-              <div style={{flex:1}}>
-                <h3 style={{margin:0,fontSize:14,fontWeight:700,color:"#128C7E"}}>Vous avez un groupe WhatsApp ?</h3>
-                <p style={{margin:"3px 0 0",fontSize:12,color:T.textLight,lineHeight:1.4}}>Importez-le pour détecter les sujets récurrents et retrouver vos voisins déjà là.</p>
-              </div>
-              <span style={{fontSize:18,color:"#25D366"}}>→</span>
-            </div>
-            <div style={{display:"flex",gap:6,marginTop:10}}>
-              {["📢 Sujets détectés","👥 Résidents identifiés","⚡ Warm start"].map((t,i)=>(
-                <span key={i} style={{flex:1,textAlign:"center",padding:"4px 2px",borderRadius:6,background:"rgba(255,255,255,0.7)",fontSize:9,fontWeight:600,color:"#128C7E"}}>{t}</span>
-              ))}
-            </div>
-          </Card>}
 
           {/* Progress card — compact */}
           <Card style={{padding:14}}>
@@ -1345,6 +1342,16 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
               <span style={{fontSize:9,fontWeight:600,color:T.purple}}>Sondage</span>
             </button>
           </div>
+
+          {/* Building filter — only if 2+ buildings */}
+          {activeCopro.buildings&&activeCopro.buildings.length>=2&&(
+            <div style={{display:"flex",gap:4,marginBottom:8,overflowX:"auto",paddingBottom:2}}>
+              <button onClick={()=>setFeedBuilding("all")} style={{padding:"5px 10px",borderRadius:16,border:"none",background:feedBuilding==="all"?T.forest:"#fff",color:feedBuilding==="all"?"#fff":T.textLight,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,whiteSpace:"nowrap",boxShadow:feedBuilding==="all"?"none":"0 1px 3px rgba(0,0,0,0.06)"}}>🏘 Toute la copro</button>
+              {activeCopro.buildings.map(b=>(
+                <button key={b} onClick={()=>setFeedBuilding(b)} style={{padding:"5px 10px",borderRadius:16,border:"none",background:feedBuilding===b?T.forestLight:"#fff",color:feedBuilding===b?"#fff":T.textLight,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,whiteSpace:"nowrap",boxShadow:feedBuilding===b?"none":"0 1px 3px rgba(0,0,0,0.06)"}}>🏢 Bât. {b}</button>
+              ))}
+            </div>
+          )}
 
           <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{CATS.map(c=><Chip key={c.id} label={c.l} icon={c.i} active={feedCat===c.id} color={CC[c.id]||T.forest} onClick={()=>setFeedCat(c.id)}/>)}</div>
           {filteredPosts.map(p=>{
@@ -1740,6 +1747,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             </div>
           )}
 
+          {/* WhatsApp import — compact, in Copro tab */}
+          {!waImported&&<div onClick={()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)}} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"linear-gradient(135deg,#25D36608,#25D36604)",borderRadius:10,marginBottom:10,cursor:"pointer",border:"1px solid #25D36625"}}>
+            <div style={{width:28,height:28,borderRadius:7,background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>💬</div>
+            <div style={{flex:1}}><div style={{fontSize:11,fontWeight:600,color:"#128C7E"}}>Importer un groupe WhatsApp</div><div style={{fontSize:9,color:T.textMuted}}>Sujets détectés · Résidents identifiés</div></div>
+            <span style={{fontSize:11,color:"#128C7E",fontWeight:600}}>→</span>
+          </div>}
+
           {agendaTab==="docs"&&<div>
             <div style={{background:"#fff",borderRadius:12,padding:"3px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:8,boxShadow:"0 1px 6px rgba(0,0,0,0.04)"}}>
               <span>🔍</span><input value={docSearch} onChange={e=>setDocSearch(e.target.value)} placeholder="Rechercher..." style={{flex:1,border:"none",outline:"none",padding:"10px 0",fontSize:13,fontFamily:SANS,background:"transparent"}}/>
@@ -1784,12 +1798,6 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
           {/* Messages inside Copro */}
           {/* ═══ SUJETS SUB-TAB ═══ */}
           {agendaTab==="sujets"&&<div>
-            {/* WhatsApp import banner */}
-            <div onClick={()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"linear-gradient(135deg,#25D36612,#25D36606)",borderRadius:14,marginBottom:10,cursor:"pointer",border:"1.5px solid #25D36630"}}>
-              <div style={{width:32,height:32,borderRadius:8,background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>💬</div>
-              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:"#128C7E"}}>Importer un groupe WhatsApp</div><div style={{fontSize:10,color:T.textMuted}}>Détecte automatiquement les sujets récurrents</div></div>
-              <span style={{fontSize:11,color:"#128C7E",fontWeight:600}}>→</span>
-            </div>
             {/* Stats */}
             <div style={{display:"flex",gap:5,marginBottom:8}}>
               {[{v:sujetStats.total,l:"Total",c:T.text},{v:sujetStats.escalade,l:"Escalade",c:T.amber},{v:sujetStats.nonResolu,l:"Non résolus",c:T.coral},{v:sujetStats.resolu,l:"Résolus",c:T.green}].map((s,i)=>(
@@ -1873,6 +1881,37 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
                     </div>
                   ))}
                 </Card>}
+                {/* AG Proposal — only for escalated sujets */}
+                {sujetDetail.status==="escalade"&&role==="proprio"&&(()=>{
+                  const existing=agProposals.find(p=>p.sujetId===sujetDetail.id);
+                  return existing?
+                    <Card style={{padding:10,border:`1.5px solid ${T.amber}30`,background:`${T.amber}06`}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                        <span style={{fontSize:14}}>🏛</span>
+                        <h4 style={{margin:0,fontSize:11,fontWeight:700,color:T.amber}}>Proposé pour la prochaine AG</h4>
+                        <span style={{marginLeft:"auto",padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:existing.status==="accepted"?`${T.forest}12`:`${T.amber}12`,color:existing.status==="accepted"?T.forest:T.amber}}>{existing.status==="accepted"?"✅ Accepté par le CS":"⏳ En attente"}</span>
+                      </div>
+                      <p style={{fontSize:10,color:T.text,margin:"0 0 4px",fontWeight:500}}>« {existing.title} »</p>
+                      <div style={{display:"flex",gap:8,fontSize:9,color:T.textMuted}}>
+                        <span>⚖️ {existing.majorite}</span>
+                        {existing.cout&&<span>💰 {existing.cout}</span>}
+                        <span>👥 {existing.soutiens.length} soutien{existing.soutiens.length>1?"s":""}</span>
+                      </div>
+                    </Card>
+                  :<Card style={{padding:10,border:`1.5px dashed ${T.amber}40`,background:`${T.amber}04`,cursor:"pointer"}} onClick={()=>{
+                    const prop={id:Date.now(),title:sujetDetail.title,motif:`${sujetDetail.signalCount} signalements. ${sujetDetail.residents.length} résidents concernés.`,majorite:"Article 24",cout:null,soutiens:[userName],author:userName,date:"Auj.",sujetId:sujetDetail.id,status:"pending"};
+                    setAgProposals(p=>[...p,prop]);
+                  }}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:18}}>🏛</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:11,fontWeight:600,color:T.amber}}>Proposer pour la prochaine AG</div>
+                        <div style={{fontSize:9,color:T.textMuted}}>L'AI reformulera en résolution avec la majorité applicable</div>
+                      </div>
+                      <span style={{fontSize:11,color:T.amber,fontWeight:600}}>→</span>
+                    </div>
+                  </Card>;
+                })()}
                 {/* Timeline */}
                 <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"10px 0 6px"}}>Historique</h4>
                 <div style={{position:"relative",paddingLeft:16}}>
@@ -1897,6 +1936,38 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
 
             /* ── LIST VIEW ── */
             <div>
+              {/* AG Proposals section */}
+              {agProposals.length>0&&<div style={{marginBottom:10}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                  <span style={{fontSize:13}}>🏛</span>
+                  <h4 style={{fontSize:10,fontWeight:700,color:T.amber,textTransform:"uppercase",letterSpacing:1,margin:0}}>Propositions pour la prochaine AG</h4>
+                  <span style={{padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`${T.amber}15`,color:T.amber}}>{agProposals.length}</span>
+                </div>
+                {agProposals.map(prop=>(
+                  <div key={prop.id} style={{background:"#fff",borderRadius:12,padding:10,marginBottom:5,borderLeft:`3px solid ${T.amber}`,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                      <span style={{fontSize:12,fontWeight:600,color:T.text,flex:1}}>{prop.title}</span>
+                      <span style={{padding:"2px 6px",borderRadius:4,fontSize:7,fontWeight:700,background:prop.status==="accepted"?`${T.forest}12`:`${T.amber}12`,color:prop.status==="accepted"?T.forest:T.amber}}>{prop.status==="accepted"?"Accepté":"En attente"}</span>
+                    </div>
+                    <div style={{display:"flex",gap:8,fontSize:8,color:T.textMuted,marginBottom:4}}>
+                      <span>⚖️ {prop.majorite}</span>
+                      {prop.cout&&<span>💰 {prop.cout}</span>}
+                      <span>par {prop.author} · {prop.date}</span>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                      <div style={{display:"flex",gap:-2}}>
+                        {prop.soutiens.slice(0,5).map((s,i)=>(
+                          <div key={i} style={{width:18,height:18,borderRadius:6,background:`${[T.forestLight,T.sky,T.coral,T.sunrise,T.purple][i%5]}`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:7,fontWeight:700,marginLeft:i>0?-4:0,border:"1.5px solid #fff",zIndex:5-i}}>{s.split(" ").map(n=>n[0]).join("")}</div>
+                        ))}
+                        <span style={{fontSize:8,color:T.textMuted,marginLeft:4}}>{prop.soutiens.length} soutien{prop.soutiens.length>1?"s":""}</span>
+                      </div>
+                      {!prop.soutiens.includes(userName)&&<button onClick={()=>setAgProposals(p=>p.map(x=>x.id===prop.id?{...x,soutiens:[...x.soutiens,userName]}:x))} style={{padding:"3px 8px",borderRadius:6,border:`1px solid ${T.amber}40`,background:`${T.amber}08`,fontSize:9,fontWeight:600,color:T.amber,cursor:"pointer",fontFamily:SANS}}>👍 Soutenir</button>}
+                      {prop.soutiens.includes(userName)&&<span style={{fontSize:8,fontWeight:600,color:T.forest}}>✓ Soutenu</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>}
+
               {filteredSujets.length===0&&<div style={{textAlign:"center",padding:20}}><div style={{fontSize:36,marginBottom:4}}>📋</div><p style={{fontSize:12,color:T.textMuted}}>Aucun sujet</p></div>}
               {filteredSujets.map(s=>{const st=SUJET_STATUS[s.status];const cat=SUJET_CAT[s.category];return(
                 <div key={s.id} onClick={()=>{setSujetId(s.id);setSujetAiIdx(null);setSujetAiResult(null);setConsultVote(null)}} style={{background:"#fff",borderRadius:14,padding:12,marginBottom:7,boxShadow:"0 2px 8px rgba(0,0,0,0.04)",cursor:"pointer",borderLeft:`3px solid ${st.color}`}}>
@@ -3076,6 +3147,13 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
             <h3 style={{fontFamily:FONT,fontSize:19,color:T.forest,margin:0}}>Annuaire de la copropriété</h3>
           </div>
 
+          {/* WhatsApp import hint in annuaire */}
+          {!waImported&&<div onClick={()=>{setShowAnnuaire(false);setTimeout(()=>{setShowWaImport(true);setWaStep(0);setWaResult(null)},150)}} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#25D36608",borderRadius:8,marginBottom:10,cursor:"pointer",border:"1px solid #25D36620"}}>
+            <span style={{fontSize:14}}>💬</span>
+            <span style={{fontSize:10,color:"#128C7E",fontWeight:500}}>Retrouvez vos voisins depuis WhatsApp</span>
+            <span style={{fontSize:10,color:"#128C7E",fontWeight:600,marginLeft:"auto"}}>→</span>
+          </div>}
+
           {/* Residents — enriched with verification & governance */}
           {(()=>{
             const residents=[
@@ -3247,223 +3325,313 @@ function MainApp({copro,role:initRole,isCS:initCS,isNew,waData,userApt}) {
         </div>
       </div>}
 
-      {/* ═══ PROFILE MODAL ═══ */}
-      {showProfile&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
-        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
-          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 18px"}}/>
+      {/* ═══ PROFILE MODAL — 4 TABS ═══ */}
+      {showProfile&&(()=>{
+        // Viral opportunity active = Étendre by default, else Profil
+        const hasViralOpp = canParrain && activeCopro.members >= 8 && Math.round(activeCopro.members/activeCopro.logements*100) >= 30;
+        const [profTab,setProfTab] = [showProfile===true?(hasViralOpp?"etendre":"profil"):showProfile, (v)=>setShowProfile(v)];
+        const ptColor={etendre:T.purple,profil:T.forest,activite:T.sky,reglages:T.bark};
 
-          {/* Profile header */}
-          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:24}}>
+        return <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowProfile(false)}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:420,background:T.warmWhite,borderRadius:"22px 22px 0 0",padding:"8px 20px 36px",maxHeight:"85vh",overflowY:"auto",animation:"slideUp 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.sandDark,margin:"8px auto 14px"}}/>
+
+          {/* ─── HEADER (always visible) ─── */}
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
             <div style={{position:"relative"}}>
               <label style={{cursor:"pointer",display:"block"}}>
                 {profilePhoto
-                  ?<img src={profilePhoto} style={{width:60,height:60,borderRadius:18,objectFit:"cover"}} alt=""/>
-                  :<div style={{width:60,height:60,borderRadius:18,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:22,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
+                  ?<img src={profilePhoto} style={{width:52,height:52,borderRadius:16,objectFit:"cover"}} alt=""/>
+                  :<div style={{width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${T.sunrise},${T.coral})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:20,fontFamily:SANS}}>{userName.split(" ").map(n=>n[0]).join("")}</div>
                 }
                 <input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>setProfilePhoto(ev.target.result);r.readAsDataURL(f)}}} style={{display:"none"}}/>
-                <div style={{position:"absolute",bottom:-2,right:-2,width:22,height:22,borderRadius:11,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff"}}>📷</div>
+                <div style={{position:"absolute",bottom:-2,right:-2,width:20,height:20,borderRadius:10,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff"}}>📷</div>
               </label>
-              {(verifiedProprio||verifiedSyndic)&&<div style={{position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:9,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff"}}>✓</div>}
+              {(verifiedProprio||verifiedSyndic)&&<div style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:8,background:T.forest,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:7,color:"#fff"}}>✓</div>}
             </div>
             <div style={{flex:1}}>
-              <h3 style={{fontFamily:FONT,fontSize:20,color:T.text,margin:"0 0 2px"}}>{userName}</h3>
-              <p style={{fontSize:12,color:T.textMuted,margin:0}}>{userEmail}</p>
-              <div style={{marginTop:4,display:"flex",gap:5,flexWrap:"wrap"}}>
-                <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.forest}15`,color:T.forest,display:"flex",alignItems:"center",gap:3}}>
+              <h3 style={{fontFamily:FONT,fontSize:18,color:T.text,margin:"0 0 2px"}}>{userName}</h3>
+              <p style={{fontSize:11,color:T.textMuted,margin:0}}>{userEmail}</p>
+              <div style={{marginTop:3,display:"flex",gap:4,flexWrap:"wrap"}}>
+                <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${T.forest}15`,color:T.forest}}>
                   {role==="proprio"?"Copropriétaire":role==="locataire"?"Locataire":role==="concierge"?"Concierge":"Syndic"}
-                  {((role==="proprio"&&verifiedProprio)||(role==="syndic"&&verifiedSyndic))&&<span style={{fontSize:8}}>✓</span>}
+                  {((role==="proprio"&&verifiedProprio)||(role==="syndic"&&verifiedSyndic))&&" ✓"}
                 </span>
-                {isCS&&<span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:`${T.sky}20`,color:T.sky,display:"flex",alignItems:"center",gap:3}}>CS{verifiedCS&&<span style={{fontSize:8}}>✓</span>}</span>}
-                <span style={{padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:600,background:T.sand,color:T.bark}}>App. {currentApt}</span>
+                {isCS&&<span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:700,background:`${T.sky}20`,color:T.sky}}>CS{verifiedCS?" ✓":""}</span>}
+                <span style={{padding:"2px 7px",borderRadius:5,fontSize:9,fontWeight:600,background:T.sand,color:T.bark}}>App. {currentApt}</span>
               </div>
             </div>
           </div>
 
-          {/* Verification status banner */}
+          {/* Verification banner */}
           {role==="proprio"&&!verifiedProprio&&(
-            <div style={{background:`${T.sunriseLight}22`,borderRadius:12,padding:14,marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:20}}>🔒</span>
-              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.bark}}>Statut non vérifié</div><div style={{fontSize:11,color:T.textMuted,marginTop:1}}>Les documents financiers et les votes d'AG nécessitent une vérification.</div></div>
-              <button onClick={()=>{setShowProfile(false);setShowVerifyGate("proprio")}} style={{padding:"6px 12px",borderRadius:8,border:"none",background:T.sunrise,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS,flexShrink:0}}>Vérifier</button>
+            <div style={{background:`${T.sunriseLight}22`,borderRadius:10,padding:10,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>🔒</span>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.bark}}>Statut non vérifié</div><div style={{fontSize:10,color:T.textMuted}}>Docs financiers et votes nécessitent une vérification.</div></div>
+              <button onClick={()=>{setShowProfile(false);setShowVerifyGate("proprio")}} style={{padding:"5px 10px",borderRadius:7,border:"none",background:T.sunrise,color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,flexShrink:0}}>Vérifier</button>
             </div>
           )}
           {role==="syndic"&&!verifiedSyndic&&(
-            <div style={{background:`${T.coral}12`,borderRadius:12,padding:14,marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:20}}>🏛</span>
-              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:T.coral}}>Dashboard en mode démo</div><div style={{fontSize:11,color:T.textMuted,marginTop:1}}>Vérification professionnelle nécessaire pour activer les fonctions syndic.</div></div>
-              <button onClick={()=>{setShowProfile(false);setShowVerifyGate("syndic")}} style={{padding:"6px 12px",borderRadius:8,border:"none",background:T.coral,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS,flexShrink:0}}>Vérifier</button>
+            <div style={{background:`${T.coral}12`,borderRadius:10,padding:10,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>🏛</span>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.coral}}>Mode démo syndic</div><div style={{fontSize:10,color:T.textMuted}}>Vérification pro requise.</div></div>
+              <button onClick={()=>{setShowProfile(false);setShowVerifyGate("syndic")}} style={{padding:"5px 10px",borderRadius:7,border:"none",background:T.coral,color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS,flexShrink:0}}>Vérifier</button>
             </div>
           )}
           {(verifiedProprio||verifiedSyndic)&&(
-            <div style={{background:`${T.leafLight}22`,borderRadius:12,padding:14,marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:20}}>✅</span>
-              <div><div style={{fontSize:13,fontWeight:600,color:T.forest}}>Statut vérifié</div><div style={{fontSize:11,color:T.textMuted,marginTop:1}}>Vous avez accès à toutes les fonctions de votre rôle.</div></div>
+            <div style={{background:`${T.leafLight}22`,borderRadius:10,padding:10,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>✅</span>
+              <div><div style={{fontSize:12,fontWeight:600,color:T.forest}}>Statut vérifié</div><div style={{fontSize:10,color:T.textMuted}}>Accès complet à votre rôle.</div></div>
             </div>
           )}
 
-          {/* Activity stats */}
-          <div style={{display:"flex",gap:10,marginBottom:20}}>
-            <div style={{flex:1,background:"#fff",borderRadius:14,padding:"14px 12px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
-              <div style={{fontSize:22,fontWeight:700,color:T.forest}}>{posts.filter(p=>p.author===userName).length}</div>
-              <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>Publications</div>
-            </div>
-            <div style={{flex:1,background:"#fff",borderRadius:14,padding:"14px 12px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
-              <div style={{fontSize:22,fontWeight:700,color:T.sunrise}}>{3}</div>
-              <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>Invitations acceptées</div>
-            </div>
-            <div style={{flex:1,background:"#fff",borderRadius:14,padding:"14px 12px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
-              <div style={{fontSize:22,fontWeight:700,color:T.sky}}>{posts.reduce((n,p)=>n+p.replies.filter(r=>r.author===userName).length,0)}</div>
-              <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>Réponses</div>
-            </div>
-          </div>
-
-          {/* Profile fields */}
-          <div style={{marginBottom:20}}>
-            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Nom complet</label>
-            <input value={userName} onChange={e=>setUserName(e.target.value)} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
-          </div>
-
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
-            <div style={{flex:2}}>
-              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Bâtiment</label>
-              <input value={userBuilding} onChange={e=>{setUserBuilding(e.target.value);setUserFloorEdited(false)}} placeholder="A, Mimosa..." style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
-            </div>
-            <div style={{flex:1}}>
-              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Étage</label>
-              <input type="number" value={userEtage} onChange={e=>{setUserEtage(e.target.value);setUserFloorEdited(false)}} placeholder="3" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
-            </div>
-            <div style={{flex:1.5}}>
-              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Porte</label>
-              <input value={userDoor} onChange={e=>{if(e.target.value.length<=8){setUserDoor(e.target.value);setUserFloorEdited(false)}}} placeholder="Gauche" maxLength={8} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
-            </div>
-          </div>
-
-          <div style={{marginBottom:12}}>
-            <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Appartement <span style={{fontSize:8,fontWeight:400,textTransform:"none",letterSpacing:0}}>(auto-généré, modifiable)</span></label>
-            <input value={currentApt} onChange={e=>{setUserFloor(e.target.value);setUserFloorEdited(true)}} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${userFloorEdited?T.sunrise:T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:userFloorEdited?"#fff":`${T.leafLight}12`,color:T.text,boxSizing:"border-box"}}/>
-            {userFloorEdited&&<p style={{fontSize:10,color:T.sunrise,margin:"3px 0 0"}}>✏️ Modifié manuellement</p>}
-          </div>
-
-          {/* Multi-logement */}
-          {role!=="syndic"&&<div style={{marginBottom:16}}>
-            {extraLogements.length>0&&extraLogements.map((lg,i)=>(
-              <div key={i} style={{display:"flex",gap:6,alignItems:"center",padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,border:`1px solid ${T.sandDark}`}}>
-                <span style={{fontSize:12}}>🏠</span>
-                <span style={{fontSize:12,flex:1,color:T.text}}>{lg}</span>
-                <button onClick={()=>setExtraLogements(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
-              </div>
+          {/* ─── TAB BAR ─── */}
+          <div style={{display:"flex",gap:0,background:"#E0DDD5",borderRadius:10,padding:3,marginBottom:14}}>
+            {[
+              {id:"etendre",l:"🚀 Étendre",show:canParrain},
+              {id:"profil",l:"👤 Profil",show:true},
+              {id:"activite",l:"📊 Activité",show:true},
+              {id:"reglages",l:"⚙️ Réglages",show:true},
+            ].filter(t=>t.show).map(t=>(
+              <button key={t.id} onClick={()=>setProfTab(t.id)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"none",background:profTab===t.id?ptColor[t.id]||T.forest:"transparent",color:profTab===t.id?"#fff":"#888780",fontSize:9,fontWeight:profTab===t.id?700:500,cursor:"pointer",fontFamily:SANS,textAlign:"center"}}>{t.l}</button>
             ))}
-            {showAddLogement?<div style={{display:"flex",gap:6,alignItems:"center"}}>
-              <input value={addLogementInput} onChange={e=>setAddLogementInput(e.target.value)} placeholder="Ex: 5ème Droite - B" autoFocus onKeyDown={e=>{if(e.key==="Enter"&&addLogementInput.trim()){setExtraLogements(p=>[...p,addLogementInput.trim()]);setAddLogementInput("");setShowAddLogement(false)}}} style={{flex:1,padding:"8px 10px",borderRadius:8,border:`1.5px solid ${T.forestLight}`,fontSize:12,fontFamily:SANS,outline:"none",background:"#fff"}}/>
-              <button onClick={()=>{if(addLogementInput.trim()){setExtraLogements(p=>[...p,addLogementInput.trim()]);setAddLogementInput("");setShowAddLogement(false)}}} style={{padding:"7px 12px",borderRadius:8,border:"none",background:T.forest,color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>OK</button>
-              <button onClick={()=>{setShowAddLogement(false);setAddLogementInput("")}} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
-            </div>
-            :<button onClick={()=>setShowAddLogement(true)} style={{background:"none",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.forestLight,padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>+ Ajouter un logement supplémentaire</button>}
-          </div>}
-
-          <div style={{marginBottom:20}}>
-            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Email</label>
-            <div style={{padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,color:T.textMuted,background:T.sand}}>{userEmail}</div>
           </div>
 
-          {/* Lots - copropriétaire only */}
-          {role==="proprio"&&<div style={{marginBottom:20}}>
-            <label style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Numéros de lots</label>
-            <input value={userLots} onChange={e=>setUserLots(e.target.value)} placeholder="12, 45, 78" style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
-            <p style={{fontSize:10,color:T.textMuted,margin:"4px 0 0",lineHeight:1.4}}>🔒 Visible uniquement par le syndic — utile pour identifier vos lots dans les échanges officiels.</p>
+          {/* ════════════════════════════════════
+             TAB: ÉTENDRE
+             ════════════════════════════════════ */}
+          {profTab==="etendre"&&<div>
+            {/* Main CTA */}
+            <Card style={{padding:18,background:`linear-gradient(135deg,${T.purple}06,${T.sky}04)`,border:`1px solid ${T.purple}15`}}>
+              <h4 style={{fontFamily:FONT,fontSize:16,color:T.text,margin:"0 0 6px"}}>Votre copro fonctionne bien</h4>
+              <p style={{fontSize:12,color:T.textLight,lineHeight:1.5,margin:"0 0 14px"}}>Vous pouvez aider une autre résidence à démarrer sur de bonnes bases. Partagez votre expérience et lancez VoisinSereins dans une copro de votre entourage.</p>
+              <Btn full onClick={()=>{setShowProfile(false);setTimeout(()=>{setShowParrainage(true);setParrainageStep(1);setNewParr({contact:"",city:"",channel:"whatsapp"});setParrMsgEdited("")},150)}} style={{background:`linear-gradient(135deg,${T.purple},${T.sky})`}}>Lancer une autre copro</Btn>
+            </Card>
+
+            {/* KPIs */}
+            <div style={{display:"flex",gap:6,marginBottom:12}}>
+              <div style={{flex:1,background:"#fff",borderRadius:10,padding:"10px 6px",textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.purple}}>{parrainages.length}</div>
+                <div style={{fontSize:8,color:T.textMuted,fontWeight:600}}>Copros lancées</div>
+              </div>
+              <div style={{flex:1,background:"#fff",borderRadius:10,padding:"10px 6px",textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.forest}}>{parrainages.filter(p=>p.actifs>=p.seuil).length}</div>
+                <div style={{fontSize:8,color:T.textMuted,fontWeight:600}}>Devenues actives</div>
+              </div>
+              <div style={{flex:1,background:"#fff",borderRadius:10,padding:"10px 6px",textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                <div style={{fontSize:18,fontWeight:700,color:T.sunrise}}>{parrainages.reduce((s,p)=>s+(p.seuil-Math.min(p.actifs,p.seuil)),0)}</div>
+                <div style={{fontSize:8,color:T.textMuted,fontWeight:600}}>Voisins en attente</div>
+              </div>
+            </div>
+
+            {/* Mes lancements */}
+            {parrainages.length>0&&<div style={{marginBottom:12}}>
+              <h4 style={{fontSize:11,fontWeight:700,color:T.bark,textTransform:"uppercase",letterSpacing:1,margin:"0 0 8px"}}>Mes lancements</h4>
+              {parrainages.map(p=>{
+                const pct=Math.round(p.actifs/p.seuil*100);const done=p.actifs>=p.seuil;
+                return(
+                <Card key={p.id} style={{padding:12,borderLeft:`3px solid ${done?T.forest:T.purple}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <div style={{width:30,height:30,borderRadius:8,background:done?`${T.forest}15`:`${T.purple}10`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{done?"✅":"⏳"}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:600,color:T.text}}>{p.copro}</div>
+                      <div style={{fontSize:9,color:T.textMuted}}>{p.city} · Contact : {p.contact}</div>
+                    </div>
+                    <span style={{padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:done?`${T.forest}12`:`${T.purple}12`,color:done?T.forest:T.purple}}>{done?"Active":"En cours"}</span>
+                  </div>
+                  <div style={{height:4,borderRadius:2,background:T.sand,marginBottom:2}}>
+                    <div style={{height:"100%",borderRadius:2,width:`${Math.min(100,pct)}%`,background:done?T.forest:`linear-gradient(90deg,${T.purple},${T.sky})`,transition:"width 0.5s"}}/>
+                  </div>
+                  <div style={{fontSize:8,color:T.textMuted}}>{p.actifs}/{p.seuil} résidents actifs · {p.logements} logements</div>
+                </Card>);
+              })}
+            </div>}
+
+            {/* Mes avantages — discret */}
+            {parrainages.filter(p=>p.actifs>=p.seuil).length>0&&<div style={{padding:12,background:`${T.leafLight}12`,borderRadius:10,border:`1px solid ${T.leafLight}30`}}>
+              <h4 style={{fontSize:10,fontWeight:600,color:T.forest,margin:"0 0 6px"}}>Mes avantages</h4>
+              {parrainages.filter(p=>p.actifs>=p.seuil).map(p=>(
+                <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",fontSize:10}}>
+                  <span style={{color:T.text}}>{p.copro}</span>
+                  <div style={{display:"flex",gap:4}}>
+                    <span style={{padding:"1px 5px",borderRadius:3,fontSize:8,fontWeight:600,background:`${T.forest}12`,color:T.forest}}>1 mois Perso Pro</span>
+                    {p.paidReward&&<span style={{padding:"1px 5px",borderRadius:3,fontSize:8,fontWeight:600,background:`${T.sunrise}12`,color:T.sunrise}}>{chequeMontant(p.logements||20)}€</span>}
+                  </div>
+                </div>
+              ))}
+            </div>}
           </div>}
 
-          {/* Mes parrainages — Ambassadeur */}
-          {canParrain&&<div style={{marginBottom:20}}>
-            <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>🚀 Mes parrainages</h4>
-            <div style={{padding:12,background:`linear-gradient(135deg,${T.purple}06,${T.sky}06)`,borderRadius:12,border:`1px solid ${T.purple}20`,marginBottom:8}}>
-              <div style={{display:"flex",justifyContent:"space-around",textAlign:"center",marginBottom:10}}>
-                <div><div style={{fontSize:20,fontWeight:700,color:T.purple}}>{parrainages.length}</div><div style={{fontSize:9,color:T.textMuted}}>Copros parrainées</div></div>
-                <div><div style={{fontSize:20,fontWeight:700,color:T.forest}}>{parrRewards}</div><div style={{fontSize:9,color:T.textMuted}}>Mois Pass Perso</div></div>
-                <div><div style={{fontSize:20,fontWeight:700,color:T.sunrise}}>{parrainages.filter(p=>p.paidReward).reduce((s,p)=>s+chequeMontant(p.logements||20),0)}€</div><div style={{fontSize:9,color:T.textMuted}}>Chèques gagnés</div></div>
+          {/* ════════════════════════════════════
+             TAB: PROFIL
+             ════════════════════════════════════ */}
+          {profTab==="profil"&&<div>
+            {/* Profile fields */}
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Nom complet</label>
+              <input value={userName} onChange={e=>setUserName(e.target.value)} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:14,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+            </div>
+
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <div style={{flex:2}}>
+                <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Bâtiment</label>
+                <input value={userBuilding} onChange={e=>{setUserBuilding(e.target.value);setUserFloorEdited(false)}} placeholder="A, Mimosa..." style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
               </div>
-              {parrainages.map(p=>(
-                <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#fff",borderRadius:10,marginBottom:4,border:`1px solid ${p.actifs>=p.seuil?T.forest:T.sandDark}30`}}>
-                  <div style={{width:32,height:32,borderRadius:8,background:p.actifs>=p.seuil?`${T.forest}15`:`${T.purple}10`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{p.actifs>=p.seuil?"✅":"⏳"}</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:11,fontWeight:600,color:T.text}}>{p.copro} <span style={{fontWeight:400,color:T.textMuted}}>· {p.city}</span></div>
-                    <div style={{fontSize:9,color:T.textMuted}}>Filleul : {p.contact} · {p.actifs}/{p.seuil} actifs</div>
-                  </div>
-                  {p.actifs>=p.seuil&&<span style={{fontSize:8,fontWeight:700,color:T.forest,background:`${T.forest}12`,padding:"2px 6px",borderRadius:4}}>🎁 Pass Perso</span>}
-                  {p.paidReward&&<span style={{fontSize:8,fontWeight:700,color:T.sunrise,background:`${T.sunrise}12`,padding:"2px 6px",borderRadius:4}}>🎁 {chequeMontant(p.logements||20)}€</span>}
+              <div style={{flex:1}}>
+                <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Étage</label>
+                <input type="number" value={userEtage} onChange={e=>{setUserEtage(e.target.value);setUserFloorEdited(false)}} placeholder="3" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+              </div>
+              <div style={{flex:1.5}}>
+                <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Porte</label>
+                <input value={userDoor} onChange={e=>{if(e.target.value.length<=8){setUserDoor(e.target.value);setUserFloorEdited(false)}}} placeholder="Gauche" maxLength={8} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+              </div>
+            </div>
+
+            <div style={{marginBottom:12}}>
+              <label style={{fontSize:9,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:4}}>Appartement <span style={{fontSize:8,fontWeight:400,textTransform:"none"}}>(auto-généré, modifiable)</span></label>
+              <input value={currentApt} onChange={e=>{setUserFloor(e.target.value);setUserFloorEdited(true)}} style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${userFloorEdited?T.sunrise:T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:userFloorEdited?"#fff":`${T.leafLight}12`,color:T.text,boxSizing:"border-box"}}/>
+              {userFloorEdited&&<p style={{fontSize:9,color:T.sunrise,margin:"3px 0 0"}}>✏️ Modifié manuellement</p>}
+            </div>
+
+            {/* Multi-logement */}
+            {role!=="syndic"&&<div style={{marginBottom:14}}>
+              {extraLogements.map((lg,i)=>(
+                <div key={i} style={{display:"flex",gap:6,alignItems:"center",padding:"7px 10px",background:"#fff",borderRadius:8,marginBottom:3,border:`1px solid ${T.sandDark}`}}>
+                  <span style={{fontSize:11}}>🏠</span><span style={{fontSize:11,flex:1,color:T.text}}>{lg}</span>
+                  <button onClick={()=>setExtraLogements(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:13,color:T.textMuted,cursor:"pointer"}}>×</button>
+                </div>
+              ))}
+              {showAddLogement?<div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <input value={addLogementInput} onChange={e=>setAddLogementInput(e.target.value)} placeholder="Ex: 5ème Droite - B" autoFocus onKeyDown={e=>{if(e.key==="Enter"&&addLogementInput.trim()){setExtraLogements(p=>[...p,addLogementInput.trim()]);setAddLogementInput("");setShowAddLogement(false)}}} style={{flex:1,padding:"8px 10px",borderRadius:8,border:`1.5px solid ${T.forestLight}`,fontSize:11,fontFamily:SANS,outline:"none",background:"#fff"}}/>
+                <button onClick={()=>{if(addLogementInput.trim()){setExtraLogements(p=>[...p,addLogementInput.trim()]);setAddLogementInput("");setShowAddLogement(false)}}} style={{padding:"6px 10px",borderRadius:8,border:"none",background:T.forest,color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:SANS}}>OK</button>
+                <button onClick={()=>{setShowAddLogement(false);setAddLogementInput("")}} style={{background:"none",border:"none",fontSize:13,color:T.textMuted,cursor:"pointer"}}>×</button>
+              </div>
+              :<button onClick={()=>setShowAddLogement(true)} style={{background:"none",border:"none",cursor:"pointer",fontFamily:SANS,fontSize:10,fontWeight:600,color:T.forestLight,padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>+ Ajouter un logement supplémentaire</button>}
+            </div>}
+
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Email</label>
+              <div style={{padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,color:T.textMuted,background:T.sand}}>{userEmail}</div>
+            </div>
+
+            {role==="proprio"&&<div style={{marginBottom:16}}>
+              <label style={{fontSize:10,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Numéros de lots</label>
+              <input value={userLots} onChange={e=>setUserLots(e.target.value)} placeholder="12, 45, 78" style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`2px solid ${T.sandDark}`,fontSize:13,fontFamily:SANS,outline:"none",background:"#fff",color:T.text,boxSizing:"border-box"}}/>
+              <p style={{fontSize:9,color:T.textMuted,margin:"3px 0 0"}}>🔒 Visible uniquement par le syndic</p>
+            </div>}
+
+            {/* Droits d'accès */}
+            <div style={{background:`${T.leafLight}18`,borderRadius:12,padding:12,marginBottom:12}}>
+              <h4 style={{fontSize:12,fontWeight:600,color:T.forest,margin:"0 0 4px"}}>Vos droits d'accès</h4>
+              {role==="proprio"?
+                <p style={{fontSize:11,color:T.textLight,margin:0,lineHeight:1.4}}>Documents AG, votes, médiation, conseil juridique.{isCS?" + Outils CS.":""}{!verifiedProprio?" Docs financiers après vérification.":""}</p>:
+              role==="syndic"?
+                <p style={{fontSize:11,color:T.textLight,margin:0,lineHeight:1.4}}>Dashboard, diffusion officielle, analytics.{!verifiedSyndic?" Mode démo actif.":""}</p>:
+                <p style={{fontSize:11,color:T.textLight,margin:0,lineHeight:1.4}}>Fil, annonces, messagerie, conseil AI. Pas de docs financiers ni votes AG.</p>
+              }
+            </div>
+            <button onClick={()=>setShowRoleSwitch(true)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:500,color:T.forest,textAlign:"left",display:"flex",alignItems:"center",gap:8}}>🔄 Changer de rôle</button>
+          </div>}
+
+          {/* ════════════════════════════════════
+             TAB: ACTIVITÉ
+             ════════════════════════════════════ */}
+          {profTab==="activite"&&<div>
+            <div style={{display:"flex",gap:8,marginBottom:14}}>
+              {[
+                {v:posts.filter(p=>p.author===userName&&!p.welcome).length,l:"Publications",c:T.forest},
+                {v:3,l:"Invitations acceptées",c:T.sunrise},
+                {v:posts.reduce((n,p)=>n+p.replies.filter(r=>r.author===userName).length,0),l:"Réponses",c:T.sky},
+              ].map((s,i)=>(
+                <div key={i} style={{flex:1,background:"#fff",borderRadius:12,padding:"12px 8px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.03)"}}>
+                  <div style={{fontSize:20,fontWeight:700,color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:9,color:T.textMuted,marginTop:2}}>{s.l}</div>
                 </div>
               ))}
             </div>
-            <button onClick={()=>{setShowProfile(false);setTimeout(()=>{setShowParrainage(true);setParrainageStep(1);setNewParr({contact:"",city:"",channel:"whatsapp"});setParrMsgEdited("")},150)}} style={{width:"100%",padding:10,borderRadius:10,border:`1.5px dashed ${T.purple}40`,background:`${T.purple}06`,cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.purple,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🚀 Parrainer une nouvelle copro</button>
+
+            {/* Recent activity */}
+            <h4 style={{fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 8px"}}>Dernières actions</h4>
+            {[
+              {icon:"💬",text:"Publication dans le fil",time:"Aujourd'hui",color:T.sky},
+              {icon:"📢",text:"Signalement : Porte d'entrée ouverte",time:"Hier",color:T.sunrise},
+              {icon:"⚖️",text:"Question au Conseil AI",time:"Hier",color:T.forest},
+              {icon:"📨",text:"3 invitations envoyées",time:"Il y a 3 jours",color:T.coral},
+              {icon:"🕊",text:"Médiation initiée (bruit)",time:"La semaine dernière",color:T.purple},
+              {icon:"✓",text:"Vérification de Karim B.",time:"Il y a 5 jours",color:T.forest},
+            ].map((a,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<5?`1px solid ${T.sand}`:"none"}}>
+                <div style={{width:28,height:28,borderRadius:8,background:`${a.color}12`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{a.icon}</div>
+                <div style={{flex:1}}><div style={{fontSize:11,color:T.text}}>{a.text}</div><div style={{fontSize:9,color:T.textMuted}}>{a.time}</div></div>
+              </div>
+            ))}
+
+            {/* Gamification summary */}
+            <Card style={{marginTop:12,padding:12,background:`${T.sunrise}06`,border:`1px solid ${T.sunrise}18`}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:20}}>🌱</span>
+                <div>
+                  <div style={{fontSize:12,fontWeight:600,color:T.bark}}>Niveau Fondateur</div>
+                  <div style={{fontSize:10,color:T.textMuted}}>3 invitations acceptées — prochain palier : Animateur (20% couverture + 300 pts)</div>
+                </div>
+              </div>
+              <div style={{height:4,borderRadius:2,background:T.sand,marginTop:8}}>
+                <div style={{height:"100%",borderRadius:2,width:"35%",background:`linear-gradient(90deg,${T.sunrise},${T.leaf})`}}/>
+              </div>
+            </Card>
           </div>}
 
-          {/* Mes documents */}
-          <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Mes documents</h4>
-          <p style={{fontSize:11,color:T.textMuted,margin:"-8px 0 10px",lineHeight:1.4}}>Uploadez vos documents (bail, PV d'AG, etc.) — le Conseil AI pourra s'en servir pour vous donner des réponses personnalisées.</p>
-          {userDocs.map((doc,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"#fff",borderRadius:10,marginBottom:5,border:`1px solid ${T.sandDark}`}}>
-              <div style={{width:32,height:32,borderRadius:8,background:`${T.purple}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📄</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:11,fontWeight:600,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{doc.name}</div>
-                <div style={{fontSize:9,color:T.textMuted}}>Ajouté le {doc.date}</div>
+          {/* ════════════════════════════════════
+             TAB: RÉGLAGES
+             ════════════════════════════════════ */}
+          {profTab==="reglages"&&<div>
+            {/* Mes documents */}
+            <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 8px"}}>Mes documents</h4>
+            <p style={{fontSize:10,color:T.textMuted,margin:"-4px 0 8px",lineHeight:1.4}}>Le Conseil AI s'en sert pour des réponses personnalisées.</p>
+            {userDocs.map((doc,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:"#fff",borderRadius:8,marginBottom:4,border:`1px solid ${T.sandDark}`}}>
+                <span style={{fontSize:13}}>📄</span>
+                <div style={{flex:1,minWidth:0}}><div style={{fontSize:10,fontWeight:600,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{doc.name}</div><div style={{fontSize:8,color:T.textMuted}}>{doc.date}</div></div>
+                <button onClick={()=>setUserDocs(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:12,color:T.textMuted,cursor:"pointer"}}>×</button>
               </div>
-              <button onClick={()=>setUserDocs(p=>p.filter((_,j)=>j!==i))} style={{background:"none",border:"none",fontSize:14,color:T.textMuted,cursor:"pointer"}}>×</button>
-            </div>
-          ))}
-          <label style={{width:"100%",padding:10,borderRadius:10,border:`1.5px dashed ${T.purple}40`,background:`${T.purple}06`,cursor:"pointer",fontFamily:SANS,fontSize:11,fontWeight:600,color:T.purple,display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:20}}>
-            📎 Ajouter un document
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const today=new Date().toISOString().split("T")[0];const r=new FileReader();r.onload=ev=>setUserDocs(p=>[...p,{name:f.name,data:ev.target.result,date:today,type:f.type}]);r.readAsDataURL(f)}}}/>
-          </label>
+            ))}
+            <label style={{width:"100%",padding:8,borderRadius:8,border:`1.5px dashed ${T.purple}40`,background:`${T.purple}06`,cursor:"pointer",fontFamily:SANS,fontSize:10,fontWeight:600,color:T.purple,display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginBottom:16}}>
+              📎 Ajouter un document
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){const today=new Date().toISOString().split("T")[0];const r=new FileReader();r.onload=ev=>setUserDocs(p=>[...p,{name:f.name,data:ev.target.result,date:today,type:f.type}]);r.readAsDataURL(f)}}}/>
+            </label>
 
-          <h4 style={{fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 12px"}}>Préférences</h4>
-
-          {[
-            {label:"Notifications prioritaires",desc:"Urgences, messages directs, signalements 🔴",value:notifsUrgent,set:setNotifsUrgent,disabled:false},
-            {label:"Notifications générales",desc:"Fil d'actualité, sondages, agenda, sujets",value:notifsGeneral,set:setNotifsGeneral,disabled:false},
-            {label:"Visible dans l'annuaire",desc:"Les voisins peuvent me trouver dans l'annuaire",value:annuaireVisible,set:setAnnuaireVisible,disabled:false},
-            {label:"Coach AI à l'écriture",desc:"Toujours actif — non désactivable",value:true,set:()=>{},disabled:true,locked:true},
-          ].map((s,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:i<3?`1px solid ${T.sand}`:"none"}}>
-              <div style={{opacity:s.disabled?0.7:1}}>
-                <div style={{fontSize:14,fontWeight:500,color:T.text,display:"flex",alignItems:"center",gap:5}}>
-                  {s.label}
-                  {s.locked&&<span style={{fontSize:10}}>🔒</span>}
+            {/* Preferences */}
+            <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"0 0 8px"}}>Préférences</h4>
+            {[
+              {label:"Notifications prioritaires",desc:"Urgences, messages directs",value:notifsUrgent,set:setNotifsUrgent,disabled:false},
+              {label:"Notifications générales",desc:"Fil, sondages, agenda, sujets",value:notifsGeneral,set:setNotifsGeneral,disabled:false},
+              {label:"Visible dans l'annuaire",desc:"Les voisins peuvent me trouver",value:annuaireVisible,set:setAnnuaireVisible,disabled:false},
+              {label:"Coach AI à l'écriture",desc:"Toujours actif — non désactivable",value:true,set:()=>{},disabled:true,locked:true},
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<3?`1px solid ${T.sand}`:"none"}}>
+                <div style={{opacity:s.disabled?0.7:1}}>
+                  <div style={{fontSize:12,fontWeight:500,color:T.text,display:"flex",alignItems:"center",gap:4}}>{s.label}{s.locked&&<span style={{fontSize:9}}>🔒</span>}</div>
+                  <div style={{fontSize:10,color:T.textMuted}}>{s.desc}</div>
                 </div>
-                <div style={{fontSize:11,color:T.textMuted}}>{s.desc}</div>
-              </div>
-              <div style={{position:"relative"}}>
-                <button onClick={()=>!s.disabled&&s.set(!s.value)} style={{width:48,height:28,borderRadius:14,border:"none",background:s.value?(s.disabled?`${T.forest}99`:T.forest):T.sandDark,cursor:s.disabled?"default":"pointer",position:"relative",transition:"background 0.2s"}}>
-                  <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,left:s.value?23:3,transition:"left 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.15)",opacity:s.disabled?0.8:1}}/>
+                <button onClick={()=>!s.disabled&&s.set(!s.value)} style={{width:42,height:24,borderRadius:12,border:"none",background:s.value?(s.disabled?`${T.forest}99`:T.forest):T.sandDark,cursor:s.disabled?"default":"pointer",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                  <div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:3,left:s.value?21:3,transition:"left 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.15)"}}/>
                 </button>
               </div>
+            ))}
+
+            {/* Account actions */}
+            <h4 style={{fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:1,margin:"16px 0 8px"}}>Compte</h4>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <button style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:500,color:T.text,textAlign:"left",display:"flex",alignItems:"center",gap:8}}>📤 Exporter mes données</button>
+              <button style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:500,color:T.text,textAlign:"left",display:"flex",alignItems:"center",gap:8}}>🔒 Changer de mot de passe</button>
+              <button style={{width:"100%",padding:10,borderRadius:10,border:"none",background:`${T.coral}12`,cursor:"pointer",fontFamily:SANS,fontSize:12,fontWeight:600,color:T.coral,textAlign:"left",display:"flex",alignItems:"center",gap:8}}>🚪 Se déconnecter</button>
             </div>
-          ))}
+          </div>}
 
-          {/* Role info + change role */}
-          <div style={{background:`${T.leafLight}18`,borderRadius:14,padding:14,marginTop:20,marginBottom:8}}>
-            <h4 style={{fontSize:13,fontWeight:600,color:T.forest,margin:"0 0 6px"}}>Vos droits d'accès ({role==="proprio"?"copropriétaire":role==="locataire"?"locataire":role==="concierge"?"concierge":"syndic"})</h4>
-            {role==="proprio"?
-              <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Accès complet : documents AG, votes, médiation, conseil juridique copropriété, tous les fils, messagerie, petites annonces.{isCS?" En tant que membre du conseil syndical, vous avez également accès aux outils de suivi CS.":""}{!verifiedProprio?" Les fonctions sensibles (docs financiers, votes) nécessitent une vérification.":""}</p>:
-            role==="syndic"?
-              <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Dashboard de gestion, diffusion officielle, analytics d'engagement, ticketing, gestion des procurations et votes AG.{!verifiedSyndic?" Mode démo actif — vérification professionnelle requise pour activer.":""}</p>:
-            role==="concierge"?
-              <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Fil d'actualité, petites annonces, messagerie (y compris avec le syndic), conseil AI. Pas d'accès aux documents financiers ni aux votes d'AG.</p>:
-              <p style={{fontSize:12,color:T.textLight,margin:0,lineHeight:1.5}}>Fil d'actualité, petites annonces, messagerie, conseil AI (orienté bail). Les documents financiers et votes d'AG sont réservés aux copropriétaires.</p>
-            }
-          </div>
-
-          <button onClick={()=>setShowRoleSwitch(true)} style={{width:"100%",padding:12,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:13,fontWeight:500,color:T.forest,textAlign:"left",display:"flex",alignItems:"center",gap:10,marginBottom:16}}>🔄 Changer de rôle</button>
-
-          {/* Actions */}
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <button style={{width:"100%",padding:12,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:13,fontWeight:500,color:T.text,textAlign:"left",display:"flex",alignItems:"center",gap:10}}>📤 Exporter mes données</button>
-            <button style={{width:"100%",padding:12,borderRadius:10,border:`1px solid ${T.sandDark}`,background:"#fff",cursor:"pointer",fontFamily:SANS,fontSize:13,fontWeight:500,color:T.text,textAlign:"left",display:"flex",alignItems:"center",gap:10}}>🔒 Changer de mot de passe</button>
-            <button style={{width:"100%",padding:12,borderRadius:10,border:"none",background:`${T.coral}12`,cursor:"pointer",fontFamily:SANS,fontSize:13,fontWeight:600,color:T.coral,textAlign:"left",display:"flex",alignItems:"center",gap:10}}>🚪 Se déconnecter</button>
-          </div>
-
-          <p style={{fontSize:10,color:T.textMuted,textAlign:"center",marginTop:16}}>VoisinSereins.ai v1.0 · Données hébergées en France (UE)</p>
+          <p style={{fontSize:9,color:T.textMuted,textAlign:"center",marginTop:16}}>VoisinSereins.ai v1.0 · Données hébergées en France (UE)</p>
         </div>
-      </div>}
+      </div>;
+      })()}
 
       {/* ═══ COPRO INFO MODAL ═══ */}
       {showCoproInfo&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.3s"}} onClick={()=>setShowCoproInfo(false)}>
@@ -3690,7 +3858,7 @@ export default function VoisinSereins() {
           onFound={c=>{setCopro(c);setIsNew(!c.members||c.members<1);setScreen(c.members>0?"building":"whatsapp")}}
           onCreate={c=>{const street=c.label?.split(",")[0]?.trim()||"Ma copropriété";const num=street.match(/^\d+\s*/);const name="Copropriété "+(num?street.replace(num[0],""):street);setCopro({...c,name,city:c.label?.split(",").pop()?.trim()||"France",members:1,logements:20});setIsNew(true);setScreen("whatsapp")}}
         />}
-        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen("building")}} onSkip={()=>setScreen("building")}/>}
+        {screen==="whatsapp"&&<OnboardingWhatsApp copro={copro} onImport={(data)=>{setWaData(data);setScreen(isNew?"role":"building")}} onSkip={()=>setScreen(isNew?"role":"building")}/>}
         {screen==="building"&&<OnboardingBuilding copro={copro} onSelect={apt=>{setUserApt(apt);setScreen("role")}}/>}
         {screen==="role"&&<OnboardingRole copro={copro} onContinue={({role,isCS})=>{setUserRole(role);setUserIsCS(isCS);setScreen("app")}}/>}
         {screen==="app"&&<MainApp copro={copro} role={userRole} isCS={userIsCS} isNew={isNew} waData={waData} userApt={userApt}/>}
